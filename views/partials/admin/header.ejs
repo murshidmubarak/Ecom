@@ -1,0 +1,249 @@
+ <style>
+    :root {
+          --sidebar-width: 250px;
+          --sidebar-collapsed-width: 70px;
+          --header-height: 60px;
+          --primary-color: #cbcfda;
+          --secondary-color: #858796;
+          --dark-bg: #1a1a1a;
+          --card-bg: #242424;
+          --text-color: #e4e4e4;
+          --fluorescent-green: #2b08ee;
+          --gradient-green: linear-gradient(135deg, #b0aec8, rgb(120, 100, 100));
+
+      }
+      body {
+          background-color: var(--dark-bg);
+          color: var(--text-color);
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+      .sidebar {
+          position: fixed;
+          top: 0;
+          left: 0;
+          height: 100vh;
+          width: var(--sidebar-width);
+          background: linear-gradient(180deg, #010612 0%, #224abe 100%);
+          transition: all 0.3s ease;
+          z-index: 1000;
+          padding-top: var(--header-height);
+          box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+      }
+      .sidebar.collapsed {
+          width: var(--sidebar-collapsed-width);
+      }
+      .sidebar-header {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: var(--sidebar-width);
+          height: var(--header-height);
+          background: rgba(1, 6, 18, 0.9);
+          display: flex;
+          align-items: center;
+          padding: 0 1rem;
+          transition: all 0.3s ease;
+          z-index: 1001;
+      }
+      .sidebar.collapsed .sidebar-header {
+          width: var(--sidebar-collapsed-width);
+      }
+      .logo-full {
+          display: flex;
+          align-items: center;
+          color: white;
+          text-decoration: none;
+          font-size: 1.5rem;
+          font-weight: bold;
+      }
+      .logo-mini {
+          display: none;
+          color: white;
+          text-decoration: none;
+          font-size: 1.5rem;
+          font-weight: bold;
+      }
+      .sidebar.collapsed .logo-full {
+          display: none;
+      }
+      .sidebar.collapsed .logo-mini {
+          display: block;
+      }
+      .nav-link {
+          display: flex;
+          align-items: center;
+          padding: 0.75rem 1rem;
+          color: rgba(255, 255, 255, 0.8);
+          text-decoration: none;
+          border-radius: 0.5rem;
+          transition: all 0.3s ease;
+      }
+      .nav-link:hover {
+          color: white;
+          background: var(--gradient-green);
+      }
+      .nav-link i {
+          width: 20px;
+          text-align: center;
+          margin-right: 1rem;
+      }
+      .sidebar.collapsed .nav-link span {
+          display: none;
+      }
+      .sidebar.collapsed .nav-link i {
+          margin-right: 0;
+      }
+</style>
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <a href="#" class="logo-full">
+            <i class="fas fa-shopping-bag me-2"></i>
+            VGURIE
+        </a>
+        <a href="#" class="logo-mini">
+            <i class="fas fa-shopping-bag"></i>
+        </a>
+    </div>
+    <div class="nav flex-column p-3">
+        <a href="/admin/dashboard" class="nav-link mb-2"><i class="fas fa-th-large"></i><span>Dashboard</span></a>
+        
+        <a href="/admin/products" class="nav-link mb-2"><i class="fas fa-shopping-cart"></i><span>products</span></a>
+        <a href="/admin/users" class="nav-link mb-2"><i class="fas fa-users"></i><span>Users</span></a>
+        <a href="/admin/categories" class="nav-link mb-2"><i class="fas fa-tags"></i><span>Categories</span></a>
+        <a href="/admin/returnRequests" class="nav-link mb-2"><i class="fas fa-undo-alt"></i><span>Returns & Refunds</span></a>
+        <a href="/admin/coupons" class="nav-link mb-2"><i class="fas fa-ticket-alt"></i><span>Coupons</span></a>
+        <a href="#" class="nav-link mb-2"><i class="fas fa-image"></i><span>Banners</span></a>
+        <a href="#" class="nav-link mb-2"><i class="fas fa-cog"></i><span>Settings</span></a>
+        <a href="/admin/logout" class="nav-link text-danger mt-auto"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    </div>
+  </nav>
+
+
+<!-- 
+  <!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Men Fashion</title>
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta property="og:title" content="">
+    <meta property="og:type" content="">
+    <meta property="og:url" content="">
+    <meta property="og:image" content="">
+    <link rel="shortcut icon" type="image/x-icon" href="#">
+    <link href="/admin-assets/css/main.css" rel="stylesheet" type="text/css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10.16.6/dist/sweetalert2.min.css">
+<script src="https://kit.fontawesome.com/16d4885483.js" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<style>
+body {
+    background-color: #ffffff;
+}
+.navbar {
+    background-color: #8da7ab;
+}
+.navbar-aside {
+    background-color: #b0d5de;
+}
+.menu-item a.menu-link {
+    color: #310505;
+}
+
+.menu-item a.menu-link:hover,
+.menu-item a.menu-link.active {
+    background-color: #6e7e6e; 
+    color: #ffffff;
+}
+.dropdown-menu {
+    background-color: #bb9aaf;
+}
+
+.dropdown-item:hover {
+    background-color: #33053d;
+    color: #ffffff;
+}
+
+</style>
+</head>
+<body>
+    <div class="screen-overlay"></div>
+    <aside class="navbar-aside" id="offcanvas_aside">
+        <div class="aside-top">
+            <a href="#" class="brand-wrap">
+                <img src="/img/logo.png"  class="logo" alt="Men Fashion Dashboard">
+            </a>
+            <div>
+                <button class="btn btn-icon btn-aside-minimize"> <i class="text-muted material-icons md-menu_open"></i> </button>
+            </div>
+        </div>
+        <nav>
+            <ul class="menu-aside">
+                <li class="menu-item">
+                    <a class="menu-link" href="/admin/dashboard"> <i class="icon material-icons md-home"></i>
+                        <span class="text">Dashboard</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a class="menu-link" href="/admin/users"> <i class="icon material-icons md-person"></i>
+                        <span class="text">Customers</span>
+                    </a>
+
+                </li>
+                <li class="menu-item">
+                    <a class="menu-link" href="/admin/category"> <i class="icon material-icons md-person"></i>
+                        <span class="text">Category</span>
+                    </a>
+
+                </li>
+                <li class="menu-item">
+                    <a class="menu-link" href="/admin/brands"> <i class="icon material-icons md-stars"></i>
+                        <span class="text">Brands</span> </a>
+                </li>
+                <li class="menu-item">
+                    <a class="menu-link" href="/admin/addProducts"> <i class="icon material-icons md-add_box"></i>
+                        <span class="text">Add product</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a class="menu-link" href="/admin/products"> <i class="icon material-icons md-shopping_bag"></i>
+                        <span class="text">Products</span>
+                    </a>
+                </li>
+            
+                <li class="menu-item">
+                    <a class="menu-link" href="/admin/coupon"> <i class="icon material-icons md-class"></i>
+                        <span class="text">Coupon</span> </a>
+                </li>
+                <li class="menu-item">
+                    <a class="menu-link" href="/admin/banner"> <i class="icon material-icons md-photo_size_select_actual"></i>
+                        <span class="text">Banner</span> </a>
+                </li>
+
+                <li class="menu-item">
+                    <a class="menu-link" href="/admin/orderList"> <i class="icon material-icons md-shopping_cart"></i>
+                        <span class="text">Orders</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+    <main class="main-wrap">
+        <header class="main-header navbar">
+            <div class="col-search">
+            </div>
+            <div class="col-nav">
+                <button class="btn btn-icon btn-mobile me-auto" data-trigger="#offcanvas_aside"> <i class="material-icons md-apps"></i> </button>
+                <ul class="nav">
+                    <li class="dropdown nav-item">
+                        <a class="dropdown-toggle" data-bs-toggle="dropdown" href="#" id="dropdownAccount" aria-expanded="false"> <img class="img-xs rounded-circle" src="/admin-assets/imgs/people/avatar2.jpg" alt="User"></a>
+                        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownAccount">
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item text-danger" href="/admin/logout"><i class="material-icons md-exit_to_app"></i>Logout</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </header>  -->

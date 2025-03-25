@@ -1,0 +1,550 @@
+<%- include("../../views/partials/user/header") %>
+
+<style>
+/* Main Container */
+.main-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 120px; /* Adjusted to account for fixed header height */
+}
+
+/* Shop Topbar */
+.shop-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+/* Search Form */
+.search-form {
+  display: flex;
+  align-items: center;
+  background-color: #f1f1f1;
+  border-radius: 25px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 300px; /* Slightly increased for better usability */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.search-input {
+  flex: 1;
+  padding: 10px;
+  font-size: 14px;
+  border: none;
+  outline: none;
+  background-color: transparent;
+}
+
+.search-button {
+  padding: 10px 20px;
+  background-color: #1e918b;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 0 25px 25px 0; /* Adjusted for better look */
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.search-button:hover {
+  background-color: #0056b3;
+  transform: scale(1.05);
+}
+
+/* Sort Options */
+.sort-options {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.sort-options a {
+  text-decoration: none;
+  padding: 8px 15px;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  color: #333;
+  border-radius: 5px;
+  transition: background-color 0.3s;
+}
+
+.sort-options a:hover {
+  background-color: #e0e0e0;
+}
+
+.sort-options a.active {
+  background-color: #007bff;
+  color: #fff;
+}
+
+/* Product List Container */
+.product-list-container {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+}
+
+/* Sidebar */
+.sidebar {
+  padding: 15px;
+  border: 1px solid #ddd;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  width: 250px; /* Slightly wider for better readability */
+  flex-shrink: 0;
+}
+
+.filter-section {
+  margin-bottom: 20px;
+}
+
+.filter-title {
+  font-weight: bold;
+  margin-bottom: 10px;
+  font-size: 16px;
+  color: #333;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #eee;
+}
+
+.filter-item {
+  margin: 5px 0;
+  list-style-type: none;
+}
+
+.filter-item a {
+  text-decoration: none;
+  color: #333;
+  display: block;
+  padding: 5px 0;
+  font-size: 14px;
+}
+
+.filter-item a:hover {
+  color: #007bff;
+}
+
+.filter-item a.active {
+  color: #007bff;
+  font-weight: bold;
+}
+
+/* Category Brand Container */
+.category-brand-container ul {
+  padding: 0;
+  list-style-type: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0;
+}
+
+/* Price Filter */
+.price-filter .price-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.price-button {
+  padding: 8px 15px;
+  background-color: #f1f1f1;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  text-decoration: none;
+  display: block;
+}
+
+.price-button:hover {
+  background-color: #007bff;
+  color: white;
+  transform: scale(1.05);
+}
+
+.price-button.active {
+  background-color: #007bff;
+  color: white;
+}
+
+/* Product Grid */
+.product-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  flex: 1;
+}
+
+/* Product Card */
+.product-card {
+  width: calc(33.333% - 14px);
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  transition: transform 0.3s, box-shadow 0.3s;
+  height: 280px; /* Slightly increased for consistency */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.product-card img {
+  max-width: 100%;
+  height: 120px;
+  object-fit: contain;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+
+.product-card a {
+  text-decoration: none;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.product-card h4 {
+  margin: 5px 0;
+  font-size: 16px;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.product-card p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.wishlist-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(237, 247, 247, 0.8);
+  color: #ff4444;
+  padding: 6px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.add-to-cart-btn {
+  background-color: #46698f;
+  color: #fff;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.3s;
+}
+
+.add-to-cart-btn:hover {
+  background-color: #385777;
+}
+
+/* No Products */
+.no-products {
+  width: 100%;
+  text-align: center;
+  padding: 40px 0;
+  color: #666;
+  font-size: 18px;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+
+.pagination a {
+  padding: 8px 12px;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  color: #333;
+  text-decoration: none;
+  transition: background-color 0.3s;
+}
+
+.pagination a:hover {
+  background-color: #e0e0e0;
+}
+
+.pagination .active {
+  background-color: #007bff;
+  color: #fff;
+}
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+  .product-list-container {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 20px;
+  }
+  
+  .filter-section {
+    flex: 1;
+    min-width: 200px;
+  }
+  
+  .product-card {
+    width: calc(50% - 10px);
+  }
+}
+
+@media (max-width: 768px) {
+  .main-container {
+    padding: 15px;
+    margin-top: 100px; /* Adjusted for smaller header on mobile */
+  }
+  
+  .shop-topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+  
+  .search-form {
+    max-width: 100%;
+  }
+  
+  .sort-options {
+    justify-content: center;
+    gap: 8px;
+  }
+  
+  .product-card {
+    width: calc(50% - 10px);
+    height: 260px;
+  }
+  
+  .sidebar {
+    padding: 15px;
+  }
+  
+  .category-brand-container ul {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+  
+  .filter-item a {
+    padding: 5px 10px;
+    border: 1px solid #eee;
+    border-radius: 5px;
+  }
+  
+  .price-filter .price-options {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .product-card {
+    width: 100%;
+    height: auto; /* Allow natural height on small screens */
+    padding: 10px;
+  }
+  
+  .product-card img {
+    height: 100px;
+  }
+  
+  .add-to-cart-btn {
+    padding: 8px;
+    font-size: 14px;
+  }
+  
+  .search-form {
+    flex-direction: row;
+    background-color: #f1f1f1;
+    border-radius: 25px;
+  }
+  
+  .search-input {
+    padding: 8px;
+  }
+  
+  .search-button {
+    padding: 8px 15px;
+    border-radius: 0 25px 25px 0;
+  }
+  
+  .filter-section {
+    min-width: 100%;
+  }
+  
+  .pagination a {
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 350px) {
+  .search-form {
+    flex-direction: column;
+    background: none;
+    box-shadow: none;
+    max-width: 100%;
+  }
+  
+  .search-input {
+    width: 100%;
+    padding: 8px;
+    border-radius: 5px;
+    background-color: #f1f1f1;
+    margin-bottom: 5px;
+  }
+  
+  .search-button {
+    width: 100%;
+    border-radius: 5px;
+    padding: 8px;
+  }
+  
+  .sort-options a {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}
+</style>
+
+<div class="main-container">
+  <section class="shop-page container">
+    <div class="shop-topbar">
+      <div class="search-bar">
+        <form action="/shop" method="GET" class="search-form">
+          <input type="text" name="search" placeholder="Search items..." class="search-input" />
+          <button type="submit" class="search-button">Search</button>
+          <% if(selectedCategory && selectedCategory !== 'all') { %>
+            <input type="hidden" name="category" value="<%= selectedCategory %>" />
+          <% } %>
+          <% if(selectedPrice && selectedPrice !== 'all') { %>
+            <input type="hidden" name="price" value="<%= selectedPrice %>" />
+          <% } %>
+          <% if(selectedSort && selectedSort !== 'newest') { %>
+            <input type="hidden" name="sort" value="<%= selectedSort %>" />
+          <% } %>
+        </form>
+      </div>
+    </div>
+    
+    <!-- Sort options -->
+    <div class="sort-options">
+      <% for(let i = 0; i < sortLinks.length; i++) { %>
+        <a href="<%= sortLinks[i].link %>" class="<%= selectedSort === sortLinks[i].id ? 'active' : '' %>">
+          <%= sortLinks[i].name %>
+        </a>
+      <% } %>
+    </div>
+
+    <div class="product-list-container">
+      <aside class="sidebar">
+        <div class="filter-section">
+          <div class="filter-title">Categories</div>
+          <div class="category-brand-container">
+            <ul>
+              <li class="filter-item">
+                <a href="/shop" class="<%= selectedCategory === 'all' ? 'active' : '' %>">All Categories</a>
+              </li>
+              <% for(let i = 0; i < categoriesWithLinks.length; i++) { %>
+                <li class="filter-item">
+                  <a href="<%= categoriesWithLinks[i].link %>" class="<%= selectedCategory === categoriesWithLinks[i]._id.toString() ? 'active' : '' %>">
+                    <%= categoriesWithLinks[i].name %>
+                  </a>
+                </li>
+              <% } %>
+            </ul>
+          </div>
+        </div>
+ 
+        <div class="filter-section">
+          <div class="filter-title">Filter by Price</div>
+          <div class="price-options">
+            <% for(let i = 0; i < priceFilters.length; i++) { %>
+              <a href="<%= priceFilters[i].link %>" class="price-button <%= selectedPrice === priceFilters[i].id ? 'active' : '' %>">
+                <%= priceFilters[i].name %>
+              </a>
+            <% } %>
+          </div>
+        </div>
+      </aside>
+ 
+      <main class="product-grid">
+        <% if(products.length > 0) { %>
+          <% for(let i = 0; i < products.length; i++) { %>
+            <div class="product-card">
+              <span class="wishlist-btn" onclick="addToWishlist('<%= products[i]._id %>')">❤️</span>
+              <a href="/productDetails?id=<%= products[i]._id %>">
+                <img src="/uploads/<%= products[i].productImage[0]%>" alt="<%= products[i].productName %>" />
+                <h4><%= products[i].productName %></h4>
+                <p>Price: ₹<%= products[i].salePrice %> <span class="text-muted"><strike>₹<%= products[i].regularPrice %></strike></span></p>
+              </a>
+              <button class="add-to-cart-btn" onclick="addToCart('<%= products[i]._id %>')">Add to Cart</button>
+            </div>
+          <% } %>
+        <% } else { %>
+          <div class="no-products">
+            <p>No products found matching your criteria.</p>
+          </div>
+        <% } %>
+      </main>
+    </div>
+ 
+    <!-- Pagination -->
+    <% if(totalPages > 1) { %>
+      <div class="pagination">
+        <% if (prevPageLink) { %>
+          <a href="<%= prevPageLink %>">Prev</a>
+        <% } %>
+     
+        <% for(let i = 0; i < paginationLinks.length; i++) { %>
+          <a href="<%= paginationLinks[i].link %>" class="<%= paginationLinks[i].active ? 'active' : '' %>">
+            <%= paginationLinks[i].pageNumber %>
+          </a>
+        <% } %>
+     
+        <% if (nextPageLink) { %>
+          <a href="<%= nextPageLink %>">Next</a>
+        <% } %>
+      </div>
+    <% } %>
+  </section>
+</div>
+
+<%- include("../../views/partials/user/footer") %>

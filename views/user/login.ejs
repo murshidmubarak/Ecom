@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: url('/img/signup.jpeg') no-repeat center center/cover;
+        }
+        .form-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 320px;
+            text-align: center;
+            animation: fadeIn 1s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        h2 { font-size: 22px; margin-bottom: 15px; }
+        .form-group {
+            margin-bottom: 10px;
+            text-align: left;
+            position: relative; /* Added for eye toggle positioning */
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .password-container {
+            position: relative;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        button:hover { background-color: #45a049; }
+        .google-btn {
+            background-color: #DB4437;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+            border: none;
+            margin-top: 10px;
+        }
+        .google-btn img {
+            width: 20px;
+            margin-right: 10px;
+        }
+        .google-btn:hover {
+            background-color: #c1351d;
+        }
+        .signup-link, .forgot-password {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .signup-link a, .forgot-password a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .signup-link a:hover, .forgot-password a:hover { text-decoration: underline; }
+        @media (max-width: 600px) {
+            .form-container { width: 85%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Login to Your Account</h2>
+
+        <!-- Login Form -->
+        <form id="loginForm" >
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email" >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="password-container">
+                    <input type="password" id="password" name="password" placeholder="Enter your password" >
+                    <span class="toggle-password">👁️</span>
+                </div>
+            </div>
+
+            <button type="submit">Login</button>
+        </form>
+
+        <!-- Forgot Password Button -->
+        <p class="forgot-password"><a href="/forgot-password">Forgot Password?</a></p>
+
+        <!-- Google Login Button -->
+        <a href="/auth/google" style="text-decoration: none;">
+            <button class="google-btn">
+                <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google Logo">
+                <span>Continue with Google</span>
+            </button>
+        </a>
+
+        <!-- Signup Link -->
+        <p class="signup-link">Don't have an account? <a href="/signup">Sign Up</a></p>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const loginForm = document.getElementById("loginForm");
+            const passwordInput = document.getElementById("password");
+            const togglePassword = document.querySelector(".toggle-password");
+
+            // Toggle password visibility
+            togglePassword.addEventListener("click", function () {
+                if (passwordInput.type === "password") {
+                    passwordInput.type = "text";
+                    togglePassword.textContent = "👁️‍🗨️"; // Optional: Change icon when visible
+                } else {
+                    passwordInput.type = "password";
+                    togglePassword.textContent = "👁️";
+                }
+            });
+
+            loginForm.addEventListener("submit", async function (event) {
+                event.preventDefault(); // Prevent default form submission
+    
+                const email = document.getElementById("email").value.trim();
+                const password = document.getElementById("password").value.trim();
+    
+                // ✅ Frontend validation
+                if (!email || !password) {
+                    Swal.fire({
+                        icon: "warning",
+                        title: "Missing Fields",
+                        text: "Please enter both email and password.",
+                    });
+                    return;
+                }
+    
+                try {
+                    const response = await fetch("/login", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"  // ✅ Fix: Explicitly tell server it's JSON
+                        },
+                        body: JSON.stringify({ email, password }) // ✅ Convert form data to JSON
+                    });
+    
+                    const result = await response.json();
+    
+                    if (result.success) {
+                        Swal.fire({
+                            icon: "success",
+                            title: "Login Successful",
+                            text: "Redirecting...",
+                            timer: 2000,
+                            showConfirmButton: false,
+                        }).then(() => {
+                            window.location.href = "/";
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: "error",
+                            title: "Login Failed",
+                            text: result.message || "Invalid credentials",
+                        });
+                    }
+                } catch (error) {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Server Error",
+                        text: "Something went wrong. Please try again!",
+                    });
+                }
+            });
+    
+            // ✅ Show backend error message if exists in URL params
+            const params = new URLSearchParams(window.location.search);
+            if (params.has("error")) {
+                let message = "";
+    
+                switch (params.get("error")) {
+                    case "user_not_found":
+                        message = "User not found. Please check your email.";
+                        break;
+                    case "account_blocked":
+                        message = "Your account has been blocked.";
+                        break;
+                    case "google_user":
+                        message = "Please log in using Google.";
+                        break;
+                    case "invalid_password":
+                        message = "Incorrect password.";
+                        break;
+                    case "server_error":
+                        message = "Something went wrong. Please try again.";
+                        break;
+                    default:
+                        message = "An unknown error occurred.";
+                }
+    
+                Swal.fire({
+                    icon: "error",
+                    title: "Login Failed",
+                    text: message,
+                });
+            }
+        });
+    </script>
+</body>
+</html>

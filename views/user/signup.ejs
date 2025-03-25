@@ -1,0 +1,388 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> 
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+        .form-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+        h2 {
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="form-container">
+        <h2>Create an Account</h2>
+        <form id="signform">
+            <div class="form-group">
+                <label for="fullName">Full Name</label>
+                <input type="text" id="fullName" name="name" placeholder="Full Name">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="Email">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Password">
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" name="cPassword" placeholder="Confirm Password">
+            </div>
+
+            <button type="submit">Sign Up</button>
+            <p style="text-align: center; margin-top: 10px;">
+                Already have an account? <a href="/login" style="color: #007bff; text-decoration: none;">Login</a>
+            </p>
+          
+        </form>
+        <a href="/auth/google" style="text-decoration: none;">
+            <button class="google-btn">
+                <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google Logo">
+                <span>Continue with Google</span>
+            </button>
+        </a>
+    </div>
+
+   
+    <script>
+        document.getElementById("signform").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const name = document.getElementById("fullName").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const cPassword = document.getElementById("confirmPassword").value.trim();
+
+    // ✅ Input Validations
+    if (!name || !email || !password || !cPassword) {
+        return Swal.fire("Error", "All fields are required!", "error");
+    }
+    if (password !== cPassword) {
+        return Swal.fire("Error", "Passwords do not match!", "error");
+    }
+    if (password.length < 8) {
+        return Swal.fire("Error", "Password must be at least 8 characters!", "error");
+    }
+
+    try {
+        const response = await fetch("/signup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, email, password, cPassword })
+        });
+
+        if (!response.ok) {
+            throw new Error("Server error, please try again.");
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            Swal.fire({
+                title: "Success!",
+                text: "OTP sent to your email. Please verify.",
+                icon: "success"
+            }).then(() => {
+                window.location.href = "/verify-otp";
+            });
+        } else {
+            Swal.fire("Error", data.message, "error");
+        }
+
+    } catch (error) {
+        Swal.fire("Error", "Something went wrong!", "error");
+        console.error("Signup Error:", error);
+    }
+});
+
+    </script>
+
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: url('/img/signup.jpeg') no-repeat center center/cover;
+        }
+        .form-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 320px;
+            text-align: center;
+            animation: fadeIn 1s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        h2 { font-size: 22px; margin-bottom: 15px; }
+        .form-group {
+            margin-bottom: 10px;
+            text-align: left;
+            position: relative;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .password-container {
+            position: relative;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        button:hover { background-color: #45a049; }
+        .google-btn {
+            background-color: #DB4437;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+            border: none;
+            margin-top: 10px;
+        }
+        .google-btn img {
+            width: 20px;
+            margin-right: 10px;
+        }
+        .google-btn:hover {
+            background-color: #c1351d;
+        }
+        .signup-link {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .signup-link a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .signup-link a:hover { text-decoration: underline; }
+        @media (max-width: 600px) {
+            .form-container { width: 85%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Create an Account</h2>
+        <form id="signform">
+            <div class="form-group">
+                <label for="fullName">Full Name</label>
+                <input type="text" id="fullName" name="name" placeholder="Full Name" >
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email" >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="password-container">
+                    <input type="password" id="password" name="password" placeholder="Enter your password" >
+                    <span class="toggle-password">👁️</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <div class="password-container">
+                    <input type="password" id="confirmPassword" name="cPassword" placeholder="Confirm your password">
+                    <span class="toggle-password">👁️</span>
+                </div>
+            </div>
+
+            <button type="submit">Sign Up</button>
+        </form>
+
+        <a href="/auth/google" style="text-decoration: none;">
+            <button class="google-btn">
+                <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google Logo">
+                <span>Continue with Google</span>
+            </button>
+        </a>
+
+        <p class="signup-link">Already have an account? <a href="/login">Login</a></p>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const signForm = document.getElementById("signform");
+            const passwordInputs = document.querySelectorAll("#password, #confirmPassword");
+            const togglePasswords = document.querySelectorAll(".toggle-password");
+
+           
+            togglePasswords.forEach((toggle, index) => {
+                toggle.addEventListener("click", function () {
+                    const input = passwordInputs[index];
+                    if (input.type === "password") {
+                        input.type = "text";
+                        toggle.textContent = "👁️‍🗨️";
+                    } else {
+                        input.type = "password";
+                        toggle.textContent = "👁️";
+                    }
+                });
+            });
+
+            signForm.addEventListener("submit", async function (e) {
+                e.preventDefault();
+
+                const name = document.getElementById("fullName").value.trim();
+                const email = document.getElementById("email").value.trim();
+                const password = document.getElementById("password").value.trim();
+                const cPassword = document.getElementById("confirmPassword").value.trim();
+
+                // Input Validations
+                if (!name || !email || !password || !cPassword) {
+                    return Swal.fire("Error", "All fields are required!", "error");
+                }
+                if (!/^[a-zA-Z\s]+$/.test(name)) {
+                    return Swal.fire("Error", "name only contain letters", "error");
+                 
+                }
+          if (password !== cPassword) {
+                    return Swal.fire("Error", "Passwords do not match!", "error");
+                }
+                if (password.length < 8) {
+                    return Swal.fire("Error", "Password must be at least 8 characters!", "error");
+                }
+                if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
+                    return Swal.fire("Error", "Password must contain both letters and numbers!", "error");
+                }
+                const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailPattern.test(email)) {
+                    return Swal.fire("Error", "Please enter a valid email address!", "error");
+                }
+
+                try {
+                    const response = await fetch("/signup", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ name, email, password, cPassword })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("Server error, please try again.");
+                    }
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        Swal.fire({
+                            title: "Success!",
+                            text: "OTP sent to your email. Please verify.",
+                            icon: "success"
+                        }).then(() => {
+                            window.location.href = "/verify-otp";
+                        });
+                    } else {
+                        Swal.fire("Error", data.message, "error");
+                    }
+                } catch (error) {
+                    Swal.fire("Error", "Something went wrong!", "error");
+                    console.error("Signup Error:", error);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - <%= errorCode || "Error" %></title>
+    <style>
+        body {
+            display: flex;
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f2f5;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .error-container {
+            background: #fff;
+            padding: 40px 60px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        h1 {
+            color: #ff4757;
+            font-size: 60px;
+        }
+        p {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        a {
+            text-decoration: none;
+            color: #1e90ff;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <h1><%= errorCode || "Oops!" %></h1>
+        <p><%= errorMessage || "Something went wrong." %></p>
+        <a href="/">Go Back to Home</a>
+    </div>
+</body>
+</html>
