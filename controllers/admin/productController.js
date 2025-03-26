@@ -72,6 +72,21 @@ const getProductAddPage = async (req, res) => {
             console.log(req.body);
     
             const products = req.body;
+            
+        
+            // Check if product with the same name already exists (case-insensitive)
+            const existingProduct = await Product.findOne({ 
+                productName: { 
+                    $regex: new RegExp(`^${products.productName.trim()}$`, 'i') 
+                } 
+            });
+    
+            if (existingProduct) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'A product with this name already exists'
+                });
+            }
             const images = [];
     
             // Check if files were uploaded
@@ -366,14 +381,23 @@ const editProduct = async (req, res) => {
         // console.log('data:', data);
         
         // Check for duplicate product name
-        const existingProduct = await Product.findOne({
+       /*  const existingProduct = await Product.findOne({
             productName: data.productName,
             _id: { $ne: id }
         });
 
         if (existingProduct) {
             return res.status(400).json('Product name already exists');
-        }
+        } */
+
+            const existingProduct = await Product.findOne({
+                productName: { $regex: new RegExp(`^${data.productName}$`, 'i') },
+                _id: { $ne: id }
+            });
+            
+            if (existingProduct) {
+                return res.status(400).json('Product name already exists');
+            }
         
         // Process regular uploaded files
         const images = [];
