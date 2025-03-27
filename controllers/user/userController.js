@@ -367,7 +367,7 @@ const loadLogin = async (req, res) => {
 
 const login = async (req, res) => {
     const { email, password } = req.body;
-
+    console.log('aaaaaaaaaaa:', req.session.admin)
 console.log(req.body);
 
     try {
@@ -400,13 +400,8 @@ console.log(req.body);
 
 const logout = (req, res) => {
     try {
-        req.session.destroy((err) => {
-            if (err) {
-                console.error("Logout Error:", err);
-                return res.redirect("/pageNotFound");
-            }
-            res.redirect("/");
-        });
+        delete req.session.user
+        res.redirect('/')
     } catch (error) {
         console.error("Unexpected Logout Error:", error);
         res.redirect("/pageNotFound");

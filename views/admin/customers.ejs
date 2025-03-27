@@ -234,7 +234,7 @@
                         // Reload page to reflect changes
                         location.reload();
                     } else {
-                        throw new Error(data.message || 'Failed to update user status');
+                        window.location.href='/admin/login'
                     }
                 }
             } catch (error) {

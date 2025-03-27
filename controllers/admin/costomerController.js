@@ -179,6 +179,7 @@ const User = require("../../models/userSchema");
         
                 // Find the user by ID and update their block status
                 const user = await User.findById(userId);
+                console.log(user)
                 if (!user) {
                     return res.status(404).json({ success: false, message: 'User not found' });
                 }

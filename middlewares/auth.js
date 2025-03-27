@@ -19,12 +19,39 @@ const userAuth = (req, res, next) => {
     }
 };
 
+const checkUserBlocked= async (req, res, next) => {
+    try {
+        const userId = req.session.user;
+        if (!userId) {
+            return next();
+        }
+  
+        const userData = await User.findById(userId);
+        
+        if (userData?.isBlocked) {
+            res.redirect("/login");
+        }
+  
+        next();
+  
+    } catch (error) {
+        console.log("Error in block check middleware:", error);
+        next();
+    }
+  };
+
+
+
 const adminAuth = (req,res,next)=>{
-    if(req.session.admin) next()
-    else res.redirect('/admin/login')
+    console.log('admin:', req.session.admin)
+   if(req.session.admin){
+    next()
+   }else{
+    res.redirect("/admin/login")
+   }
 }
 
 
 module.exports ={
-    userAuth,adminAuth
+    userAuth,adminAuth,checkUserBlocked
 }
