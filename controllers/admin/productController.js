@@ -74,7 +74,7 @@ const getProductAddPage = async (req, res) => {
             const products = req.body;
             
         
-            // Check if product with the same name already exists (case-insensitive)
+            
             const existingProduct = await Product.findOne({ 
                 productName: { 
                     $regex: new RegExp(`^${products.productName.trim()}$`, 'i') 
@@ -95,7 +95,7 @@ const getProductAddPage = async (req, res) => {
                     const originalImagePath = req.files[i].path;
                     const resizedImagePath = path.join('public', 'uploads', 'resized-' + req.files[i].filename);
     
-                    // Resize the image and save it
+                    
                     await sharp(originalImagePath)
                         .resize({ width: 440, height: 440 })
                         .toFile(resizedImagePath);
@@ -103,7 +103,7 @@ const getProductAddPage = async (req, res) => {
                 }
             }
     
-            // Find the category ID based on the category name
+           
             const categoryId = await Category.findOne({ name: products.category });
     
             if (!categoryId) {
@@ -113,7 +113,7 @@ const getProductAddPage = async (req, res) => {
                 });
             }
     
-            // Create a new product
+           
             const newProduct = new Product({
                 productName: products.productName,
                 description: products.description,
@@ -127,11 +127,11 @@ const getProductAddPage = async (req, res) => {
                 productImage: images,
             });
     
-            // Save the new product to the database
+           
             await newProduct.save();
             console.log("Product Saved");
     
-            // Return success response
+        
             res.status(200).json({
                 success: true,
                 message: 'Product added successfully'
@@ -149,13 +149,13 @@ const getProductAddPage = async (req, res) => {
 
 const getAllProducts = async (req, res) => {
     try {
-        const search = req.query.search || ''; // Get search query from request
-        const page = parseInt(req.query.page) || 1; // Get page number from request, default to 1
-        const limit = 7; // Number of products per page
+        const search = req.query.search || ''; 
+        const page = parseInt(req.query.page) || 1; 
+        const limit = 7; 
 
-        // Fetch products with search, pagination, and populate category
+        
         const productData = await Product.find({
-            productName: { $regex: new RegExp(".*" + search + ".*", "i") } // Case-insensitive search
+            productName: { $regex: new RegExp(".*" + search + ".*", "i") } 
         })
         .sort({ createdAt: -1 })
         .limit(limit) 
@@ -413,14 +413,14 @@ const editProduct = async (req, res) => {
             
             // Handle different possible structures of data.images
             if (Array.isArray(data.images)) {
-                imagesArray = data.images; // Already an array
+                imagesArray = data.images; 
             } else if (typeof data.images === 'object') {
-                imagesArray = Object.values(data.images); // Convert object values to array
+                imagesArray = Object.values(data.images); 
             } else if (typeof data.images === 'string') {
-                imagesArray = [data.images]; // Single string
+                imagesArray = [data.images]; 
             }
     
-            // Process each base64 string
+            
             for (let i = 0; i < imagesArray.length; i++) {
                 const imageData = imagesArray[i];
                 if (typeof imageData === 'string' && imageData.indexOf('data:image') === 0) {
@@ -471,7 +471,7 @@ const deleteSingleImage = async (req, res) => {
     try {
         const {imageNameToServer, ProductIdToServer} = req.body;
         
-        // Use findByIdAndUpdate with $pull instead of findByIdAndDelete
+        
         const product = await Product.findByIdAndUpdate(
             ProductIdToServer,
             {$pull: {productImage: imageNameToServer}},

@@ -297,7 +297,7 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-3">
-                            <form id="addCategoryForm" onsubmit="addCategory(event)">
+                            <form id="addCategoryForm" onsubmit="submitForm(event)">
                                 <div class="mb-4">
                                     <label for="product_name" class="form-label">Name</label>
                                     <input type="text" name="name" placeholder="Type here" class="form-control" id="product_name" >
@@ -387,17 +387,17 @@
 
     <script>
         // Form Submission Handler
-        document.getElementById("addCategoryForm").addEventListener("submit", function(event) {
-            event.preventDefault();
-            if (validateForm()) {
-                addCategory();
-            }
-        });
+        function submitForm(e){
+            e.preventDefault();
+            validateForm()
+        }
+
 
         // Form Validation
         function validateForm() {
             clearErrorMessages();
             const name = document.getElementsByName("name")[0].value.trim();
+            console.log(name)
             const description = document.getElementsByName("description")[0].value.trim();
             let isValid = true;
 
@@ -414,7 +414,7 @@
                 isValid = false;
             }
 
-            return isValid;
+            if (isValid) addCategory()
         }
 
         // Display Error Messages
@@ -434,8 +434,7 @@
         }
 
         // Add Category Function
-        function addCategory(event) {
-            event.preventDefault();
+        function addCategory() {
 
             const name = document.getElementsByName("name")[0].value;
             const description = document.getElementsByName("description")[0].value;
@@ -742,15 +741,13 @@ function unlistCategory(categoryId) {
     });
 }
 
-
-
 function editCategory(categoryId) {
     // First, fetch the current category details
     fetch(`/admin/editCategory?id=${categoryId}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
     })
-    .then(response => response.json()) // Expect JSON from a modified GET route
+    .then(response => response.json())
     .then(data => {
         if (!data.success) {
             throw new Error(data.error || 'Failed to fetch category');
@@ -769,10 +766,19 @@ function editCategory(categoryId) {
             preConfirm: () => {
                 const categoryName = document.getElementById('swal-input1').value;
                 const description = document.getElementById('swal-input2').value;
+                
+                // Check if fields are empty
                 if (!categoryName || !description) {
                     Swal.showValidationMessage('Both name and description are required');
                     return false;
                 }
+                
+                // Add name format validation
+                if (!/^[a-zA-Z\s]+$/.test(categoryName)) {
+                    Swal.showValidationMessage('Category name must contain only letters and spaces');
+                    return false;
+                }
+
                 return { categoryName, description };
             }
         }).then((result) => {
@@ -813,6 +819,9 @@ function editCategory(categoryId) {
         });
     });
 }
+
+
+
     </script>
 </body>
 </html>

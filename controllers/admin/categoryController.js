@@ -115,10 +115,10 @@ const addCategory = async(req,res)=>{
                 description,
             });
     
-            // Save the new category to the database
+        
             await newCategory.save();
     
-            // Return success response
+           
             return res.json({ success: true, message: "Category added successfully" });
 
     
