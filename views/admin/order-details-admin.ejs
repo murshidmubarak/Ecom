@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details - Admin</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #cbcfda;
+            --secondary-color: #858796;
+            --dark-bg: #1a1a1a;
+            --card-bg: #242424;
+            --text-color: #e4e4e4;
+            --fluorescent-green: #2b08ee;
+            --gradient-green: linear-gradient(135deg, #b0aec8, rgb(120, 100, 100));
+        }
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+        h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--fluorescent-green);
+            padding-bottom: 10px;
+        }
+        .order-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .info-card {
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+        .info-card strong {
+            color: var(--primary-color);
+            display: inline-block;
+            width: 120px;
+        }
+        .products-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .products-table th, .products-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .products-table th {
+            background-color: rgba(255, 255, 255, 0.1);
+            font-weight: 500;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+        .products-table td {
+            color: var(--text-color);
+        }
+        .product-image {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 5px;
+            background-color: var(--secondary-color);
+        }
+        .totals-section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            text-align: right;
+        }
+        .totals-section p {
+            margin: 10px 0;
+            font-size: 1.1rem;
+        }
+        .totals-section .final-amount {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--fluorescent-green);
+        }
+        .action-buttons {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-return {
+            background-color: var(--fluorescent-green);
+            color: white;
+        }
+        .btn-return:hover {
+            background-color: #1a05b0;
+        }
+        .btn-download {
+            background-color: #10b981;
+            color: white;
+        }
+        .btn-download:hover {
+            background-color: #059669;
+        }
+        @media (max-width: 768px) {
+            .order-info {
+                grid-template-columns: 1fr;
+            }
+            .products-table th, .products-table td {
+                padding: 10px;
+                font-size: 0.85rem;
+            }
+            .product-image {
+                width: 40px;
+                height: 40px;
+            }
+            .totals-section {
+                text-align: left;
+            }
+            .action-buttons {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Order Details - #<%= orderId %></h1>
+
+        <!-- Order Information -->
+        <div class="order-info">
+            <div class="info-card">
+                <p><strong>Order Date:</strong> <%= new Date(orders.createdOn).toLocaleDateString() %></p>
+                <p><strong>Status:</strong> <%= orders.status || 'Pending' %></p>
+                <p><strong>Payment Method:</strong> <%= orders.payment || 'Not Specified' %></p> <!-- Updated to match schema -->
+            </div>
+            <div class="info-card">
+                <p><strong>Customer:</strong> <%= orders.address?.name || 'N/A' %></p>
+                <p><strong>Email:</strong> <%= orders.userId?.email || 'N/A' %></p>
+                <p><strong>Phone:</strong> <%= orders.address?.phone || 'N/A' %></p>
+            </div>
+        </div>
+
+        <!-- Products Table -->
+        <table class="products-table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Image</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% orders.orderedItems.forEach(item => { %>
+                    <tr>
+                        <td><%= item.product?.productName || 'Unknown Product' %></td>
+                        <td>
+                            <% if (item.product?.productImage?.length) { %>
+                                <img src="/uploads/<%= item.product.productImage[0] %>" alt="<%= item.product.productName || 'Product' %>" class="product-image">
+                            <% } else { %>
+                                <i class="fas fa-image" style="font-size: 1.5rem; color: var(--secondary-color);"></i>
+                            <% } %>
+                        </td>
+                        <td><%= item.quantity || 1 %></td>
+                        <td>₹<%= (item.price || 0).toFixed(2) %></td>
+                        <td>₹<%= ((item.price || 0) * (item.quantity || 1)).toFixed(2) %></td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+
+        <!-- Totals Section -->
+        <div class="totals-section">
+            <p><strong>Subtotal:</strong> ₹<%= orders.orderedItems.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 1), 0).toFixed(2) %></p>
+            <p><strong>Discount:</strong> ₹<%= (orders.orderedItems.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 1), 0) - finalAmount).toFixed(2) %></p>
+            <p class="final-amount"><strong>Final Amount:</strong> ₹<%= finalAmount.toFixed(2) %></p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="/admin/order-list" class="btn btn-return"><i class="fas fa-arrow-left"></i> Return to Order List</a>
+            <a href="/admin/downloadInvoice/<%= orderId %>" class="btn btn-download"><i class="fas fa-download"></i> Download Invoice</a>
+        </div>
+    </div>
+</body>
+</html>

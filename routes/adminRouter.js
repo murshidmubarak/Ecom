@@ -8,6 +8,7 @@ const {userAuth,adminAuth} = require("../middlewares/auth");
 const Product = require('../models/productSchema');
 const ProductController = require("../controllers/admin/productController");
 const upload = require("../middlewares/multer");
+const orderController = require("../controllers/admin/orderController")
 //const { route } = require('./userRouter');
 
 
@@ -42,6 +43,10 @@ router.get("/unblockProduct",adminAuth,ProductController.unblockProduct);
 router.post("/editProduct/:id",adminAuth,upload.array("images",4),ProductController.editProduct);
 router.post("/deleteImage",adminAuth,ProductController.deleteSingleImage); 
 
+
+router.get("/order-list", adminAuth, orderController.getOrderListPageAdmin);
+router.get("/orderDetailsAdmin", adminAuth, orderController.getOrderDetailsPageAdmin);
+router.get("/changeStatus", adminAuth, orderController.changeOrderStatus);
 
 
 

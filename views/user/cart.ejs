@@ -1,0 +1,258 @@
+<!-- views/cart.ejs -->
+<%- include("../../views/partials/user/header") %>
+<main class="main">
+    <div class="page-header breadcrumb-wrap">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="index.html" rel="nofollow">Home</a>
+                <span></span> Shop
+                <span></span> Your Cart
+            </div>
+        </div>
+    </div>
+    <section class="mb-5 m-5" style="margin-top: 500px;">
+        <div class="container">
+            <div class="row">
+                <div class="col-9">
+                    <div class="table-responsive" style="margin-top: 120px;">
+                        <table class="table shopping-summery text-center clean">
+                            <thead>
+                                <tr class="main-heading">
+                                    <th scope="col">Image</th>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Price</th>
+                                    <th scope="col">Quantity</th>
+                                    <th scope="col">Remove</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (data && data.length > 0) { %>
+                                    <% for (let i = 0; i < data.length; i++) { %>
+                                        <tr data-product-id="<%= data[i].productDetails[0]._id %>">
+                                            <td class="image product-thumbnail">
+                                                <img src="/uploads/<%= data[i].productDetails[0].productImage[0] %>"
+                                                    alt="<%= data[i].productDetails[0].productName %>"
+                                                    style="width: 100px; height: auto;" />
+                                            </td>
+                                            <td class="product-des product-name">
+                                                <h5 class="product-name">
+                                                    <a href="/product/<%= data[i].productDetails[0]._id %>">
+                                                        <%= data[i].productDetails[0].productName %>
+                                                    </a>
+                                                </h5>
+                                                <p class="font-xs">
+                                                    <%= data[i].productDetails[0].category %><br />
+                                                    <%= data[i].productDetails[0].brand %>
+                                                </p>
+                                            </td>
+                                            <td class="price" data-title="Price">
+                                                ₹<span id="subTotal<%= data[i].productDetails[0]._id %>">
+                                                    <%= data[i].productDetails[0].salePrice * data[i].quantity %>
+                                                </span><br>
+                                                <small class="text-muted text-nowrap">₹<span id="price<%= data[i].productDetails[0]._id %>">
+                                                    <%= data[i].productDetails[0].salePrice %>
+                                                </span> / per item</small>
+                                            </td>
+                                            <td class="text-center" data-title="Quantity">
+                                                <div class="detail-qty border radius m-auto">
+                                                    <div class="quantity-control">
+                                                        <button class="btn btn-sm decrement-button"
+                                                            onclick="changeQuantity('<%= data[i].productDetails[0]._id %>', -1, <%= data[i].productDetails[0].quantity %>)">
+                                                            <i class="fi-rs-minus" style="color: black;"></i>
+                                                        </button>
+                                                        <input class="quantity-input"
+                                                            id="cartProductQuantity<%= data[i].productDetails[0]._id %>"
+                                                            value="<%= data[i].quantity %>"
+                                                            data-stock="<%= data[i].productDetails[0].quantity %>"
+                                                            style="width: 45px; text-align: center; color: black;" 
+                                                            type="text" readonly>
+                                                        <button class="btn btn-sm increment-button"
+                                                            onclick="changeQuantity('<%= data[i].productDetails[0]._id %>', 1, <%= data[i].productDetails[0].quantity %>)">
+                                                            <i class="fi-rs-plus" style="color: black;"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="action" data-title="Remove">
+                                                <a href="#" class="btn btn-sm text-danger"
+                                                    onclick="confirmRemove('<%= data[i].productDetails[0]._id %>')">
+                                                    <i class="fi-rs-trash"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    <% } %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="5" class="text-center">
+                                            <div class="p-4">
+                                                <p class="lead mb-3">Your cart is empty</p>
+                                                <a href="/shop" class="btn btn-fill-out">Continue Shopping</a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-3" style="margin-top: 120px;">
+                    <div class="border p-md-4 p-30 border-radius cart-totals">
+                        <div class="heading_s1 mb-3">
+                            <h4>PRICE DETAILS</h4>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <tbody>
+                                    <tr>
+                                        <td class="cart_total_label">Items (<%= data ? data.length : 0 %>)</td>
+                                        <td class="cart_total_amount text-end">₹<span id="items-total"><%= grandTotal %></span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="cart_total_label">Shipping</td>
+                                        <td class="cart_total_amount text-end">Free</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="cart_total_label"><strong>Total</strong></td>
+                                        <td class="cart_total_amount text-end"><strong>₹<span id="total"><%= grandTotal %></span></strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <% if (data && data.length > 0) { %>
+                            <a href="/checkout?userId=<%= user._id %>" class="btn btn-fill-out btn-block mt-3">
+                                <i class="fi-rs-box-alt mr-10"></i> Proceed To CheckOut
+                            </a>
+                        <% } else { %>
+                            <a href="/shop" class="btn btn-fill-out btn-block mt-3">
+                                <i class="fi-rs-shopping-bag mr-10"></i> Continue Shopping
+                            </a>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    const MAX_QUANTITY = 3;
+
+    function changeQuantity(productId, count, initialStock) {
+        const row = document.querySelector(`tr[data-product-id="${productId}"]`);
+        const quantityInput = row.querySelector(`#cartProductQuantity${productId}`);
+        const subtotalElement = row.querySelector(`#subTotal${productId}`);
+        const priceElement = row.querySelector(`#price${productId}`);
+        const totalElement = document.getElementById('total');
+        const itemsTotalElement = document.getElementById('items-total');
+
+        const currentQuantity = parseInt(quantityInput.value);
+        const pricePerItem = parseInt(priceElement.textContent);
+        const stockQuantity = parseInt(quantityInput.dataset.stock);
+        const newQuantity = currentQuantity + count;
+
+        // Client-side validation
+        if (newQuantity < 1) {
+            showError("Quantity cannot be less than 1");
+            return;
+        }
+        if (newQuantity > MAX_QUANTITY) {
+            showError(`Maximum ${MAX_QUANTITY} items allowed per product`);
+            return;
+        }
+        if (newQuantity > stockQuantity) {
+            showError(`Only ${stockQuantity} items available in stock`);
+            return;
+        }
+
+        // Show loading state
+        Swal.fire({
+            title: 'Updating Quantity...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        $.ajax({
+            url: '/changeQuantity',
+            method: 'POST',
+            data: {
+                productId: productId,
+                count: count.toString()
+            },
+            success: function(response) {
+                Swal.close();
+                
+                if (response.status) {
+                    quantityInput.value = response.quantityInput;
+                    subtotalElement.textContent = response.totalAmount;
+                    totalElement.textContent = response.grandTotal;
+                    itemsTotalElement.textContent = response.grandTotal;
+                    quantityInput.dataset.stock = response.stockQuantity;
+                    
+                    showSuccess(count > 0 ? "Quantity increased" : "Quantity decreased");
+                } else {
+                    showError(response.error);
+                    quantityInput.value = response.currentQuantity || currentQuantity;
+                }
+            },
+            error: function(xhr) {
+                Swal.close();
+                const errorMessage = xhr.responseJSON?.error || 'Failed to update quantity';
+                showError(errorMessage);
+                quantityInput.value = currentQuantity;
+            }
+        });
+    }
+
+    function confirmRemove(productId) {
+        Swal.fire({
+            title: 'Remove Item?',
+            text: "Are you sure you want to remove this item from your cart?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, remove it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = `/deleteItem?id=${productId}`;
+            }
+        });
+    }
+
+    function showError(message) {
+        Swal.fire({
+            title: 'Error',
+            text: message,
+            icon: 'error',
+            confirmButtonColor: '#3085d6'
+        });
+    }
+
+    function showSuccess(message) {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: message,
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const quantityInputs = document.querySelectorAll('.quantity-input');
+        quantityInputs.forEach(input => {
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                }
+            });
+        });
+    });
+</script>
+<%- include("../../views/partials/user/footer") %>
