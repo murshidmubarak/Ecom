@@ -1,139 +1,153 @@
-<!-- views/cart.ejs -->
 <%- include("../../views/partials/user/header") %>
 <main class="main">
-    <div class="page-header breadcrumb-wrap">
+    <!-- Breadcrumb -->
+    <div class="page-header breadcrumb-wrap bg-light py-4 mb-5" style="border-bottom: 1px solid #e9ecef;">
         <div class="container">
-            <div class="breadcrumb">
-                <a href="index.html" rel="nofollow">Home</a>
-                <span></span> Shop
-                <span></span> Your Cart
-            </div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0" style="font-size: 0.9rem;">
+                    <li class="breadcrumb-item"><a href="/" style="color: #007bff; text-decoration: none;">Home</a></li>
+                    <li class="breadcrumb-item"><a href="/shop" style="color: #007bff; text-decoration: none;">Shop</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Your Cart</li>
+                </ol>
+            </nav>
         </div>
     </div>
-    <section class="mb-5 m-5" style="margin-top: 500px;">
+
+    <!-- Cart Section -->
+    <section class="py-5" style="background-color: #f8f9fa;">
         <div class="container">
-            <div class="row">
-                <div class="col-9">
-                    <div class="table-responsive" style="margin-top: 120px;">
-                        <table class="table shopping-summery text-center clean">
-                            <thead>
-                                <tr class="main-heading">
-                                    <th scope="col">Image</th>
-                                    <th scope="col">Name</th>
-                                    <th scope="col">Price</th>
-                                    <th scope="col">Quantity</th>
-                                    <th scope="col">Remove</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <% if (data && data.length > 0) { %>
-                                    <% for (let i = 0; i < data.length; i++) { %>
-                                        <tr data-product-id="<%= data[i].productDetails[0]._id %>">
-                                            <td class="image product-thumbnail">
-                                                <img src="/uploads/<%= data[i].productDetails[0].productImage[0] %>"
-                                                    alt="<%= data[i].productDetails[0].productName %>"
-                                                    style="width: 100px; height: auto;" />
-                                            </td>
-                                            <td class="product-des product-name">
-                                                <h5 class="product-name">
-                                                    <a href="/product/<%= data[i].productDetails[0]._id %>">
-                                                        <%= data[i].productDetails[0].productName %>
-                                                    </a>
-                                                </h5>
-                                                <p class="font-xs">
-                                                    <%= data[i].productDetails[0].category %><br />
-                                                    <%= data[i].productDetails[0].brand %>
-                                                </p>
-                                            </td>
-                                            <td class="price" data-title="Price">
-                                                ₹<span id="subTotal<%= data[i].productDetails[0]._id %>">
-                                                    <%= data[i].productDetails[0].salePrice * data[i].quantity %>
-                                                </span><br>
-                                                <small class="text-muted text-nowrap">₹<span id="price<%= data[i].productDetails[0]._id %>">
-                                                    <%= data[i].productDetails[0].salePrice %>
-                                                </span> / per item</small>
-                                            </td>
-                                            <td class="text-center" data-title="Quantity">
-                                                <div class="detail-qty border radius m-auto">
-                                                    <div class="quantity-control">
-                                                        <button class="btn btn-sm decrement-button"
-                                                            onclick="changeQuantity('<%= data[i].productDetails[0]._id %>', -1, <%= data[i].productDetails[0].quantity %>)">
-                                                            <i class="fi-rs-minus" style="color: black;"></i>
+            <% if (data && data.length > 0) { %>
+                <div class="row g-4">
+                    <!-- Cart Items -->
+                    <div class="col-lg-8 col-md-12">
+                        <div class="card shadow-sm border-0" style="border-radius: 15px; overflow: hidden;">
+                            <div class="card-header bg-white py-3" style="border-bottom: 1px solid #e9ecef;">
+                                <h4 class="mb-0" style="font-weight: 600; color: #333;">Shopping Cart (<%= data.length %> Items)</h4>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0" style="font-size: 0.95rem;">
+                                        <thead class="table-light" style="background-color: #f1f3f5;">
+                                            <tr>
+                                                <th scope="col" style="padding: 15px;">Image</th>
+                                                <th scope="col" style="padding: 15px;">Product</th>
+                                                <th scope="col" style="padding: 15px;">Price</th>
+                                                <th scope="col" style="padding: 15px;">Quantity</th>
+                                                <th scope="col" style="padding: 15px;">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% for (let i = 0; i < data.length; i++) { %>
+                                                <tr data-product-id="<%= data[i].productDetails[0]._id %>" style="transition: background-color 0.2s;">
+                                                    <td class="product-thumbnail" style="padding: 20px;">
+                                                        <img src="/uploads/<%= data[i].productDetails[0].productImage[0] %>"
+                                                             alt="<%= data[i].productDetails[0].productName %>"
+                                                             class="img-fluid rounded shadow-sm"
+                                                             style="max-width: 80px; height: auto; border: 1px solid #e9ecef;" />
+                                                    </td>
+                                                    <td class="product-name" style="padding: 20px;">
+                                                        <h6 class="mb-1" style="font-weight: 500;">
+                                                            <a href="/product/<%= data[i].productDetails[0]._id %>"
+                                                               class="text-dark text-decoration-none hover-text-primary">
+                                                                <%= data[i].productDetails[0].productName %>
+                                                            </a>
+                                                        </h6>
+                                                        <small class="text-muted">
+                                                            <%= data[i].productDetails[0].category %> | <%= data[i].productDetails[0].brand %>
+                                                        </small>
+                                                    </td>
+                                                    <td class="price" style="padding: 20px; color: #28a745; font-weight: 500;">
+                                                        ₹<span id="subTotal<%= data[i].productDetails[0]._id %>">
+                                                            <%= data[i].productDetails[0].salePrice * data[i].quantity %>
+                                                        </span><br>
+                                                        <small class="text-muted">
+                                                            (₹<span id="price<%= data[i].productDetails[0]._id %>">
+                                                                <%= data[i].productDetails[0].salePrice %>
+                                                            </span> / unit)
+                                                        </small>
+                                                    </td>
+                                                    <td class="quantity" style="padding: 20px;">
+                                                        <div class="input-group input-group-sm w-75 mx-auto shadow-sm rounded-pill">
+                                                            <button class="btn btn-outline-secondary decrement-button"
+                                                                    onclick="changeQuantity('<%= data[i].productDetails[0]._id %>', -1, <%= data[i].productDetails[0].quantity %>)"
+                                                                    style="border-radius: 50px 0 0 50px;">
+                                                                <i class="fa fa-minus"></i>
+                                                            </button>
+                                                            <input class="form-control text-center quantity-input border-0"
+                                                                   id="cartProductQuantity<%= data[i].productDetails[0]._id %>"
+                                                                   value="<%= data[i].quantity %>"
+                                                                   data-stock="<%= data[i].productDetails[0].quantity %>"
+                                                                   type="text" readonly
+                                                                   style="background-color: #fff; font-weight: 500;">
+                                                            <button class="btn btn-outline-secondary increment-button"
+                                                                    onclick="changeQuantity('<%= data[i].productDetails[0]._id %>', 1, <%= data[i].productDetails[0].quantity %>)"
+                                                                    style="border-radius: 0 50px 50px 0;">
+                                                                <i class="fa fa-plus"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                    <td class="action" style="padding: 20px;">
+                                                        <button class="btn btn-sm btn-outline-danger shadow-sm"
+                                                                onclick="confirmRemove('<%= data[i].productDetails[0]._id %>')"
+                                                                style="border-radius: 50%; padding: 8px 12px; transition: all 0.3s;">
+                                                            <i class="fa fa-trash"></i>
                                                         </button>
-                                                        <input class="quantity-input"
-                                                            id="cartProductQuantity<%= data[i].productDetails[0]._id %>"
-                                                            value="<%= data[i].quantity %>"
-                                                            data-stock="<%= data[i].productDetails[0].quantity %>"
-                                                            style="width: 45px; text-align: center; color: black;" 
-                                                            type="text" readonly>
-                                                        <button class="btn btn-sm increment-button"
-                                                            onclick="changeQuantity('<%= data[i].productDetails[0]._id %>', 1, <%= data[i].productDetails[0].quantity %>)">
-                                                            <i class="fi-rs-plus" style="color: black;"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td class="action" data-title="Remove">
-                                                <a href="#" class="btn btn-sm text-danger"
-                                                    onclick="confirmRemove('<%= data[i].productDetails[0]._id %>')">
-                                                    <i class="fi-rs-trash"></i>
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    <% } %>
-                                <% } else { %>
-                                    <tr>
-                                        <td colspan="5" class="text-center">
-                                            <div class="p-4">
-                                                <p class="lead mb-3">Your cart is empty</p>
-                                                <a href="/shop" class="btn btn-fill-out">Continue Shopping</a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <% } %>
-                            </tbody>
-                        </table>
+                                                    </td>
+                                                </tr>
+                                            <% } %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cart Summary -->
+                    <div class="col-lg-4 col-md-12">
+                        <div class="card shadow-sm border-0 sticky-top" style="top: 20px; z-index: 5; border-radius: 15px;">
+                            <div class="card-header bg-white py-3" style="border-bottom: 1px solid #e9ecef;">
+                                <h4 class="mb-0" style="font-weight: 600; color: #333;">Price Details</h4>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex justify-content-between py-3" style="font-size: 1rem;">
+                                        <span>Items (<%= data.length %>)</span>
+                                        <span>₹<span id="items-total"><%= grandTotal %></span></span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between py-3" style="font-size: 1rem;">
+                                        <span>Shipping</span>
+                                        <span class="text-success">Free</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between py-3 fw-bold" style="font-size: 1.1rem; border-top: 1px solid #e9ecef;">
+                                        <span>Total</span>
+                                        <span>₹<span id="total"><%= grandTotal %></span></span>
+                                    </li>
+                                </ul>
+                                <a href="/checkout?userId=<%= user._id %>"
+                                   class="btn btn-primary btn-block mt-4 d-flex align-items-center justify-content-center shadow-sm"
+                                   style="border-radius: 25px; padding: 12px; font-size: 1rem; transition: all 0.3s;">
+                                    <i class="fa fa-arrow-right me-2"></i> Proceed to Checkout
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-3" style="margin-top: 120px;">
-                    <div class="border p-md-4 p-30 border-radius cart-totals">
-                        <div class="heading_s1 mb-3">
-                            <h4>PRICE DETAILS</h4>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table">
-                                <tbody>
-                                    <tr>
-                                        <td class="cart_total_label">Items (<%= data ? data.length : 0 %>)</td>
-                                        <td class="cart_total_amount text-end">₹<span id="items-total"><%= grandTotal %></span></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="cart_total_label">Shipping</td>
-                                        <td class="cart_total_amount text-end">Free</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="cart_total_label"><strong>Total</strong></td>
-                                        <td class="cart_total_amount text-end"><strong>₹<span id="total"><%= grandTotal %></span></strong></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <% if (data && data.length > 0) { %>
-                            <a href="/checkout?userId=<%= user._id %>" class="btn btn-fill-out btn-block mt-3">
-                                <i class="fi-rs-box-alt mr-10"></i> Proceed To CheckOut
-                            </a>
-                        <% } else { %>
-                            <a href="/shop" class="btn btn-fill-out btn-block mt-3">
-                                <i class="fi-rs-shopping-bag mr-10"></i> Continue Shopping
-                            </a>
-                        <% } %>
-                    </div>
+            <% } else { %>
+                <div class="text-center py-5 bg-white rounded shadow-sm" style="max-width: 500px; margin: 0 auto;">
+                    <img src="/img/empty-cart.png" alt="Empty Cart" class="img-fluid mb-4" style="max-width: 180px;">
+                    <h3 class="mb-3" style="font-weight: 600; color: #333;">Your Cart is Empty</h3>
+                    <p class="text-muted mb-4" style="font-size: 1rem;">Looks like you haven’t added anything to your cart yet.</p>
+                    <a href="/shop" class="btn btn-primary shadow-sm"
+                       style="border-radius: 25px; padding: 10px 25px; font-size: 1rem;">
+                        <i class="fa fa-shopping-cart me-2"></i> Continue Shopping
+                    </a>
                 </div>
-            </div>
+            <% } %>
         </div>
     </section>
 </main>
 
+<!-- External Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
@@ -255,4 +269,43 @@
         });
     });
 </script>
+
+<style>
+    /* Custom Styles for Enhanced Beauty */
+    .hover-text-primary:hover {
+        color: #007bff !important;
+        transition: color 0.3s ease;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .btn-outline-secondary:hover {
+        background-color: #6c757d;
+        color: #fff;
+    }
+
+    .btn-outline-danger:hover {
+        background-color: #dc3545;
+        color: #fff;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+        border-color: #0056b3;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    }
+
+    .card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1) !important;
+    }
+</style>
+
 <%- include("../../views/partials/user/footer") %>

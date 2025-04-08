@@ -58,11 +58,11 @@
                                                 </a>
                                             </td>
                                             <td class="action" data-title="Remove" style="padding: 20px;">
-                                                <a href="#" onclick="removeFromWishlist('<%= product._id %>')" 
-                                                   class="btn btn-sm" 
-                                                   style="background-color: #ff4444; color: #fff; padding: 8px 12px; border-radius: 50%; text-decoration: none; transition: background-color 0.3s;">
-                                                    <i class="fi-rs-trash" style="font-size: 14px;"></i>
-                                                </a>
+                                                <button onclick="removeFromWishlist('<%= product._id %>')" 
+                                                        class="btn btn-sm btn-outline-danger"
+                                                        style="padding: 8px 12px; border-radius: 50%; transition: background-color 0.3s, color 0.3s;">
+                                                    <i class="fa fa-trash" style="font-size: 14px;"></i>
+                                                </button>
                                             </td>
                                         </tr>
                                     <% }) %>
@@ -206,16 +206,10 @@
         background-color: #f8f9fa;
     }
 
-    .btn:hover {
-        background-color: #0056b3 !important; /* Add to Cart hover */
-    }
-
-    .btn.btn-sm i {
-        line-height: 1;
-    }
-
-    .btn.btn-sm:hover {
-        background-color: #cc3333 !important; /* Remove button hover */
+    .btn.btn-sm.btn-outline-danger:hover {
+        background-color: #dc3545 !important;
+        color: #fff !important;
+        border-color: #dc3545 !important;
     }
 
     /* Empty Wishlist Styling */

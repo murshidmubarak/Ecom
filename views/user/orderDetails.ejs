@@ -1,143 +1,141 @@
 <%- include("../../views/partials/user/header") %>
 
-<main class="container">
+<main class="container" style="margin-top: 140px; padding-bottom: 60px;">
     <section class="content-main">
-        <div class="content-header">
-            <div class="mt-10">
-                <h2 class="content-title card-title">Order detail</h2>
-                <p>Details for Order ID: <%= orders.orderId %></p>
-            </div>
+        <div class="content-header" style="margin-bottom: 30px;">
+            <h2 class="content-title" style="font-size: 2rem; color: #1a1a1a; font-weight: 700;">Order Details</h2>
+            <p style="color: #6c757d; font-size: 1rem;">Order ID: <strong>#<%= orders.orderId || orders._id %></strong></p>
         </div>
-        <div class="card-body">
-            <!-- Customer Information -->
-            <div class="row mb-10 mt-10 order-info-wrap background-info">
-                <div class="col-md-4">
-                    <article class="icontext align-items-start ml-130">
-                        <span class="icon icon-sm rounded-circle bg-primary-light">
-                            <i class="material-icons text-primary person"></i>
-                        </span>
-                        <div class="text">
-                            <h6 class="mb-1">Customer</h6>
-                            <% if (orders.address) { %>
-                                <p class="mb-1">
-                                    <%= orders.address.name %> <br> <%= orders.address.phone %>
-                                </p>
-                            <% } else { %>
-                                <p class="mb-1">Address not available</p>
-                            <% } %>
-                        </div>
-                    </article>
-                </div>
-                <!-- Order Information -->
-                <div class="col-md-4">
-                    <article class="icontext align-items-start ml-130">
-                        <span class="icon icon-sm rounded-circle bg-primary-light">
-                            <i class="text-primary material-icons md-local_shipping"></i>
-                        </span>
-                        <div class="text">
-                            <h6 class="mb-1">Order info</h6>
-                            <p class="mb-1">
-                                Pay method: <%= orders.payment %> <br>
-                                Status: <%= orders.status %><br>
-                                Grand Total: ₹<%= totalGrant.toLocaleString() %> <br>
-                                Paid Amount: ₹<%= totalPrice.toLocaleString() %> <br>
-                                Discount: ₹<%= orders.discount.toLocaleString() %> <br>
-                                Final Amount: ₹<%= finalAmount.toLocaleString() %>
-                            </p>
-                        </div>
-                    </article>
-                </div>
-                <!-- Delivery Information -->
-                <div class="col-md-4">
-                    <article class="icontext align-items-start ml-130">
-                        <span class="icon icon-sm rounded-circle bg-primary-light">
-                            <i class="text-primary material-icons md-place"></i>
-                        </span>
-                        <div class="text">
-                            <h6 class="mb-1">Deliver to</h6>
-                            <% if (orders.address) { %>
-                                <p class="mb-1">
-                                    Address: <%= orders.address.landMark %>, <%= orders.address.city %> <br>
-                                    <%= orders.address.state %>, <%= orders.address.addressType %> <br>
-                                    <%= orders.address.pincode %>
-                                </p>
-                            <% } else { %>
-                                <p class="mb-1">Address not available</p>
-                            <% } %>
-                            <% if (orders.status === "delivered" || orders.status === "Delivered") { %>
-                                <a href="/downloadInvoice/<%= orders._id %>" class="btn btn-sm btn-primary">
-                                    <i class="material-icons md-file_download"></i> Download Invoice
-                                </a>
-                            <% } %>
-                        </div>
-                    </article>
-                </div>
-            </div>
-            <!-- Order Details Table -->
-            <div class="row">
-                <div class="col-lg">
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr class="text-center">
-                                    <th width="30%">Product</th>
-                                    <th width="20%">Name</th>
-                                    <th width="10%">Unit Price</th>
-                                    <th width="10%">Quantity</th>
-                                    <th class="text-center" width="10%">Total</th>
-                                    <th width="20%">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <% if (orders && orders.orderedItems) { %>
-                                    <% orders.orderedItems.forEach((item) => { %>
-                                        <tr>
-                                            <td class="text-center">
-                                                <a class="itemside" href="#">
-                                                    <div class="left">
-                                                        <img src="/uploads/<%= item.product.productImage[0] %>"style="height: 7rem; width: 7rem;" class="img-xs" alt="Item">
-                                                    </div>
-                                                </a>
-                                            </td>
-                                            <td class="text-center">
-                                                <div class="info">
-                                                    <%= item.product.name || "Product" %>
-                                                </div>
-                                            </td>
-                                            <td class="text-center">
-                                                ₹<%= item.price.toLocaleString() %>
-                                            </td>
-                                            <td class="text-center">
-                                                <%= item.quantity %>
-                                            </td>
-                                            <td class="text-center">
-                                                ₹<%=(item.price * item.quantity).toLocaleString() %>
-                                            </td>
-                                            <td class="text-center">
-                                                <% if (item.productStatus === "cancelled" || item.productStatus === "returned") { %>
-                                                    <i><%= item.productStatus.charAt(0).toUpperCase() + item.productStatus.slice(1) %></i>
-                                                <% } else { %>
-                                                    <!-- Common Cancel Order Button -->
-                                                    <% if (orders.status === "confirmed") { %>
-                                                        <button class="btn btn-sm btn-danger" onclick="confirmCancelOrder('<%= orders._id %>')">Cancel Order</button>
-                                                    <% } %>
-                                                    <!-- Single Product Action Button -->
-                                                    <% if (orders.status === "confirmed") { %>
-                                                        <button class="btn btn-sm btn-warning" onclick="confirmCancelSingleProduct('<%= orders._id %>', '<%= item.product._id %>')">Cancel Product</button>
-                                                    <% } else if (orders.status === "shipped" || orders.status === "delivered") { %>
-                                                        <button class="btn btn-sm btn-warning" onclick="confirmReturnSingleProduct('<%= orders._id %>', '<%= item.product._id %>')">Return Product</button>
-                                                    <% } %>
-                                                <% } %>
-                                            </td>
-                                        </tr>
-                                    <% }); %>
+
+        <div class="card" style="border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); overflow: hidden;">
+            <div class="card-body" style="padding: 30px;">
+                <!-- Order Info Section -->
+                <div class="row order-info-wrap" style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                    <div class="col-md-4 mb-4">
+                        <article class="icontext d-flex align-items-start">
+                            <span class="icon icon-sm rounded-circle" style="background-color: #007bff; color: #fff; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                                <i class="material-icons">person</i>
+                            </span>
+                            <div class="text">
+                                <h6 class="mb-2" style="font-size: 1.1rem; color: #1a1a1a;">Customer</h6>
+                                <% if (orders.address) { %>
+                                    <p class="mb-0" style="color: #6c757d; font-size: 0.95rem;">
+                                        <%= orders.address.name %><br>
+                                        <%= orders.address.phone %>
+                                    </p>
+                                <% } else { %>
+                                    <p class="mb-0" style="color: #6c757d; font-size: 0.95rem;">Address not available</p>
                                 <% } %>
-                                <input type="hidden" name="" id="orderId" value="<%= orders._id %>">
-                            </tbody>
-                        </table>
+                            </div>
+                        </article>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <article class="icontext d-flex align-items-start">
+                            <span class="icon icon-sm rounded-circle" style="background-color: #007bff; color: #fff; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                                <i class="material-icons">local_shipping</i>
+                            </span>
+                            <div class="text">
+                                <h6 class="mb-2" style="font-size: 1.1rem; color: #1a1a1a;">Order Info</h6>
+                                <p class="mb-0" style="color: #6c757d; font-size: 0.95rem;">
+                                    Pay Method: <strong><%= orders.payment %></strong><br>
+                                    Status: <strong><%= orders.status.charAt(0).toUpperCase() + orders.status.slice(1) %></strong><br>
+                                    Grand Total: <strong>₹<%= totalGrant.toLocaleString() %></strong><br>
+                                    Paid Amount: <strong>₹<%= totalPrice.toLocaleString() %></strong><br>
+                                    Discount: <strong>₹<%= (totalGrant - totalPrice).toLocaleString() %></strong><br>
+                                    Final Amount: <strong>₹<%= finalAmount.toLocaleString() %></strong>
+                                </p>
+                            </div>
+                        </article>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <article class="icontext d-flex align-items-start">
+                            <span class="icon icon-sm rounded-circle" style="background-color: #007bff; color: #fff; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                                <i class="material-icons">place</i>
+                            </span>
+                            <div class="text">
+                                <h6 class="mb-2" style="font-size: 1.1rem; color: #1a1a1a;">Deliver To</h6>
+                                <% if (orders.address) { %>
+                                    <p class="mb-2" style="color: #6c757d; font-size: 0.95rem;">
+                                        <%= orders.address.landMark %>, <%= orders.address.city %><br>
+                                        <%= orders.address.state %>, <%= orders.address.addressType %><br>
+                                        <%= orders.address.pincode %>
+                                    </p>
+                                <% } else { %>
+                                    <p class="mb-2" style="color: #6c757d; font-size: 0.95rem;">Address not available</p>
+                                <% } %>
+                                <% if (orders.status === "delivered" || orders.status === "Delivered") { %>
+                                    <a href="/downloadInvoice/<%= orders._id %>" class="btn btn-sm" style="background-color: #007bff; color: #fff; border-radius: 5px; padding: 6px 12px; transition: background-color 0.2s;">
+                                        <i class="material-icons" style="vertical-align: middle;">file_download</i> Download Invoice
+                                    </a>
+                                <% } %>
+                            </div>
+                        </article>
                     </div>
                 </div>
-                <div class="col-lg-1"></div>
+
+                <!-- Order Items Table -->
+                <div class="table-responsive">
+                    <table class="table" style="border-collapse: separate; border-spacing: 0; background-color: #fff; border-radius: 8px; overflow: hidden;">
+                        <thead style="background-color: #f1f3f5; color: #1a1a1a;">
+                            <tr class="text-center">
+                                <th style="padding: 15px; font-weight: 600;">Product</th>
+                                <th style="padding: 15px; font-weight: 600;">Name</th>
+                                <th style="padding: 15px; font-weight: 600;">Unit Price</th>
+                                <th style="padding: 15px; font-weight: 600;">Quantity</th>
+                                <th style="padding: 15px; font-weight: 600;">Total</th>
+                                <th style="padding: 15px; font-weight: 600;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (orders && orders.orderedItems) { %>
+                                <% orders.orderedItems.forEach((item) => { %>
+                                    <tr style="border-bottom: 1px solid #e9ecef;">
+                                        <td class="text-center" style="padding: 20px;">
+                                            <a href="#" class="itemside d-flex justify-content-center">
+                                                <img src="/uploads/<%= item.product.productImage[0] %>" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);" alt="<%= item.product.productName %>">
+                                            </a>
+                                        </td>
+                                        <td class="text-center" style="padding: 20px;">
+                                            <div class="info" style="font-weight: 500; color: #1a1a1a;">
+                                                <%= item.product.productName || item.product.name || "Product" %>
+                                            </div>
+                                        </td>
+                                        <td class="text-center" style="padding: 20px; color: #6c757d;">
+                                            ₹<%= item.price.toLocaleString() %>
+                                        </td>
+                                        <td class="text-center" style="padding: 20px; color: #6c757d;">
+                                            <%= item.quantity %>
+                                        </td>
+                                        <td class="text-center" style="padding: 20px; color: #1a1a1a; font-weight: 500;">
+                                            ₹<%=(item.price * item.quantity).toLocaleString() %>
+                                        </td>
+                                        <td class="text-center" style="padding: 20px;">
+                                            <% if (item.productStatus === "cancelled" || item.productStatus === "returned") { %>
+                                                <span style="color: #6c757d; font-style: italic;"><%= item.productStatus.charAt(0).toUpperCase() + item.productStatus.slice(1) %></span>
+                                            <% } else if (item.productStatus === "return-requested") { %>
+                                                <span style="color: #facc15; font-style: italic;">Return Requested</span>
+                                            <% } else if (item.productStatus === "return-rejected") { %>
+                                                <span style="color: #991b1b; font-style: italic;">Return Rejected</span>
+                                            <% } else { %>
+                                                <% if (orders.status === "confirmed") { %>
+                                                    <button class="btn btn-sm btn-danger" onclick="confirmCancelOrder('<%= orders._id %>')" style="margin-right: 5px; border-radius: 5px; padding: 6px 12px; transition: background-color 0.2s;">Cancel Order</button>
+                                                    <button class="btn btn-sm btn-warning" onclick="confirmCancelSingleProduct('<%= orders._id %>', '<%= item.product._id %>')" style="border-radius: 5px; padding: 6px 12px; transition: background-color 0.2s;">Cancel Product</button>
+                                                <% } else if (orders.status === "shipped" || orders.status === "delivered") { %>
+                                                    <button class="btn btn-sm btn-warning" onclick="confirmReturnSingleProduct('<%= orders._id %>', '<%= item.product._id %>')" style="border-radius: 5px; padding: 6px 12px; transition: background-color 0.2s;">Request Return</button>
+                                                <% } %>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 30px; color: #6c757d;">No items found in this order</td>
+                                </tr>
+                            <% } %>
+                            <input type="hidden" id="orderId" value="<%= orders._id %>">
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </section>
@@ -154,8 +152,8 @@ function confirmCancelOrder(orderId) {
         text: 'Are you sure you want to cancel this entire order?',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
+        confirmButtonColor: '#007bff',
+        cancelButtonColor: '#dc3545',
         confirmButtonText: 'Yes, cancel it!'
     }).then((result) => {
         if (result.isConfirmed) {
@@ -199,8 +197,8 @@ function confirmCancelSingleProduct(orderId, singleProductId) {
         text: 'Are you sure you want to cancel this product?',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
+        confirmButtonColor: '#007bff',
+        cancelButtonColor: '#dc3545',
         confirmButtonText: 'Yes, cancel it!'
     }).then((result) => {
         if (result.isConfirmed) {
@@ -249,13 +247,13 @@ function cancelSingleProduct(orderId, singleProductId) {
 
 function confirmReturnSingleProduct(orderId, singleProductId) {
     Swal.fire({
-        title: 'Confirm Return Product',
-        text: 'Are you sure you want to return this product?',
+        title: 'Confirm Return Request',
+        text: 'Are you sure you want to request a return for this product?',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, return it!'
+        confirmButtonColor: '#007bff',
+        cancelButtonColor: '#dc3545',
+        confirmButtonText: 'Yes, request it!'
     }).then((result) => {
         if (result.isConfirmed) {
             returnSingleProduct(orderId, singleProductId);
@@ -270,10 +268,10 @@ function returnSingleProduct(orderId, singleProductId) {
         contentType: 'application/json',
         data: JSON.stringify({ orderId: orderId, singleProductId: singleProductId }),
         success: (response) => {
-            if (response.message === "Product status updated successfully") {
+            if (response.message === "Return request submitted to admin for approval") {
                 Swal.fire({
-                    title: 'Product Returned',
-                    text: 'The product has been marked as returned successfully.',
+                    title: 'Return Requested',
+                    text: 'Your return request has been submitted to the admin for approval.',
                     icon: 'success',
                     confirmButtonText: 'OK'
                 }).then(() => {
@@ -284,7 +282,7 @@ function returnSingleProduct(orderId, singleProductId) {
         error: (error) => {
             Swal.fire({
                 title: 'Error',
-                text: "Error returning product: " + error.responseText,
+                text: "Error submitting return request: " + error.responseText,
                 icon: 'error',
                 confirmButtonText: 'OK'
             });

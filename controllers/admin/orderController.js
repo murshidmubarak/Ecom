@@ -9,44 +9,42 @@ const crypto = require("crypto");
 const { v4: uuidv4 } = require('uuid');
 
 const getOrderListPageAdmin = async (req, res) => {
-    try {
-        const { page = 1, search = '' } = req.query; // Add search query support
-        const itemsPerPage = 5; // Flexible items per page (changed from 3 to 5 for better UX)
-        const currentPage = parseInt(page) || 1;
+  try {
+      const { page = 1, search = '' } = req.query;
+      const itemsPerPage = 5;
+      const currentPage = parseInt(page) || 1;
 
-        // Build search query
-        let query = {};
-        if (search) {
-            query = {
-                $or: [
-                    { orderId: { $regex: search, $options: 'i' } }, // Case-insensitive search by orderId
-                    { 'userId.email': { $regex: search, $options: 'i' } }, // Search by user email (needs population)
-                ],
-            };
-        }
+      let query = {};
+      if (search) {
+          query = {
+              $or: [
+                  { orderId: { $regex: search, $options: 'i' } },
+                  { 'userId.email': { $regex: search, $options: 'i' } },
+              ],
+          };
+      }
 
-        // Fetch orders with populated userId and orderedItems.product
-        const orders = await Order.find(query)
-            .populate('userId', 'email') // Populate user email
-            .populate('orderedItems.product', 'productName productImage') // Populate product details
-            .sort({ createdOn: -1 }); // Newest first
+      const orders = await Order.find(query)
+          .populate('userId', 'email')
+          .populate('orderedItems.product', 'productName productImage')
+          .sort({ createdOn: -1 });
 
-        const totalOrders = orders.length;
-        const totalPages = Math.ceil(totalOrders / itemsPerPage);
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        const endIndex = startIndex + itemsPerPage;
-        const currentOrders = orders.slice(startIndex, endIndex);
+      const totalOrders = orders.length;
+      const totalPages = Math.ceil(totalOrders / itemsPerPage);
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const currentOrders = orders.slice(startIndex, endIndex);
 
-        res.render("order-list", {
-            orders: currentOrders,
-            totalPages,
-            currentPage,
-            search, // Pass search term back to frontend
-        });
-    } catch (error) {
-        console.error('Error in getOrderListPageAdmin:', error);
-        res.redirect("/pageerror");
-    }
+      res.render("order-list", {
+          orders: currentOrders,
+          totalPages,
+          currentPage,
+          search,
+      });
+  } catch (error) {
+      console.error('Error in getOrderListPageAdmin:', error);
+      res.redirect("/pageerror");
+  }
 };
   
   
@@ -133,50 +131,158 @@ const getOrderListPageAdmin = async (req, res) => {
   
   const getOrderDetailsPageAdmin = async (req, res) => {
     try {
-      const orderId = req.query.id;
-      const findOrder = await Order.findOne({ _id: orderId })
-        .populate("orderedItems.product") // Populate Product references
-        .populate("userId") // Populate User reference
-        .sort({ createdOn: 1 });
-  
-      if (!findOrder) {
-        throw new Error("Order not found");
-      }
-  
-      // Default to empty array if orderedItems is undefined or not an array
-      const orderedItems = Array.isArray(findOrder.orderedItems) ? findOrder.orderedItems : [];
-      console.log("Ordered Items:", orderedItems); // Log to verify
-      console.log("User:", findOrder.userId); // Log to verify user data
-  
-      // Calculate total grant based on orderedItems
-      let totalGrant = 0;
-      orderedItems.forEach((val) => {
-        totalGrant += (val.price || 0) * (val.quantity || 1);
-      });
-  
-      const totalPrice = findOrder.totalPrice || 0;
-      const discount = totalGrant - totalPrice;
-      const finalAmount = totalPrice;
-  
-      // Add quantity to each orderedItem (if not already present)
-      orderedItems.forEach((item) => {
-        item.quantity = item.quantity || 1;
-      });
-  
-      res.render("order-details-admin", {
-        orders: findOrder,
-        orderId: orderId,
-        finalAmount: finalAmount,
-      });
+        const orderId = req.query.id;
+        const findOrder = await Order.findOne({ _id: orderId })
+            .populate("orderedItems.product")
+            .populate("userId")
+            .sort({ createdOn: 1 });
+
+        if (!findOrder) {
+            throw new Error("Order not found");
+        }
+
+        const orderedItems = Array.isArray(findOrder.orderedItems) ? findOrder.orderedItems : [];
+        let totalGrant = 0;
+        orderedItems.forEach((val) => {
+            totalGrant += (val.price || 0) * (val.quantity || 1);
+        });
+
+        const totalPrice = findOrder.totalPrice || 0;
+        const finalAmount = totalPrice;
+
+        res.render("order-details-admin", {
+            orders: findOrder,
+            orderId: orderId,
+            finalAmount: finalAmount,
+        });
     } catch (error) {
-      console.error(error);
-      res.redirect("/pageerror");
+        console.error("Error in getOrderDetailsPageAdmin:", error);
+        res.redirect("/pageerror");
     }
-  };
+};
+
+const approveReturnRequest = async (req, res) => {
+  try {
+    const { orderId, singleProductId, action } = req.body;
+    const order = await Order.findOne({ _id: orderId }).populate("orderedItems.product");
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (singleProductId) {
+      // Single product return request
+      const oid = new mongoose.Types.ObjectId(singleProductId);
+      const productIndex = order.orderedItems.findIndex(
+        (item) => item.product._id.toString() === singleProductId
+      );
+      if (productIndex === -1) {
+        return res.status(404).json({ message: "Product not found in order" });
+      }
+
+      if (order.orderedItems[productIndex].productStatus !== "return-requested") {
+        return res.status(400).json({ message: "No return request pending for this product" });
+      }
+
+      if (action === "approve") {
+        const orderedItemPrice = order.orderedItems[productIndex].price;
+        const newPrice = order.totalPrice - orderedItemPrice;
+
+        const filter = { _id: orderId };
+        const update = {
+          $set: {
+            "orderedItems.$[elem].productStatus": "returned",
+            totalPrice: newPrice,
+          },
+        };
+        const options = { arrayFilters: [{ "elem.product": oid }] };
+        await Order.updateOne(filter, update, options);
+
+        // Restore stock
+        const product = await Product.findById(singleProductId);
+        if (product) {
+          const currentQuantity = parseInt(product.quantity, 10);
+          const newQuantity = currentQuantity + order.orderedItems[productIndex].quantity;
+          product.quantity = newQuantity.toString();
+          await product.save();
+        }
+
+        // Refund to wallet
+        if (["razorpay", "wallet", "cod"].includes(order.payment)) {
+          const user = await User.findById(order.userId);
+          if (user && user.wallet !== undefined) {
+            user.wallet += orderedItemPrice;
+            await user.save();
+          }
+        }
+
+        // Check if all items are returned
+        const allReturned = order.orderedItems.every(item => item.productStatus === "returned");
+        if (allReturned) {
+          await Order.updateOne({ _id: orderId }, { status: "returned" });
+        }
+
+        res.status(200).json({ message: "Return request approved for product" });
+      } else if (action === "reject") {
+        const filter = { _id: orderId };
+        const update = { $set: { "orderedItems.$[elem].productStatus": "return-rejected" } };
+        const options = { arrayFilters: [{ "elem.product": oid }] };
+        await Order.updateOne(filter, update, options);
+        res.status(200).json({ message: "Return request rejected for product" });
+      }
+    } else {
+      // Entire order return request
+      if (order.status !== "return-requested") {
+        return res.status(400).json({ message: "No return request pending for this order" });
+      }
+
+      if (action === "approve") {
+        await Order.updateOne({ _id: orderId }, { status: "returned" });
+        for (const item of order.orderedItems) {
+          item.productStatus = "returned";
+          const product = await Product.findById(item.product);
+          if (product) {
+            const currentQuantity = parseInt(product.quantity, 10);
+            const newQuantity = currentQuantity + item.quantity;
+            product.quantity = newQuantity.toString();
+            await product.save();
+          }
+        }
+        await order.save();
+
+        // Refund to wallet
+        if (["razorpay", "wallet", "cod"].includes(order.payment)) {
+          const user = await User.findById(order.userId);
+          if (user && user.wallet !== undefined) {
+            user.wallet += order.totalPrice;
+            await user.save();
+          }
+        }
+
+        res.status(200).json({ message: "Return request approved for order" });
+      } else if (action === "reject") {
+        await Order.updateOne({ _id: orderId }, { status: "delivered" });
+        for (const item of order.orderedItems) {
+          if (item.productStatus === "return-requested") {
+            item.productStatus = "return-rejected";
+          }
+        }
+        await order.save();
+        res.status(200).json({ message: "Return request rejected for order" });
+      }
+    }
+  } catch (error) {
+    console.error("Error in approveReturnRequest:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
 
   module.exports = {
     getOrderListPageAdmin,
     changeOrderStatus,
     getOrderDetailsPageAdmin,
+    approveReturnRequest,
   }
   

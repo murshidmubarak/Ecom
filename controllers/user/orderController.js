@@ -344,37 +344,46 @@ const cancelOrder = async (req, res) => {
     };
 
 
-const returnSingleProduct = async (req, res) => {
-    const { orderId, singleProductId } = req.body;
-    const oid = new mongoose.Types.ObjectId(singleProductId);
-
-    if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(singleProductId)) {
-        return res.status(400).json({ message: "Invalid ID format" });
-    }
-
-    const order = await Order.findOne({ _id: orderId });
-    const productIndex = order.orderedItems.findIndex((item) => item.product.toString() === singleProductId);
-    const orderedItemPrice = order.orderedItems[productIndex].price;
-    const newPrice = order.totalPrice - orderedItemPrice;
-
-    try {
-        const filter = { _id: orderId };
-        const update = {
-            $set: {
-                "orderedItems.$[elem].productStatus": "returned",
-                totalPrice: newPrice,
-            },
-        };
-        const options = {
-            arrayFilters: [{ "elem.product": oid }]
-        };
-        const result = await Order.updateOne(filter, update, options);
-        res.status(200).json({ message: "Product status updated successfully", result });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Internal server error" });
-    }
-}
+    const returnSingleProduct = async (req, res) => {
+        const { orderId, singleProductId } = req.body;
+        const oid = new mongoose.Types.ObjectId(singleProductId);
+    
+        if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(singleProductId)) {
+            return res.status(400).json({ message: "Invalid ID format" });
+        }
+    
+        try {
+            const order = await Order.findOne({ _id: orderId });
+            if (!order) {
+                return res.status(404).json({ message: "Order not found" });
+            }
+            if (order.status !== "shipped" && order.status !== "delivered") {
+                return res.status(400).json({ message: "Order must be shipped or delivered to request a return" });
+            }
+    
+            const productIndex = order.orderedItems.findIndex((item) => item.product.toString() === singleProductId);
+            if (productIndex === -1) {
+                return res.status(404).json({ message: "Product not found in order" });
+            }
+    
+            if (order.orderedItems[productIndex].productStatus === "returned" || 
+                order.orderedItems[productIndex].productStatus === "return-requested") {
+                return res.status(400).json({ message: "Product is already returned or a return is requested" });
+            }
+    
+            const filter = { _id: orderId };
+            const update = {
+                $set: { "orderedItems.$[elem].productStatus": "return-requested" },
+            };
+            const options = { arrayFilters: [{ "elem.product": oid }] };
+            await Order.updateOne(filter, update, options);
+    
+            res.status(200).json({ message: "Return request submitted to admin for approval" });
+        } catch (error) {
+            console.error("Error in returnSingleProduct:", error);
+            res.status(500).json({ message: "Internal server error" });
+        }
+    };
 
 
 
@@ -383,16 +392,21 @@ const returnorder = async (req, res) => {
         const userId = req.session.user;
         const { orderId } = req.body;
         const findOrder = await Order.findOne({ _id: orderId });
+
         if (!findOrder) {
             return res.status(404).json({ message: "Order not found" });
         }
-        if (findOrder.status === "returned") {
-            return res.status(400).json({ message: "Order is already returned" });
+        if (findOrder.status === "returned" || findOrder.status === "return-requested") {
+            return res.status(400).json({ message: "Order is already returned or a return is requested" });
         }
-        await Order.updateOne({ _id: orderId }, { status: "return request" });
-        res.status(200).json({ message: "Return request initiated successfully" });
+        if (findOrder.status !== "shipped" && findOrder.status !== "delivered") {
+            return res.status(400).json({ message: "Order must be shipped or delivered to request a return" });
+        }
+
+        await Order.updateOne({ _id: orderId }, { status: "return-requested" });
+        res.status(200).json({ message: "Return request submitted to admin for approval" });
     } catch (error) {
-        console.error(error);
+        console.error("Error in returnorder:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 };

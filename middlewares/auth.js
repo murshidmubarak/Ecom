@@ -19,6 +19,17 @@ const userAuth = (req, res, next) => {
     }
 };
 
+const isLogin=async (req,res,next)=>{
+    if(req.session.user){
+        res.redirect('/')
+    }else{
+        next()           
+    }
+}
+
+
+
+
 const checkUserBlocked= async (req, res, next) => {
     try {
         const userId = req.session.user;
@@ -53,5 +64,5 @@ const adminAuth = (req,res,next)=>{
 
 
 module.exports ={
-    userAuth,adminAuth,checkUserBlocked
+    userAuth,adminAuth,checkUserBlocked,isLogin
 }

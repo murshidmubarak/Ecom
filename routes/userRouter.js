@@ -1,5 +1,5 @@
 const express = require("express");
-const {checkUserBlocked ,userAuth,adminAuth} = require("../middlewares/auth");
+const {checkUserBlocked ,userAuth,isLogin} = require("../middlewares/auth");
 const router = express.Router();
 const userController = require("../controllers/user/userController")
 const passport = require('passport')
@@ -19,8 +19,8 @@ router.get("/verify-otp",userController.getotp);
 router.post("/verify-otp",userController.verifyOtp);
 router.get("/home",checkUserBlocked ,userController.loadHomepage);
 router.post("/resend-otp",userController.resendOtp)
-router.get('/login',userController.loadLogin);
-router.post("/login",userController.login);
+router.get('/login',isLogin,userController.loadLogin);
+router.post("/login",isLogin,userController.login);
 router.get("/logout",userController.logout);
 
 
@@ -82,5 +82,9 @@ router.post("/returnSingleProduct",userAuth,orderController.returnSingleProduct)
 
 router.get("/addAddress", userAuth,profileController.addAddress);
 router.post("/addAddress", userAuth,profileController.postAddAddress);
-
+router.get("/editAddress", userAuth,profileController.editAddress);
+router.post("/editAddress", userAuth,profileController.postEditAddress);
+router.get("/deleteAddress", userAuth,profileController.deleteAddress);
+ 
+ 
 module.exports = router;
