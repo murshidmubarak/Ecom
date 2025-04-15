@@ -1,0 +1,302 @@
+<%- include("../../views/partials/admin/header") %>
+<style>
+  .content-wrapper {
+    margin-left: calc(var(--sidebar-width) + 20px);
+    padding: 20px;
+    transition: margin-left 0.3s ease;
+    background-color: var(--dark-bg);
+    color: var(--text-color);
+  }
+  .sidebar.collapsed + .content-wrapper {
+    margin-left: calc(var(--sidebar-collapsed-width) + 20px);
+  }
+
+  .card {
+    background-color: var(--card-bg);
+    border: none;
+    border-radius: 8px;
+    text-align: center;
+    padding: 20px;
+    margin: 10px;
+    transition: transform 0.2s;
+  }
+
+  .card:hover {
+    transform: translateY(-5px);
+  }
+
+  .card-header {
+    background-color: #2c2c2c;
+    border-bottom: 1px solid #3c3c3c;
+    padding: 1rem;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .btn {
+    margin: 0 5px;
+    padding: 8px 15px; /* Increased padding for better look */
+    border-radius: 6px; /* Rounded corners */
+    text-decoration: none;
+    transition: all 0.2s ease;
+    background-color: #4a4a4a;
+    border: 1px solid #5a5a5a;
+    color: var(--text-color);
+    font-weight: 500; /* Slightly bold text */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  }
+
+  .btn:hover {
+    background-color: #5a5a5a;
+    transform: translateY(-1px); /* Slight lift on hover */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Enhanced shadow on hover */
+  }
+
+  .btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: #fff;
+  }
+
+  .btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+  }
+
+  .form-select,
+  .form-control {
+    background-color: #3c3c3c;
+    color: var(--text-color);
+    border: 1px solid #5a5a5a;
+    height: 38px; /* Match button height */
+    border-radius: 6px; /* Consistent rounding */
+  }
+
+  .alert {
+    margin-top: 20px;
+    background-color: #3c3c3c;
+    color: var(--text-color);
+    border: 1px solid #5a5a5a;
+  }
+
+  .stat-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+
+  .stat-label {
+    font-size: 0.9rem;
+    color: #bbb;
+  }
+
+  /* Card colors based on reference */
+  .card-sales { border-left: 4px solid #007bff; }
+  .card-orders { border-left: 4px solid #28a745; }
+  .card-returned { border-left: 4px solid #dc3545; }
+  .card-pending { border-left: 4px solid #ffc107; }
+  .card-delivered { border-left: 4px solid #17a2b8; }
+  .card-shipped { border-left: 4px solid #6f42c1; }
+
+  /* Custom styling for filter and button area */
+  .filter-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Space between elements */
+  }
+
+  .download-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px; /* Space between download buttons */
+    margin-left: auto; /* Push to the right */
+  }
+</style>
+
+<div class="content-wrapper">
+  <div class="content-header row mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+      <h2 class="content-title card-title">Sales Report Dashboard</h2>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <header class="card-header">
+      <div class="row gx-3 align-items-center">
+        <div class="col-lg-3 col-md-4 col-6">
+          <select class="form-select w-100" onchange="location.href='/admin/salesReport?day=' + this.value">
+            <option value="salesToday" <%= salesToday ? 'selected' : '' %>>1 Day</option>
+            <option value="salesWeekly" <%= salesWeekly ? 'selected' : '' %>>1 Week</option>
+            <option value="salesMonthly" <%= salesMonthly ? 'selected' : '' %>>1 Month</option>
+            <option value="salesYearly" <%= salesYearly ? 'selected' : '' %>>1 Year</option>
+          </select>
+        </div>
+        <div class="col-lg-3 col-md-4 col-6">
+          <div class="filter-actions">
+            <input
+              type="date"
+              id="selectedDate"
+              class="form-control"
+              value="<%= date || '' %>"
+            />
+            <button class="btn btn-primary" onclick="dateWiseFilter()">Apply</button>
+          </div>
+        </div>
+        <div class="col-lg-6 col-md-4 col-12">
+          <div class="download-buttons">
+            <button id="createSalesReport" class="btn btn-primary">Download PDF</button>
+            <button id="downloadExcelReport" class="btn btn-primary">Download Excel</button>
+          </div>
+        </div>
+      </div>
+    </header>
+  </div>
+
+  <% if (data && data.length > 0) { %>
+    <% let summaryGrandTotal = 0; %>
+    <% data.forEach((order) => { %>
+      <% summaryGrandTotal += order.totalPrice; %>
+    <% }); %>
+
+    <div class="stats-grid">
+      <div class="card card-sales">
+        <i class="fas fa-chart-line stat-icon" style="color: #007bff;"></i>
+        <div class="stat-value">₹<%= summaryGrandTotal.toFixed(2) %></div>
+        <div class="stat-label">Total Sales</div>
+      </div>
+      <div class="card card-orders">
+        <i class="fas fa-shopping-cart stat-icon" style="color: #28a745;"></i>
+        <div class="stat-value"><%= data.length %></div>
+        <div class="stat-label">Total Orders</div>
+      </div>
+      <div class="card card-returned">
+        <i class="fas fa-undo stat-icon" style="color: #dc3545;"></i>
+        <div class="stat-value"><%= data.filter(order => order.status === 'returned').length %></div>
+        <div class="stat-label">Returned Orders</div>
+      </div>
+      <div class="card card-pending">
+        <i class="fas fa-hourglass stat-icon" style="color: #ffc107;"></i>
+        <div class="stat-value"><%= data.filter(order => order.status === 'pending').length %></div>
+        <div class="stat-label">Pending Orders</div>
+      </div>
+      <div class="card card-delivered">
+        <i class="fas fa-check-circle stat-icon" style="color: #17a2b8;"></i>
+        <div class="stat-value"><%= data.filter(order => order.status === 'delivered').length %></div>
+        <div class="stat-label">Delivered Orders</div>
+      </div>
+      <div class="card card-shipped">
+        <i class="fas fa-truck stat-icon" style="color: #6f42c1;"></i>
+        <div class="stat-value"><%= data.filter(order => order.status === 'shipped').length %></div>
+        <div class="stat-label">Shipped Orders</div>
+      </div>
+    </div>
+  <% } else { %>
+    <div class="alert alert-info text-center">
+      No orders found for the selected criteria.
+    </div>
+  <% } %>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
+  <script>
+    function dateWiseFilter() {
+      const selectedDate = document.getElementById("selectedDate").value;
+      if (selectedDate) {
+        window.location.href = `/admin/salesReport?date=${selectedDate}`;
+      }
+    }
+
+    // Declare salesData and grandTotal as global variables for the script
+    let salesData = [];
+    let grandTotal = 0;
+
+    <% if (data && data.length > 0) { %>
+      <% data.forEach((order) => { %>
+        salesData.push({
+          dataId: "<%= order._id %>",
+          name: "<%= order.address[0].name %>",
+          date: "<%= order.createdOn.toLocaleString('en-IN') %>",
+          payment: "<%= order.payment %>",
+          totalAmount: <%= order.totalPrice %>
+        });
+        grandTotal += <%= order.totalPrice %>;
+      <% }); %>
+      salesData.push({
+        dataId: "Grand Total",
+        name: "",
+        date: "",
+        payment: "",
+        totalAmount: grandTotal
+      });
+    <% } %>
+
+    document.getElementById("createSalesReport").addEventListener("click", async (event) => {
+      event.preventDefault();
+      try {
+        const response = await fetch("/admin/generatePdf", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(salesData),
+        });
+
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "sales_report.pdf";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        } else {
+          alert("Failed to generate PDF");
+        }
+      } catch (error) {
+        console.error("PDF generation error:", error);
+        alert("Error generating PDF");
+      }
+    });
+
+    document.getElementById("downloadExcelReport").addEventListener("click", async (event) => {
+      event.preventDefault();
+      try {
+        const response = await fetch("/admin/downloadExcel", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(salesData),
+        });
+
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "sales_report.xlsx";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        } else {
+          alert("Failed to generate Excel");
+        }
+      } catch (error) {
+        console.error("Excel generation error:", error);
+        alert("Error generating Excel");
+      }
+    });
+  </script>
+</div>
+
+<%- include("../../views/partials/admin/footer") %>

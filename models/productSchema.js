@@ -32,8 +32,10 @@ const productSchema = new Schema ({
         required:true
      },
     productOffer:{
-        type:String,
-        default:0
+        type: Number, // Changed from String to Number
+        default: 0,
+        min: 0,
+        max: 100
     },
     quantity:{
         type:String,

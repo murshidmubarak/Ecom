@@ -835,17 +835,18 @@
                 return;
             }
 
-            fetch(`/addToCart/${productId}`, {
+            fetch(`/addToCart`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    quantity: 1
+                    productId
                 })
             })
             .then(response => response.json())
             .then(data => {
+                console.log('aaaa',data)
                 if (data.outOfStock) {
                     Swal.fire({
                         title: 'Out of Stock!',

@@ -137,6 +137,10 @@ const userSchema = new Schema(
             unique: true,
             sparse: true,
         },
+        couponApplied: {
+            type: [String], 
+            default: []
+          },
         password: {
             type: String,
             required: function () {
@@ -187,7 +191,7 @@ const userSchema = new Schema(
         },
         referalCode: {
             type: String,
-            trim: true,
+            required: false,
         },
         redeemed: {
             type: Boolean,

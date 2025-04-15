@@ -11,7 +11,7 @@
     <style>
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #f4f6f9; /* Matches light dashboard background */
+            background-color: #f4f6f9;
             margin: 0;
             padding: 0;
         }
@@ -19,48 +19,11 @@
             display: flex;
             min-height: 100vh;
         }
-        .sidebar {
-            width: 250px;
-            background-color: #1e293b; /* Matches your dashboard sidebar */
-            color: #fff;
-            padding: 20px 0;
-            position: fixed;
-            height: 100%;
-        }
-        .sidebar-header {
-            padding: 0 20px;
-            margin-bottom: 20px;
-        }
-        .sidebar .logo-full, .sidebar .logo-mini {
-            color: #fff;
-            text-decoration: none;
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-        .sidebar .nav-link {
-            color: #94a3b8; /* Lighter gray for sidebar links */
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-        }
-        .sidebar .nav-link.active {
-            background-color: #334155; /* Slightly lighter slate for active state */
-            color: #fff;
-        }
-        .sidebar .nav-link:hover {
-            color: #fff;
-            background-color: #2d3748; /* Hover state matches dashboard */
-        }
-        .sidebar .nav-link i {
-            margin-right: 10px;
-            width: 20px;
-        }
         .main-content {
             flex: 1;
-            margin-left: 250px;
+            margin-left: 250px; /* Matches sidebar width */
             padding: 30px;
-            background-color: #f4f6f9; /* Consistent with dashboard background */
+            background-color: #f4f6f9;
         }
         .container {
             max-width: 1200px;
@@ -68,8 +31,9 @@
         }
         h1 {
             font-size: 2rem;
-            color: #1e293b; /* Matches sidebar for consistency */
+            color: #1e293b; /* Matches sidebar */
             margin-bottom: 20px;
+            font-weight: 600;
         }
         .search-container {
             position: relative;
@@ -78,23 +42,29 @@
         .search-input {
             width: 100%;
             padding: 12px 40px 12px 15px;
-            border: 1px solid #d1d5db;
+            border: 1px solid #1e293b; /* Matches sidebar */
             border-radius: 8px;
             font-size: 1rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 4px rgba(30, 41, 59, 0.1); /* Subtle shadow with sidebar color */
             background-color: #fff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .search-input:focus {
+            border-color: #334155; /* Lighter sidebar shade */
+            box-shadow: 0 0 8px rgba(30, 41, 59, 0.2);
+            outline: none;
         }
         .search-icon {
             position: absolute;
             top: 50%;
             right: 15px;
             transform: translateY(-50%);
-            color: #6b7280; /* Matches secondary text */
+            color: #1e293b; /* Matches sidebar */
         }
         .table-container {
             background-color: #fff;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(30, 41, 59, 0.1); /* Shadow with sidebar color */
             overflow: hidden;
         }
         table {
@@ -107,8 +77,8 @@
             font-size: 0.95rem;
         }
         th {
-            background-color: #e2e8f0; /* Slightly darker than main bg for contrast */
-            color: #1e293b; /* Matches primary text */
+            background-color: #1e293b; /* Matches sidebar */
+            color: #fff;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -116,7 +86,7 @@
         td {
             border-bottom: 1px solid #e5e7eb;
             vertical-align: top;
-            color: #1e293b; /* Primary text color */
+            color: #1e293b; /* Matches sidebar */
         }
         .product-card {
             display: flex;
@@ -124,25 +94,22 @@
             align-items: center;
             padding: 10px 0;
         }
-        .product-card:last-child {
-            border-bottom: none;
-        }
         .product-image img {
             width: 80px;
             height: 80px;
             object-fit: cover;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(30, 41, 59, 0.1); /* Shadow with sidebar color */
         }
         .product-details {
             flex: 1;
         }
         .product-name {
             font-weight: 500;
-            color: #1e293b; /* Matches primary text */
+            color: #1e293b; /* Matches sidebar */
         }
         .return-note {
-            color: #facc15; /* Matches your original return-requested */
+            color: #facc15;
             font-size: 0.875rem;
             font-weight: 500;
             margin-top: 5px;
@@ -163,45 +130,46 @@
             transition: background-color 0.2s;
         }
         .approve-btn {
-            background-color: #166534; /* Green from your original */
+            background-color: #1e293b; /* Matches sidebar */
             color: #fff;
         }
         .approve-btn:hover {
-            background-color: #14532d; /* Darker green */
+            background-color: #334155; /* Lighter sidebar shade */
         }
         .reject-btn {
-            background-color: #991b1b; /* Red from your original */
+            background-color: #991b1b;
             color: #fff;
         }
         .reject-btn:hover {
-            background-color: #7f1d1d; /* Darker red */
+            background-color: #7f1d1d;
         }
         .action-button {
-            background-color: #1e293b; /* Matches sidebar for consistency */
+            background-color: #1e293b; /* Matches sidebar */
             color: #fff;
             text-decoration: none;
             display: inline-block;
         }
         .action-button:hover {
-            background-color: #334155; /* Lighter slate for hover */
+            background-color: #334155; /* Lighter sidebar shade */
         }
         .status-badge {
             padding: 6px 12px;
             border-radius: 6px;
             font-size: 0.9rem;
-            border: none;
+            border: 1px solid #1e293b; /* Matches sidebar */
             width: 100%;
             cursor: pointer;
-            background-color: #e5e7eb; /* Default gray */
-            color: #4b5563;
+            background-color: #fff;
+            color: #1e293b; /* Matches sidebar */
+            transition: background-color 0.2s, color 0.2s;
         }
-        .status-confirmed { background-color: #d1fae5; color: #065f46; } /* Light green */
-        .status-pending { background-color: #fef3c7; color: #92400e; } /* Light yellow */
-        .status-shipped { background-color: #dbeafe; color: #1e40af; } /* Light blue */
-        .status-delivered { background-color: #d1e7dd; color: #0f5132; } /* Light teal */
-        .status-returned { background-color: #e5e7eb; color: #4b5563; } /* Gray */
-        .status-cancelled { background-color: #fee2e2; color: #991b1b; } /* Light red */
-        .status-return-requested { background-color: #facc15; color: #78350f; } /* Matches your original */
+        .status-confirmed { background-color: #1e293b; color: #fff; }
+        .status-pending { background-color: #fef3c7; color: #92400e; }
+        .status-shipped { background-color: #dbeafe; color: #1e40af; }
+        .status-delivered { background-color: #d1e7dd; color: #0f5132; }
+        .status-returned { background-color: #e5e7eb; color: #4b5563; }
+        .status-cancelled { background-color: #fee2e2; color: #991b1b; }
+        .status-return-requested { background-color: #facc15; color: #78350f; }
         .pagination {
             display: flex;
             justify-content: center;
@@ -212,13 +180,14 @@
             padding: 8px 16px;
             border-radius: 6px;
             background-color: #fff;
-            color: #1e293b; /* Matches primary text */
+            color: #1e293b; /* Matches sidebar */
             text-decoration: none;
-            border: 1px solid #d1d5db;
+            border: 1px solid #1e293b; /* Matches sidebar */
             transition: all 0.2s;
         }
         .page-link:hover {
-            background-color: #e5e7eb; /* Light gray hover */
+            background-color: #334155; /* Lighter sidebar shade */
+            color: #fff;
         }
         .page-link.active {
             background-color: #1e293b; /* Matches sidebar */
@@ -229,29 +198,6 @@
 </head>
 <body>
     <div class="wrapper">
-        <nav class="sidebar">
-            <div class="sidebar-header">
-                <a href="#" class="logo-full">
-                    <i class="fas fa-shopping-bag me-2"></i>
-                    Admin
-                </a>
-                <a href="#" class="logo-mini">
-                    <i class="fas fa-shopping-bag"></i>
-                </a>
-            </div>
-            <div class="nav flex-column p-3">
-                <a href="/admin/dashboard" class="nav-link"><i class="fas fa-th-large"></i><span>Dashboard</span></a>
-                <a href="/admin/products" class="nav-link"><i class="fas fa-shopping-cart"></i><span>Products</span></a>
-                <a href="/admin/users" class="nav-link"><i class="fas fa-users"></i><span>Users</span></a>
-                <a href="/admin/categories" class="nav-link"><i class="fas fa-tags"></i><span>Categories</span></a>
-                <a href="/admin/order-list" class="nav-link active"><i class="fas fa-undo-alt"></i><span>Returns & Refunds</span></a>
-                <a href="/admin/coupons" class="nav-link"><i class="fas fa-ticket-alt"></i><span>Coupons</span></a>
-                <a href="#" class="nav-link"><i class="fas fa-image"></i><span>Banners</span></a>
-                <a href="#" class="nav-link"><i class="fas fa-cog"></i><span>Settings</span></a>
-                <a href="/admin/logout" class="nav-link text-danger mt-auto"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
-            </div>
-        </nav>
-
         <div class="main-content">
             <div class="container">
                 <h1>Returns & Refunds</h1>

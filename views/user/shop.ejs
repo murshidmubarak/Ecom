@@ -547,7 +547,7 @@ async function addToCart(productId) {
 
         const result = await response.json();
 
-        if (result.status) {
+        if (result.success) {
             Swal.fire({
                 icon: 'success',
                 title: 'Added to Cart',

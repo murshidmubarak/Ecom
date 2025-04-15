@@ -7,6 +7,10 @@ const bcrypt = require("bcrypt");
 const session = require("express-session");
 const Address = require("../../models/addressSchema");
 const Order = require("../../models/orderSchema"); // Add this line to import Order model
+const mongoose = require('mongoose');
+const Wallet = require("../../models/walletSchema");
+const moment = require('moment'); // Import moment.js for date formatting
+
 
 function generateOtp() {
     return Math.floor(100000 + Math.random() * 900000).toString();
@@ -137,7 +141,7 @@ const postNewPassword = async (req, res) => {
     }
 };
 
-const userProfile = async (req, res) => {
+/* const userProfile = async (req, res) => {
     try {
         const userId = req.session.user;
         const [userData, addressData, orders] = await Promise.all([
@@ -155,7 +159,43 @@ const userProfile = async (req, res) => {
         console.error('something went wrong to render profile page:', error);
         res.redirect('/page404');
     }
-};
+}; */
+
+
+const userProfile = async (req, res) => {
+    try {
+      const userId = req.session.user;
+  
+      if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        return res.redirect('/login');
+      }
+  
+      const [userData, addressData, orders, wallet] = await Promise.all([
+        User.findById(userId),
+        Address.findOne({ userId }),
+        Order.find({ userId }).populate('orderedItems.product').sort({ createdOn: -1 }),
+        Wallet.findOne({ userId })
+      ]);
+  
+      if (!userData) {
+        return res.redirect('/login');
+      }
+  
+      const walletBalance = userData.wallet || 0;
+  
+      res.render('profile', {
+        user: userData,
+        userAddress: addressData || { address: [] },
+        orders: orders || [],
+        wallet, // Can be null if no wallet exists
+        walletBalance,
+        moment
+      });
+    } catch (error) {
+      console.error('Error rendering profile page:', error);
+      res.redirect('/page404');
+    }
+  };
 
 // Optional: Route to view individual order details
 const getOrderDetails = async (req, res) => {

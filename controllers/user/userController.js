@@ -274,8 +274,9 @@ const verifyOtp = async (req, res) => {
 
         // If everything is fine, proceed with user creation
         const passwordHash = await securePassword(userData.password);
-
+        let code=Math.floor(100000 + Math.random() * 900000).toString();
         const savedUser = new User({
+           
             name: userData.name,
             email: userData.email,
             password: passwordHash

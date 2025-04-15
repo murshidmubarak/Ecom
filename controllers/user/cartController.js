@@ -11,11 +11,17 @@ const getCartPage = async (req, res) => {
         const userId = req.session.user;
 
         const user = await User.findById(userId);
-        if (!user) {
-            return res.redirect("/login");
-        }
+        // if (!user) {
+        //     return res.redirect("/login");
+        // }
 
         const cart = await Cart.findOne({ userId }).populate("items.productId");
+        const productIds = cart?.items.map(item => item.productId) || [];
+        const products = await Product.find({
+            _id: { $in: productIds },
+            isBlock: false
+          });
+
 
         if (!cart || !cart.items || cart.items.length === 0) {
             return res.render("cart", {
@@ -39,7 +45,7 @@ const getCartPage = async (req, res) => {
 
         req.session.grandTotal = grandTotal;
 
-        console.log("Cart data:", JSON.stringify(data, null, 2));
+        console.log("Cart data:", data);
         console.log("Grand Total:", grandTotal);
 
         res.render("cart", {
@@ -54,8 +60,9 @@ const getCartPage = async (req, res) => {
     }
 };
 
-const addToCart = async (req, res) => {
+/* const addToCart = async (req, res) => {
     try {
+        console.log('hissssssssssssss')
         const { productId } = req.body;
         const userId = req.session.user;
 
@@ -70,6 +77,7 @@ const addToCart = async (req, res) => {
         }
 
         const product = await Product.findById(productId).lean();
+
         if (!product) {
             return res.json({ status: false, message: "Product not found" });
         }
@@ -92,7 +100,7 @@ const addToCart = async (req, res) => {
         const existingItemIndex = cart.items.findIndex(
             (item) => item.productId.toString() === productId.toString()
         );
-
+        
         console.log("Existing item index:", existingItemIndex);
 
         if (existingItemIndex === -1) {
@@ -127,7 +135,107 @@ const addToCart = async (req, res) => {
         console.log("Grand Total after add:", grandTotal);
 
         return res.json({
-            status: true,
+            success: true,
+            cartLength: updatedCart.items.length,
+            grandTotal: grandTotal,
+            message: "Product added to cart successfully",
+        });
+    } catch (error) {
+        console.error("Add to cart error:", error);
+        return res.status(500).json({ status: false, message: "Server error" });
+    }
+}; */
+
+const addToCart = async (req, res) => {
+    try {
+        console.log('hissssssssssssss');
+        const { productId } = req.body;
+        const userId = req.session.user;
+
+        console.log("Add to cart - Received productId:", productId);
+
+        if (!userId) {
+            return res.json({ status: false, message: "Please login first" });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
+            return res.json({ status: false, message: "Invalid product ID" });
+        }
+
+        const product = await Product.findById(productId).lean();
+
+        if (!product) {
+            return res.json({ status: false, message: "Product not found" });
+        }
+
+        const productQuantity = parseInt(product.quantity, 10);
+        if (isNaN(productQuantity) || productQuantity <= 0) {
+            return res.json({ outOfStock: true, message: "Out of stock" });
+        }
+
+        const salePrice = Number(product.salePrice);
+        if (isNaN(salePrice)) {
+            return res.json({ status: false, message: "Invalid product price" });
+        }
+
+        let cart = await Cart.findOne({ userId });
+        if (!cart) {
+            cart = new Cart({ userId, items: [] });
+        }
+
+        const existingItemIndex = cart.items.findIndex(
+            (item) => item.productId.toString() === productId.toString()
+        );
+        
+        console.log("Existing item index:", existingItemIndex);
+
+        const MAX_QUANTITY_PER_ITEM = 3;
+        if (existingItemIndex === -1) {
+            cart.items.push({
+                productId: productId,
+                quantity: 1,
+            });
+            console.log("Added new item:", cart.items[cart.items.length - 1]);
+        } else {
+            const item = cart.items[existingItemIndex];
+            if (item.quantity >= MAX_QUANTITY_PER_ITEM) {
+                return res.json({
+                    status: false,
+                    message: `Maximum ${MAX_QUANTITY_PER_ITEM} items allowed per product`,
+                });
+            }
+            if (item.quantity >= productQuantity) {
+                return res.json({ outOfStock: true, message: "Out of stock" });
+            }
+            item.quantity += 1;
+            console.log("Incremented item:", item);
+        }
+
+        await cart.save();
+
+        // Remove from wishlist
+        const wishlist = await Wishlist.findOne({ userId });
+        if (wishlist) {
+            const initialLength = wishlist.products.length;
+            wishlist.products = wishlist.products.filter(
+                (p) => p.productId.toString() !== productId.toString()
+            );
+            if (wishlist.products.length < initialLength) {
+                await wishlist.save();
+                console.log(`Removed product ${productId} from wishlist for user ${userId}`);
+            }
+        }
+
+        const updatedCart = await Cart.findOne({ userId }).populate("items.productId");
+        const grandTotal = updatedCart.items.reduce((total, item) => {
+            return total + (Number(item.productId.salePrice) * item.quantity);
+        }, 0);
+
+        console.log("Updated cart:", JSON.stringify(updatedCart.items, null, 2));
+        console.log("Grand Total after add:", grandTotal);
+
+        return res.json({
+            success: true,
             cartLength: updatedCart.items.length,
             grandTotal: grandTotal,
             message: "Product added to cart successfully",
@@ -137,6 +245,7 @@ const addToCart = async (req, res) => {
         return res.status(500).json({ status: false, message: "Server error" });
     }
 };
+
 
 const changeQuantity = async (req, res) => {
     try {

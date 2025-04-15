@@ -87,51 +87,72 @@
 <!-- SweetAlert2 CDN -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    async function addToCart(productId) {
-        try {
-            const response = await fetch('/addToCart', {
+    /* async function addToCart(productId) {
+        fetch(`/addToCart`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ productId })
-            });
-
-            const result = await response.json();
-
-            if (result.status) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Added to Cart',
-                    text: result.message,
-                    showConfirmButton: false,
-                    timer: 1500,
-                    customClass: {
-                        popup: 'swal-custom'
-                    }
-                }).then(() => {
-                    window.location.href = '/cart';
-                });
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: result.message,
-                    customClass: {
-                        popup: 'swal-custom'
-                    }
-                });
-            }
-        } catch (error) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Something went wrong. Please try again.',
-                customClass: {
-                    popup: 'swal-custom'
+                body: JSON.stringify({
+                    productId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('aaaa',data)
+                if (data.outOfStock) {
+                    Swal.fire({
+                        title: 'Out of Stock!',
+                        text: 'Sorry, this product is currently out of stock.',
+                        icon: 'error',
+                        confirmButtonColor: '#088178'
+                    });
+                } else if (data.alreadyInCart) {
+                    Swal.fire({
+                        title: 'Already in Cart!',
+                        text: 'This product is already in your cart.',
+                        icon: 'info',
+                        confirmButtonColor: '#088178',
+                        confirmButtonText: 'View Cart',
+                        showCancelButton: true,
+                        cancelButtonText: 'Continue Shopping'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = '/cart';
+                        }
+                    });
+                } else if (data.success) {
+                    Swal.fire({
+                        title: 'Added!',
+                        text: 'The product has been added to your cart.',
+                        icon: 'success',
+                        confirmButtonColor: '#088178',
+                        showDenyButton: true,
+                        denyButtonText: 'View Cart',
+                        denyButtonColor: '#2c3e50'
+                    }).then((result) => {
+                        if (result.isDenied) {
+                            window.location.href = '/cart';
+                        }
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: data.message || 'Failed to add the product to your cart.',
+                        icon: 'error',
+                        confirmButtonColor: '#088178'
+                    });
                 }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Something went wrong. Please try again later.',
+                    icon: 'error',
+                    confirmButtonColor: '#088178'
+                });
             });
-        }
     }
 
     async function removeFromWishlist(productId) {
@@ -179,7 +200,131 @@
                 }
             });
         }
+    } */
+
+    async function addToCart(productId) {
+        try {
+            const response = await fetch(`/addToCart`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ productId })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('addToCart Response:', data);
+
+            if (data.outOfStock) {
+                await Swal.fire({
+                    title: 'Out of Stock!',
+                    text: 'Sorry, this product is currently out of stock.',
+                    icon: 'error',
+                    confirmButtonColor: '#088178'
+                });
+            } else if (data.alreadyInCart) {
+                await Swal.fire({
+                    title: 'Already in Cart!',
+                    text: 'This product is already in your cart.',
+                    icon: 'info',
+                    confirmButtonColor: '#088178',
+                    confirmButtonText: 'View Cart',
+                    showCancelButton: true,
+                    cancelButtonText: 'Continue Shopping'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/cart';
+                    }
+                });
+            } else if (data.success) {
+                await Swal.fire({
+                    title: 'Added!',
+                    text: 'The product has been added to your cart and removed from your wishlist.',
+                    icon: 'success',
+                    confirmButtonColor: '#088178',
+                    showDenyButton: true,
+                    denyButtonText: 'View Cart',
+                    denyButtonColor: '#2c3e50'
+                }).then((result) => {
+                    if (result.isDenied) {
+                        window.location.href = '/cart';
+                    } else {
+                        window.location.reload(); // Reload to update wishlist
+                    }
+                });
+            } else {
+                await Swal.fire({
+                    title: 'Error!',
+                    text: data.message || 'Failed to add the product to your cart.',
+                    icon: 'error',
+                    confirmButtonColor: '#088178'
+                });
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            await Swal.fire({
+                title: 'Error!',
+                text: 'Something went wrong. Please try again later.',
+                icon: 'error',
+                confirmButtonColor: '#088178'
+            });
+        }
     }
+
+    async function removeFromWishlist(productId) {
+        try {
+            const response = await fetch('/removeFromWishlist', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ productId })
+            });
+
+            const result = await response.json();
+
+            if (result.status) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Removed from Wishlist',
+                    text: result.message,
+                    showConfirmButton: false,
+                    timer: 1500,
+                    customClass: {
+                        popup: 'swal-custom'
+                    }
+                });
+                window.location.reload();
+            } else {
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: result.message,
+                    customClass: {
+                        popup: 'swal-custom'
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Remove wishlist error:', error);
+            await Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Something went wrong. Please try again.',
+                customClass: {
+                    popup: 'swal-custom'
+                }
+            });
+        }
+    }
+
+    
+
+
 </script>
 
 <style>

@@ -9,6 +9,9 @@ const Product = require('../models/productSchema');
 const ProductController = require("../controllers/admin/productController");
 const upload = require("../middlewares/multer");
 const orderController = require("../controllers/admin/orderController")
+const coupenController = require("../controllers/admin/coupenController")
+const salesReportController = require("../controllers/admin/salesReportController")
+
 //const { route } = require('./userRouter');
 
 
@@ -26,7 +29,7 @@ router.post("/users/:id/block", adminAuth, customerController.toggleBlockUser);
 router.get("/categories",adminAuth,categoryController.categorInfo);
 router.post("/addCategory",adminAuth,categoryController.addCategory)
 router.post('/searchCategory',adminAuth,categoryController.searchCategory);
-router.post('/addCategryOffer',adminAuth,categoryController.addCategoryOffer)
+router.post('/addCategoryOffer', adminAuth, categoryController.addCategoryOffer);
 router.post("/removeCategoryOffer",adminAuth,categoryController.removeCategoryOffer)
 router.get("/listCategory", adminAuth, categoryController.getListedCategory);
 router.get("/unlistCategory", adminAuth, categoryController.getUnlistedCategory);
@@ -49,11 +52,17 @@ router.get("/orderDetailsAdmin", adminAuth, orderController.getOrderDetailsPageA
 router.get("/changeStatus", adminAuth, orderController.changeOrderStatus);
 router.post('/approveReturnRequest',adminAuth,orderController.approveReturnRequest);
 
+router.get("/coupen",adminAuth, coupenController.loadCoupen);
+router.post("/createCoupen",adminAuth, coupenController.createCoupon);
+router.post("/editcoupon/:id",adminAuth, coupenController.editCoupon);
+router.delete("/deletecoupon",adminAuth, coupenController.deleteCoupon);
 
 
 
-
-
+router.get("/salesReport", adminAuth, salesReportController.getSalesReportPage);
+router.get("/dateWiseFilter", adminAuth, salesReportController.dateWiseFilter);
+router.post("/generatePdf", adminAuth, salesReportController.generatePdf);
+router.post("/downloadExcel", adminAuth, salesReportController.downloadExcel);
 
 
 

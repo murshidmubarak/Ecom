@@ -217,6 +217,7 @@
             border: none;
             cursor: pointer;
             color: white;
+            margin: 2px;
         }
         .btn-edit {
             background-color: #4CAF50;
@@ -267,11 +268,10 @@
         </div>
         <div class="nav flex-column p-3">
             <a href="/admin/dashboard" class="nav-link mb-2"><i class="fas fa-th-large"></i><span>Dashboard</span></a>
-        
-            <a href="/admin/products" class="nav-link mb-2"><i class="fas fa-shopping-cart"></i><span>products</span></a>
+            <a href="/admin/products" class="nav-link mb-2"><i class="fas fa-shopping-cart"></i><span>Products</span></a>
             <a href="/admin/users" class="nav-link mb-2"><i class="fas fa-users"></i><span>Users</span></a>
             <a href="/admin/categories" class="nav-link mb-2"><i class="fas fa-tags"></i><span>Categories</span></a>
-            <a href="/admin/returnRequests" class="nav-link mb-2"><i class="fas fa-undo-alt"></i><span>Returns & Refunds</span></a>
+            <a href="/admin/order-list" class="nav-link mb-2"><i class="fas fa-undo-alt"></i><span>Returns & Refunds</span></a>
             <a href="/admin/coupons" class="nav-link mb-2"><i class="fas fa-ticket-alt"></i><span>Coupons</span></a>
             <a href="#" class="nav-link mb-2"><i class="fas fa-image"></i><span>Banners</span></a>
             <a href="#" class="nav-link mb-2"><i class="fas fa-cog"></i><span>Settings</span></a>
@@ -300,12 +300,12 @@
                             <form id="addCategoryForm" onsubmit="submitForm(event)">
                                 <div class="mb-4">
                                     <label for="product_name" class="form-label">Name</label>
-                                    <input type="text" name="name" placeholder="Type here" class="form-control" id="product_name" >
+                                    <input type="text" name="name" placeholder="Type here" class="form-control" id="product_name">
                                     <div id="name-error" class="error-message"></div>
                                 </div>
                                 <div class="mb-4">
                                     <label class="form-label">Description</label>
-                                    <textarea name="description" placeholder="Type here" class="form-control" id="descriptionId" rows="3" ></textarea>
+                                    <textarea name="description" placeholder="Type here" class="form-control" id="descriptionId" rows="3"></textarea>
                                     <div id="description-error" class="error-message"></div>
                                 </div>
                                 <div class="d-grid">
@@ -320,42 +320,38 @@
                                         <tr>
                                             <th>Name</th>
                                             <th>Description</th>
-                                            <th>Offer Price</th>
+                                            <th>Offer</th>
                                             <th>Status</th>
                                             <th>List/Unlist</th>
                                             <th>Edit</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <% if (cat && cat.length > 0) { %> 
+                                        <% if (cat && cat.length > 0) { %>
                                             <% cat.forEach(category => { %>
                                                 <tr data-id="<%= category._id %>">
                                                     <td><%= category.name %></td>
                                                     <td><%= category.description %></td>
                                                     <td>
-                                                        <button class="btn btn-edit" onclick="addOffer('<%= category._id %>')">Add Offer</button>
-                                                        <button class="btn btn-delete" onclick="removeOffer('<%= category._id %>')">Remove</button>
+                                                        <span>
+                                                            <%= category.categoryOffer > 0 ? category.categoryOffer + '%' : 'No Offer' %>
+                                                        </span>
+                                                        <button class="btn btn-edit" onclick="addOffer('<%= category._id %>')">
+                                                            <%= category.categoryOffer > 0 ? 'Update Offer' : 'Add Offer' %>
+                                                        </button>
+                                                        <% if (category.categoryOffer > 0) { %>
+                                                            <button class="btn btn-delete" onclick="removeOffer('<%= category._id %>')">Remove Offer</button>
+                                                        <% } %>
                                                     </td>
-                                                    <td><%= category.status || "Listed" %></td>
+                                                    <td><%= category.isListed ? 'Listed' : 'Unlisted' %></td>
                                                     <td>
                                                         <% if (category.isListed) { %>
-                                                           <!--  <a href="/admin/unlistCategory?id=<%= category._id %>">
-                                                                <button class="btn btn-unlist">Unlist</button>
-                                                            </a> -->
                                                             <button class="btn btn-unlist" onclick="unlistCategory('<%= category._id %>')">Unlist</button>
-
-
                                                         <% } else { %>
-                                                           <!--  <a href="/admin/listCategory?id=<%= category._id %>">
-                                                                <button class="btn btn-list">List</button>
-                                                            </a> -->
                                                             <button class="btn btn-list" onclick="listCategory('<%= category._id %>')">List</button>
                                                         <% } %>
                                                     </td>
                                                     <td>
-                                                        <!-- <a href="/admin/editCategory?id=<%= category._id %>">
-                                                            <button class="btn btn-edit">Edit</button>
-                                                        </a> -->
                                                         <button class="btn btn-edit" onclick="editCategory('<%= category._id %>')">Edit</button>
                                                     </td>
                                                 </tr>
@@ -366,7 +362,6 @@
                                             </tr>
                                         <% } %>
                                     </tbody>
-                                    
                                 </table>
                             </div>
                         </div>
@@ -387,17 +382,15 @@
 
     <script>
         // Form Submission Handler
-        function submitForm(e){
+        function submitForm(e) {
             e.preventDefault();
-            validateForm()
+            validateForm();
         }
-
 
         // Form Validation
         function validateForm() {
             clearErrorMessages();
             const name = document.getElementsByName("name")[0].value.trim();
-            console.log(name)
             const description = document.getElementsByName("description")[0].value.trim();
             let isValid = true;
 
@@ -414,7 +407,7 @@
                 isValid = false;
             }
 
-            if (isValid) addCategory()
+            if (isValid) addCategory();
         }
 
         // Display Error Messages
@@ -435,7 +428,6 @@
 
         // Add Category Function
         function addCategory() {
-
             const name = document.getElementsByName("name")[0].value;
             const description = document.getElementsByName("description")[0].value;
 
@@ -444,7 +436,7 @@
                 document.getElementById('description-error').textContent = !description ? "Description is required" : "";
                 document.getElementById('name-error').style.display = !name ? "block" : "none";
                 document.getElementById('description-error').style.display = !description ? "block" : "none";
-                return; // Stop if fields are empty
+                return;
             }
 
             fetch('/admin/addCategory', {
@@ -457,7 +449,6 @@
                 if (!data.success) {
                     throw new Error(data.error || "Failed to add category");
                 }
-
                 Swal.fire({
                     icon: "success",
                     title: "Success",
@@ -473,53 +464,65 @@
             });
         }
 
-        // Add Offer Function
+        // Add/Update Offer Function
         function addOffer(categoryId) {
             Swal.fire({
-                title: 'Add Offer',
+                title: 'Add/Update Category Offer',
                 input: 'number',
-                inputLabel: 'Offer Percentage',
-                inputPlaceholder: 'Enter offer percentage',
+                inputLabel: 'Offer Percentage (%)',
+                inputPlaceholder: 'Enter percentage (0-100)',
+                inputAttributes: {
+                    min: 0,
+                    max: 100,
+                    step: 1
+                },
                 showCancelButton: true,
-                confirmButtonText: 'Add',
+                confirmButtonText: 'Apply Offer',
                 cancelButtonText: 'Cancel',
                 inputValidator: (value) => {
                     if (!value) {
                         return 'You need to enter a percentage!';
                     }
-                    if (isNaN(value) || value < 0 || value > 100) {
+                    const numValue = parseFloat(value);
+                    if (isNaN(numValue) || numValue < 0 || numValue > 100) {
                         return 'Please enter a valid percentage between 0 and 100!';
                     }
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
-                    const percentage = parseInt(result.value);
-                    fetch('/admin/addCategryOffer', {
+                    const percentage = parseFloat(result.value);
+                    fetch('/admin/addCategoryOffer', {
                         method: "POST",
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ categoryId, percentage })
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         if (data.status) {
                             Swal.fire({
                                 icon: "success",
                                 title: "Success",
-                                text: "Offer added successfully!"
+                                text: data.message
                             }).then(() => location.reload());
                         } else {
                             Swal.fire({
                                 icon: "error",
                                 title: "Error",
-                                text: data.message || "Failed to add offer"
+                                text: data.message || "Failed to apply offer"
                             });
                         }
                     })
                     .catch(error => {
+                        console.error("Error applying offer:", error);
                         Swal.fire({
                             icon: "error",
                             title: "Error",
-                            text: "Failed to add offer"
+                            text: "Something went wrong!"
                         });
                     });
                 }
@@ -529,8 +532,8 @@
         // Remove Offer Function
         function removeOffer(categoryId) {
             Swal.fire({
-                title: 'Remove Offer',
-                text: 'Are you sure you want to remove the offer?',
+                title: 'Remove Category Offer',
+                text: 'Are you sure you want to remove this offer?',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: 'Yes, remove it!',
@@ -542,13 +545,18 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ categoryId })
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         if (data.status) {
                             Swal.fire({
                                 icon: "success",
                                 title: "Success",
-                                text: "Offer removed successfully!"
+                                text: data.message
                             }).then(() => location.reload());
                         } else {
                             Swal.fire({
@@ -559,60 +567,61 @@
                         }
                     })
                     .catch(error => {
+                        console.error("Error removing offer:", error);
                         Swal.fire({
                             icon: "error",
                             title: "Error",
-                            text: "Failed to remove offer"
+                            text: "Something went wrong!"
                         });
                     });
                 }
             });
         }
 
-        // List/Unlist Category Functions (added from previous response)
+        // List Category Function
         function listCategory(categoryId) {
-    Swal.fire({
-        title: 'List Category',
-        text: 'Are you sure you want to list this category?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, list it!',
-        cancelButtonText: 'No, cancel'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch('/admin/listCategory', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ categoryId })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
+            Swal.fire({
+                title: 'List Category',
+                text: 'Are you sure you want to list this category?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, list it!',
+                cancelButtonText: 'No, cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/admin/listCategory?id=${categoryId}`, {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success',
+                                text: data.message
+                            }).then(() => location.reload());
+                        } else {
+                            throw new Error(data.message || 'Failed to list category');
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: error.message || 'Something went wrong!'
+                        });
+                    });
                 }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Category listed successfully!'
-                    }).then(() => location.reload());
-                } else {
-                    throw new Error(data.message || 'Failed to list category');
-                }
-            })
-            .catch(error => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error.message || 'Something went wrong!'
-                });
             });
         }
-    });
-}
 
+        // Unlist Category Function
         function unlistCategory(categoryId) {
             Swal.fire({
                 title: 'Unlist Category',
@@ -623,205 +632,109 @@
                 cancelButtonText: 'No, keep it'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    fetch('/admin/unlistCategory', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ categoryId })
+                    fetch(`/admin/unlistCategory?id=${categoryId}`, {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' }
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         if (data.success) {
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Success',
-                                text: 'Category unlisted successfully!'
+                                text: data.message
                             }).then(() => location.reload());
                         } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text: data.message || 'Failed to unlist category'
-                            });
+                            throw new Error(data.message || 'Failed to unlist category');
                         }
                     })
                     .catch(error => {
                         Swal.fire({
                             icon: 'error',
                             title: 'Error',
-                            text: 'Something went wrong!'
+                            text: error.message || 'Something went wrong!'
                         });
                     });
                 }
             });
         }
 
-        // List Category Function with SweetAlert2
-function listCategory(categoryId) {
-    Swal.fire({
-        title: 'List Category',
-        text: 'Are you sure you want to list this category?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, list it!',
-        cancelButtonText: 'No, cancel'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch(`/admin/listCategory?id=${categoryId}`, {
-                method: 'GET', // Adjusted to match your router.get
+        // Edit Category Function
+        function editCategory(categoryId) {
+            fetch(`/admin/editCategory?id=${categoryId}`, {
+                method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json(); // Expecting JSON response from server
-            })
+            .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Category listed successfully!'
-                    }).then(() => location.reload());
-                } else {
-                    throw new Error(data.message || 'Failed to list category');
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to fetch category');
                 }
-            })
-            .catch(error => {
                 Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error.message || 'Something went wrong!'
-                });
-            });
-        }
-    });
-}
-
-// Unlist Category Function with SweetAlert2
-function unlistCategory(categoryId) {
-    Swal.fire({
-        title: 'Unlist Category',
-        text: 'Are you sure you want to unlist this category?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, unlist it!',
-        cancelButtonText: 'No, keep it'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch(`/admin/unlistCategory?id=${categoryId}`, {
-                method: 'GET', // Adjusted to match your router.get
-                headers: { 'Content-Type': 'application/json' }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json(); // Expecting JSON response from server
-            })
-            .then(data => {
-                if (data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Category unlisted successfully!'
-                    }).then(() => location.reload());
-                } else {
-                    throw new Error(data.message || 'Failed to unlist category');
-                }
-            })
-            .catch(error => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error.message || 'Something went wrong!'
-                });
-            });
-        }
-    });
-}
-
-function editCategory(categoryId) {
-    // First, fetch the current category details
-    fetch(`/admin/editCategory?id=${categoryId}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (!data.success) {
-            throw new Error(data.error || 'Failed to fetch category');
-        }
-
-        // Show SweetAlert2 form with pre-filled data
-        Swal.fire({
-            title: 'Edit Category',
-            html: `
-                <input id="swal-input1" class="swal2-input" placeholder="Category Name" value="${data.category.name}">
-                <textarea id="swal-input2" class="swal2-textarea" placeholder="Description">${data.category.description}</textarea>
-            `,
-            focusConfirm: false,
-            showCancelButton: true,
-            confirmButtonText: 'Save Changes',
-            preConfirm: () => {
-                const categoryName = document.getElementById('swal-input1').value;
-                const description = document.getElementById('swal-input2').value;
-                
-                // Check if fields are empty
-                if (!categoryName || !description) {
-                    Swal.showValidationMessage('Both name and description are required');
-                    return false;
-                }
-                
-                // Add name format validation
-                if (!/^[a-zA-Z\s]+$/.test(categoryName)) {
-                    Swal.showValidationMessage('Category name must contain only letters and spaces');
-                    return false;
-                }
-
-                return { categoryName, description };
-            }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const { categoryName, description } = result.value;
-                fetch(`/admin/editCategory/${categoryId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ categoryName, description })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Success',
-                            text: 'Category updated successfully!'
-                        }).then(() => location.reload());
-                    } else {
-                        throw new Error(data.error || 'Failed to update category');
+                    title: 'Edit Category',
+                    html: `
+                        <input id="swal-input1" class="swal2-input" placeholder="Category Name" value="${data.category.name}">
+                        <textarea id="swal-input2" class="swal2-textarea" placeholder="Description">${data.category.description}</textarea>
+                    `,
+                    focusConfirm: false,
+                    showCancelButton: true,
+                    confirmButtonText: 'Save Changes',
+                    preConfirm: () => {
+                        const categoryName = document.getElementById('swal-input1').value;
+                        const description = document.getElementById('swal-input2').value;
+                        if (!categoryName || !description) {
+                            Swal.showValidationMessage('Both name and description are required');
+                            return false;
+                        }
+                        if (!/^[a-zA-Z\s]+$/.test(categoryName)) {
+                            Swal.showValidationMessage('Category name must contain only letters and spaces');
+                            return false;
+                        }
+                        return { categoryName, description };
                     }
-                })
-                .catch(error => {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: error.message || 'Something went wrong!'
-                    });
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const { categoryName, description } = result.value;
+                        fetch(`/admin/editCategory/${categoryId}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ categoryName, description })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success',
+                                    text: 'Category updated successfully!'
+                                }).then(() => location.reload());
+                            } else {
+                                throw new Error(data.error || 'Failed to update category');
+                            }
+                        })
+                        .catch(error => {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: error.message || 'Something went wrong!'
+                            });
+                        });
+                    }
                 });
-            }
-        });
-    })
-    .catch(error => {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: error.message || 'Failed to fetch category details'
-        });
-    });
-}
-
-
-
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message || 'Failed to fetch category details'
+                });
+            });
+        }
     </script>
 </body>
 </html>

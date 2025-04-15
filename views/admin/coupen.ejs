@@ -1,0 +1,626 @@
+<%- include("../../views/partials/admin/header") %>
+
+<style>
+  :root {
+    --sidebar-width: 250px;
+    --sidebar-collapsed-width: 70px;
+    --header-height: 60px;
+    --primary-color: #cbcfda;
+    --secondary-color: #858796;
+    --dark-bg: #1a1a1a;
+    --card-bg: #242424;
+    --text-color: #e4e4e4;
+    --fluorescent-green: #2b08ee;
+    --gradient-green: linear-gradient(135deg, #b0aec8, rgb(120, 100, 100));
+  }
+
+  .content-main {
+    margin-left: var(--sidebar-width);
+    padding: 20px;
+    background-color: var(--dark-bg);
+    color: var(--text-color);
+    min-height: calc(100vh - var(--header-height));
+    transition: margin-left 0.3s ease;
+  }
+
+  .sidebar.collapsed ~ .content-main {
+    margin-left: var(--sidebar-collapsed-width);
+  }
+
+  .content-header {
+    margin-bottom: 20px;
+  }
+
+  .content-title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--text-color);
+  }
+
+  .card {
+    background-color: var(--card-bg);
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    padding: 20px;
+  }
+
+  .col-md-3 {
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    background-color: #2a2a2a;
+    margin-right: 20px;
+  }
+
+  .col-md-7 {
+    padding: 20px;
+  }
+
+  .error-message {
+    color: #ff4d4d;
+    font-size: 0.9rem;
+    margin-top: 5px;
+  }
+
+  .form-label {
+    margin-bottom: 8px;
+    color: var(--text-color);
+    font-weight: 500;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    background-color: #333;
+    color: var(--text-color);
+    box-sizing: border-box;
+  }
+
+  .form-control:focus {
+    outline: none;
+    border-color: var(--fluorescent-green);
+    box-shadow: 0 0 5px rgba(43, 8, 238, 0.5);
+  }
+
+  .d-grid {
+    margin-top: 20px;
+  }
+
+  .btn-primary {
+    background: var(--gradient-green);
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #9a9ab8, rgb(100, 80, 80));
+    transform: translateY(-2px);
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+  }
+
+  .table {
+    width: 100%;
+    color: var(--text-color);
+    background-color: var(--card-bg);
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .table th,
+  .table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .table th {
+    background-color: #2a2a2a;
+    font-weight: 600;
+    color: var(--primary-color);
+  }
+
+  .table td {
+    background-color: var(--card-bg);
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .btn-sm {
+    padding: 5px 10px;
+    font-size: 0.9rem;
+  }
+
+  .btn-danger {
+    background-color: #ff4d4d;
+    border: none;
+    color: white;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+  }
+
+  .btn-danger:hover {
+    background-color: #e60000;
+    transform: translateY(-2px);
+  }
+
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal.show {
+    display: flex;
+  }
+
+  .modal-content {
+    background-color: #2a2a2a;
+    padding: 20px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 500px;
+    color: var(--text-color);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .modal-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+
+  .close-btn {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+
+  .close-btn:hover {
+    color: #ff4d4d;
+  }
+</style>
+
+<section class="content-main">
+  <div class="content-header">
+    <div>
+      <h2 class="content-title card-title">Coupons</h2>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-3">
+          <form method="post" action="/admin/createCoupen">
+            <div class="mb-4">
+              <label for="coupon-name" class="form-label">Coupon Name</label>
+              <input
+                type="text"
+                id="coupon-name"
+                name="couponName"
+                placeholder="Type here"
+                class="form-control"
+                required
+              />
+              <div id="error-coupon-name" class="error-message"></div>
+            </div>
+
+            <div>
+              <label for="startingDate" class="form-label">Start Date</label>
+              <input
+                type="date"
+                name="startDate"
+                class="form-control"
+                required
+                id="startingDate"
+              />
+              <div id="error-start-date" class="error-message"></div>
+            </div>
+
+            <div>
+              <label for="expiringDate" class="form-label">End Date</label>
+              <input
+                type="date"
+                name="endDate"
+                class="form-control"
+                id="expiringDate"
+                required
+              />
+              <div id="error-end-date" class="error-message"></div>
+            </div>
+
+            <div>
+              <label for="offer-price" class="form-label">Offer Price</label>
+              <input
+                type="text"
+                name="offerPrice"
+                placeholder="Type here"
+                class="form-control"
+                required
+              />
+              <div id="error-offer-price" class="error-message"></div>
+            </div>
+
+            <div>
+              <label for="minimum-price" class="form-label">Minimum Price</label>
+              <input
+                type="text"
+                name="minimumPrice"
+                placeholder="Type here"
+                class="form-control"
+                required
+              />
+              <div id="error-minimum-price" class="error-message"></div>
+            </div>
+
+            <div>
+              <label for="status" class="form-label">Status</label>
+              <select name="status" id="status" class="form-control" required>
+                <option value="Active">Active</option>
+                <option value="Expired">Expired</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+              <div id="error-status" class="error-message"></div>
+            </div>
+
+            <div class="d-grid">
+              <button class="btn btn-primary" type="submit" onclick="return validateForm()">
+                Add Coupon
+              </button>
+            </div>
+            <div id="err-msg" class="error-message"></div>
+          </form>
+        </div>
+        <div class="col-md-7">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Created On</th>
+                  <th>Expire On</th>
+                  <th>Offer Price</th>
+                  <th>Minimum Price</th>
+                  <th>Status</th>
+                  <th>Edit/Delete</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (coupons && coupons.length > 0) { %>
+                  <% coupons.forEach(coupon => { %>
+                    <tr>
+                      <td><%= coupon.couponName %></td>
+                      <td><%= coupon.createdAt.toISOString().split('T')[0] %></td>
+                      <td><%= coupon.endDate.toISOString().split('T')[0] %></td>
+                      <td>$<%= coupon.offerPrice.toFixed(2) %></td>
+                      <td>$<%= coupon.minimumPrice.toFixed(2) %></td>
+                      <td><%= coupon.status %></td>
+                      <td>
+                        <button
+                          class="btn btn-primary btn-sm"
+                          onclick="openEditModal('<%- coupon._id %>', '<%- coupon.couponName %>', '<%- coupon.startDate.toISOString().split('T')[0] %>', '<%- coupon.endDate.toISOString().split('T')[0] %>', <%- coupon.offerPrice %>, <%- coupon.minimumPrice %>, '<%- coupon.status %>', <%- coupon.isActive %>)"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          class="btn btn-danger btn-sm"
+                          onclick="confirmDelete('<%- coupon._id %>')"
+                          style="margin-left: 5px;"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  <% }) %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="7" style="text-align: center;">No coupons found</td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Edit Coupon Modal -->
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Edit Coupon</h2>
+      <button class="close-btn" onclick="closeEditModal()">×</button>
+    </div>
+    <form id="editCouponForm" method="post" action="">
+      <input type="hidden" name="id" id="edit-coupon-id" />
+      <div class="mb-4">
+        <label for="edit-coupon-name" class="form-label">Coupon Name</label>
+        <input
+          type="text"
+          id="edit-coupon-name"
+          name="couponName"
+          class="form-control"
+          required
+        />
+        <div id="edit-error-coupon-name" class="error-message"></div>
+      </div>
+      <div>
+        <label for="edit-startingDate" class="form-label">Start Date</label>
+        <input
+          type="date"
+          name="startDate"
+          class="form-control"
+          required
+          id="edit-startingDate"
+        />
+        <div id="edit-error-start-date" class="error-message"></div>
+      </div>
+      <div>
+        <label for="edit-expiringDate" class="form-label">End Date</label>
+        <input
+          type="date"
+          name="endDate"
+          class="form-control"
+          required
+          id="edit-expiringDate"
+        />
+        <div id="edit-error-end-date" class="error-message"></div>
+      </div>
+      <div>
+        <label for="edit-offer-price" class="form-label">Offer Price</label>
+        <input
+          type="text"
+          name="offerPrice"
+          class="form-control"
+          required
+          id="edit-offer-price"
+        />
+        <div id="edit-error-offer-price" class="error-message"></div>
+      </div>
+      <div>
+        <label for="edit-minimum-price" class="form-label">Minimum Price</label>
+        <input
+          type="text"
+          name="minimumPrice"
+          class="form-control"
+          required
+          id="edit-minimum-price"
+        />
+        <div id="edit-error-minimum-price" class="error-message"></div>
+      </div>
+      <div>
+        <label for="edit-status" class="form-label">Status</label>
+        <select name="status" id="edit-status" class="form-control" required>
+          <option value="Active">Active</option>
+          <option value="Expired">Expired</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+        <div id="edit-error-status" class="error-message"></div>
+      </div>
+      <div>
+        <label for="edit-isActive" class="form-label">Active</label>
+        <select name="isActive" id="edit-isActive" class="form-control" required>
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </select>
+      </div>
+      <div class="d-grid">
+        <button class="btn btn-primary" type="submit" onclick="return validateEditForm()">
+          Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function validateForm() {
+    document.querySelectorAll(".error-message").forEach((element) => (element.innerHTML = ""));
+
+    const sDate = document.getElementsByName("startDate")[0].value;
+    const eDate = document.getElementsByName("endDate")[0].value;
+    const sDateObj = new Date(sDate);
+    const eDateObj = new Date(eDate);
+    const todayDateObj = new Date();
+    todayDateObj.setHours(0, 0, 0, 0);
+
+    if (sDateObj > eDateObj) {
+      document.getElementById("error-end-date").innerHTML =
+        "End date should be after the start date";
+      return false;
+    }
+
+    if (sDateObj <= todayDateObj) {
+      document.getElementById("error-start-date").innerHTML =
+        "Starting date should be greater than or equal to today's date";
+      return false;
+    }
+
+    let name = document.getElementsByName("couponName")[0].value;
+    const nameRegex = /^[A-Za-z0-9]{1,50}$/;
+    if (!nameRegex.test(name)) {
+      document.getElementById("error-coupon-name").innerHTML =
+        "Coupon name must be alphanumeric and up to 50 characters";
+      return false;
+    }
+
+    const offerPriceInput = document.getElementsByName("offerPrice")[0];
+    const minimumPriceInput = document.getElementsByName("minimumPrice")[0];
+    const offerPrice = offerPriceInput.value.trim() !== "" ? parseFloat(offerPriceInput.value) : NaN;
+    const minimumPrice =
+      minimumPriceInput.value.trim() !== "" ? parseFloat(minimumPriceInput.value) : NaN;
+
+    if (isNaN(offerPrice) || isNaN(minimumPrice)) {
+      document.getElementById("error-offer-price").innerHTML =
+        "Please enter numeric values for Offer Price and Minimum Price";
+      return false;
+    }
+
+    if (offerPrice >= minimumPrice) {
+      document.getElementById("error-offer-price").innerHTML =
+        "Offer Price must be less than Minimum Price";
+      return false;
+    }
+
+    const status = document.getElementsByName("status")[0].value;
+    if (!["Active", "Expired", "Inactive"].includes(status)) {
+      document.getElementById("error-status").innerHTML = "Please select a valid status";
+      return false;
+    }
+
+    return true;
+  }
+
+  function validateEditForm() {
+    document.querySelectorAll(".error-message").forEach((element) => (element.innerHTML = ""));
+
+    const sDate = document.getElementById("edit-startingDate").value;
+    const eDate = document.getElementById("edit-expiringDate").value;
+    const sDateObj = new Date(sDate);
+    const eDateObj = new Date(eDate);
+    const todayDateObj = new Date();
+    todayDateObj.setHours(0, 0, 0, 0);
+
+    if (sDateObj > eDateObj) {
+      document.getElementById("edit-error-end-date").innerHTML =
+        "End date should be after the start date";
+      return false;
+    }
+
+    if (sDateObj <= todayDateObj) {
+      document.getElementById("edit-error-start-date").innerHTML =
+        "Starting date should be greater than or equal to today's date";
+      return false;
+    }
+
+    let name = document.getElementById("edit-coupon-name").value;
+    const nameRegex = /^[A-Za-z0-9]{1,50}$/;
+    if (!nameRegex.test(name)) {
+      document.getElementById("edit-error-coupon-name").innerHTML =
+        "Coupon name must be alphanumeric and up to 50 characters";
+      return false;
+    }
+
+    const offerPrice = parseFloat(document.getElementById("edit-offer-price").value);
+    const minimumPrice = parseFloat(document.getElementById("edit-minimum-price").value);
+
+    if (isNaN(offerPrice) || isNaN(minimumPrice)) {
+      document.getElementById("edit-error-offer-price").innerHTML =
+        "Please enter numeric values for Offer Price and Minimum Price";
+      return false;
+    }
+
+    if (offerPrice >= minimumPrice) {
+      document.getElementById("edit-error-offer-price").innerHTML =
+        "Offer Price must be less than Minimum Price";
+      return false;
+    }
+
+    const status = document.getElementById("edit-status").value;
+    if (!["Active", "Expired", "Inactive"].includes(status)) {
+      document.getElementById("edit-error-status").innerHTML = "Please select a valid status";
+      return false;
+    }
+
+    return true;
+  }
+
+  function openEditModal(id, name, startDate, endDate, offerPrice, minimumPrice, status, isActive) {
+    document.getElementById("edit-coupon-id").value = id;
+    document.getElementById("edit-coupon-name").value = name;
+    document.getElementById("edit-startingDate").value = startDate;
+    document.getElementById("edit-expiringDate").value = endDate;
+    document.getElementById("edit-offer-price").value = offerPrice;
+    document.getElementById("edit-minimum-price").value = minimumPrice;
+    document.getElementById("edit-status").value = status;
+    document.getElementById("edit-isActive").value = isActive.toString();
+    document.getElementById("editCouponForm").action = `/admin/editcoupon/${id}`;
+    document.getElementById("editModal").classList.add("show");
+  }
+
+  function closeEditModal() {
+    document.getElementById("editModal").classList.remove("show");
+    document.querySelectorAll(".error-message").forEach((element) => (element.innerHTML = ""));
+  }
+
+  function confirmDelete(couponId) {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteCoupon(couponId);
+      }
+    });
+  }
+
+  function deleteCoupon(couponId) {
+    $.ajax({
+      url: `/admin/deletecoupon?id=${couponId}`,
+      method: "DELETE",
+      success: function (response) {
+        if (response.success) {
+          Swal.fire({
+            icon: "success",
+            title: "Deleted!",
+            text: response.message,
+            confirmButtonText: "OK",
+          }).then(() => {
+            window.location.reload();
+          });
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Error!",
+            text: response.error || "Failed to delete coupon",
+          });
+        }
+      },
+      error: function (xhr) {
+        console.error("Delete error:", xhr);
+        Swal.fire({
+          icon: "error",
+          title: "Error!",
+          text: "Failed to delete the coupon. Please try again.",
+        });
+      },
+    });
+  }
+</script>
+
+<%- include("../../views/partials/admin/footer") %>

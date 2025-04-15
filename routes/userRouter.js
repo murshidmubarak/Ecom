@@ -11,6 +11,7 @@ const orderController = require("../controllers/user/orderController");
 
 
 
+
 router.get("/pageNotFound",userController.pageNotFound);
 router.get('/signup',userController.loadsignup);
 router.get("/",checkUserBlocked,userController.loadHomepage);
@@ -58,7 +59,7 @@ router.post("/change-password",profileController.changePasswordValid)
 router.post("/verify-changepassword-otp",profileController.verrifyChangePassOtp)
 
 
-router.get("/cart", userAuth, cartController.getCartPage)
+router.get("/cart", cartController.getCartPage)
 router.post("/addToCart",userAuth, cartController.addToCart)
 router.post("/changeQuantity", userAuth,cartController.changeQuantity)
 router.get("/deleteItem", userAuth, cartController.deleteProduct)
@@ -77,7 +78,9 @@ router.post("/singleProductId",userAuth,orderController.changeSingleProductStatu
 router.get("/downloadInvoice/:orderId",userAuth,orderController.downloadInvoice);
 router.post("/cancelSingleProduct",userAuth,orderController.cancelSingleProduct);
 router.post("/returnSingleProduct",userAuth,orderController.returnSingleProduct)
-
+router.post('/verifyPayment',userAuth,orderController.verifyPayment);
+ router.post("/applyCoupon",userAuth, orderController.applyCoupon);
+ 
 
 
 router.get("/addAddress", userAuth,profileController.addAddress);
@@ -85,6 +88,8 @@ router.post("/addAddress", userAuth,profileController.postAddAddress);
 router.get("/editAddress", userAuth,profileController.editAddress);
 router.post("/editAddress", userAuth,profileController.postEditAddress);
 router.get("/deleteAddress", userAuth,profileController.deleteAddress);
+
+
  
  
 module.exports = router;
