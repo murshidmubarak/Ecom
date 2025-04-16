@@ -40,7 +40,7 @@
                                     Pay Method: <strong><%= orders.payment %></strong><br>
                                     Status: <strong><%= orders.status.charAt(0).toUpperCase() + orders.status.slice(1) %></strong><br>
                                     Grand Total: <strong>₹<%= totalGrant.toLocaleString() %></strong><br>
-                                    Paid Amount: <strong>₹<%= totalPrice.toLocaleString() %></strong><br>
+                                    Paid Amount: <strong>₹<%= (totalPrice).toLocaleString() %></strong><br>
                                     Discount: <strong>₹<%= (totalGrant - totalPrice).toLocaleString() %></strong><br>
                                     Final Amount: <strong>₹<%= finalAmount.toLocaleString() %></strong>
                                 </p>

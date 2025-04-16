@@ -497,6 +497,7 @@ const cancelSingleProduct = async (req, res) => {
 
   try {
     const order = await Order.findOne({ _id: orderId });
+    console.log('sdgsdfsdf', order)
     if (!order) {
       console.log("Order not found for ID:", orderId);
       return res.status(404).json({ message: "Order not found" });
@@ -569,8 +570,7 @@ const cancelSingleProduct = async (req, res) => {
       console.log("User found:", { id: user._id, currentWallet: user.wallet });
 
       const oldWalletBalance = user.wallet || 0;
-      
-      user.wallet = oldWalletBalance + refundAmount;
+      user.wallet = oldWalletBalance + orderedItemPrice;
       const userSaveResult = await user.save();
       console.log("User wallet update attempted:", {
         oldBalance: oldWalletBalance,

@@ -103,7 +103,7 @@ async function sendVerificationEmail(email, otp) {
 const signup = async (req, res) => {
     try {
         const { name, email, password, cPassword, code } = req.body;
-console.log(req.body);
+        console.log(req.body);
 
         if (!name || !email || !password || !cPassword) {
             return res.json({ success: false, message: "All fields are required" });
@@ -176,7 +176,6 @@ const verifyOtp = async (req, res) => {
         const { otp: userOtp } = req.body;
         const sessionOtp = req.session.userOtp;
         const userData = req.session.userData;
-      console.log("M74LVSM74LVSM74LVSM74LVSM74LVSM74LVSM74LVS",userData)
         console.log("User-submitted OTP:", userOtp);
         console.log("Session OTP:", sessionOtp);
         console.log("Session User Data:", userData);
@@ -225,41 +224,54 @@ const verifyOtp = async (req, res) => {
                     await referrerWallet.save();
                     console.log("Created new wallet for referrer:", referrerWallet);
                 }
-                const referrerBalance = referrerWallet.transactions.reduce(
-                    (sum, tx) => sum + (tx.type.toLowerCase() === "credit" ? Number(tx.amount) : -Number(tx.amount)),
-                    0
-                );
+                const referrerBalance = referrerWallet.transactions.length > 0
+                    ? referrerWallet.transactions.sort(
+                        (a, b) => b.transactionDate - a.transactionDate
+                      )[0].balanceAfter || 0
+                    : 0;
+                const referralBonus = 100;
+                const newReferrerBalance = referrerBalance + referralBonus;
                 const referrerTransaction = {
                     transactionId: `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                    amount: 100,
+                    amount: referralBonus,
                     type: "credit",
                     description: "referral_bonus",
-                    balanceAfter: referrerBalance + 100,
+                    balanceAfter: newReferrerBalance,
                     status: "completed",
-                    transactionDate: Date.now()
+                    transactionDate: new Date()
                 };
                 referrerWallet.transactions.push(referrerTransaction);
                 await referrerWallet.save();
                 console.log("Referrer wallet transaction added:", referrerTransaction);
 
-                const referredWallet = new Wallet({
-                    userId: savedUser._id,
-                    transactions: [{
-                        transactionId: `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                        amount: 100,
-                        type: "credit",
-                        description: "referral_bonus",
-                        balanceAfter: 100,
-                        status: "completed",
-                        transactionDate: Date.now()
-                    }]
-                });
-                await referredWallet.save();
-                console.log("Referred user wallet transaction added:", referredWallet.transactions[0]);
-
+                // Update referrer's user.wallet
+                referrer.wallet = newReferrerBalance;
                 referrer.redeemedUsers.push(savedUser._id);
                 await referrer.save();
-                console.log("Referrer redeemedUsers updated:", referrer.redeemedUsers);
+                console.log("Referrer updated - wallet:", referrer.wallet, "redeemedUsers:", referrer.redeemedUsers);
+
+                let referredWallet = await Wallet.findOne({ userId: savedUser._id });
+                if (!referredWallet) {
+                    referredWallet = new Wallet({
+                        userId: savedUser._id,
+                        transactions: [{
+                            transactionId: `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                            amount: referralBonus,
+                            type: "credit",
+                            description: "referral_bonus",
+                            balanceAfter: referralBonus,
+                            status: "completed",
+                            transactionDate: new Date()
+                        }]
+                    });
+                    await referredWallet.save();
+                    console.log("Referred user wallet transaction added:", referredWallet.transactions[0]);
+                }
+
+                // Update referred user's user.wallet
+                savedUser.wallet = referralBonus;
+                await savedUser.save();
+                console.log("Referred user wallet updated:", savedUser.wallet);
             } else {
                 console.log("No valid referrer or user already referred");
             }
@@ -528,13 +540,31 @@ const loadProfile = async (req, res) => {
             return res.redirect("/login");
         }
 
-        let walletBalance = 0;
+        let walletBalance = user.wallet || 0; // Fallback to user.wallet
         if (wallet && wallet.transactions && wallet.transactions.length > 0) {
-            walletBalance = wallet.transactions.reduce((sum, tx) => {
-                const amount = Number(tx.amount) || 0;
-                const isCredit = tx.type.toLowerCase() === "credit";
-                return sum + (isCredit ? amount : -amount);
-            }, 0);
+            const latestTransaction = wallet.transactions.sort(
+                (a, b) => b.transactionDate - a.transactionDate
+            )[0];
+            if (latestTransaction && typeof latestTransaction.balanceAfter === 'number') {
+                walletBalance = latestTransaction.balanceAfter;
+
+                // Synchronize user.wallet if out of sync
+                if (user.wallet !== walletBalance) {
+                    console.log(`Synchronizing user.wallet: ${user.wallet} -> ${walletBalance}`);
+                    user.wallet = walletBalance;
+                    await user.save();
+                }
+            } else {
+                console.warn(`Invalid latestTransaction.balanceAfter: ${latestTransaction.balanceAfter}`);
+            }
+        } else {
+            console.log(`No wallet transactions found, using user.wallet: ${user.wallet}`);
+            if (!wallet && user.wallet !== 0) {
+                // Create empty wallet to align with user.wallet
+                const newWallet = new Wallet({ userId: user._id, transactions: [] });
+                await newWallet.save();
+                console.log(`Created empty wallet for user: ${user._id}`);
+            }
         }
 
         console.log("Profile data:", {
