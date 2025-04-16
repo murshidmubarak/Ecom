@@ -276,7 +276,7 @@
 
             <div class="form-group">
                 <label for="code">Referral Code</label>
-                <input type="text" id="email" name="code" placeholder="Coupen code" >
+                <input type="text" id="code" name="code"  placeholder="Coupen code" >
             </div>
 
             <div class="form-group">
@@ -333,6 +333,7 @@
 
                 const name = document.getElementById("fullName").value.trim();
                 const email = document.getElementById("email").value.trim();
+                const code = document.getElementById("code").value.trim();
                 const password = document.getElementById("password").value.trim();
                 const cPassword = document.getElementById("confirmPassword").value.trim();
 
@@ -362,7 +363,7 @@
                     const response = await fetch("/signup", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ name, email, password, cPassword })
+                        body: JSON.stringify({ name, email, password, cPassword,code })
                     });
 
                     if (!response.ok) {

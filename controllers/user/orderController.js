@@ -569,7 +569,8 @@ const cancelSingleProduct = async (req, res) => {
       console.log("User found:", { id: user._id, currentWallet: user.wallet });
 
       const oldWalletBalance = user.wallet || 0;
-      user.wallet = oldWalletBalance + orderedItemPrice;
+      
+      user.wallet = oldWalletBalance + refundAmount;
       const userSaveResult = await user.save();
       console.log("User wallet update attempted:", {
         oldBalance: oldWalletBalance,
