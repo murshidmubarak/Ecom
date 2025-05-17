@@ -141,28 +141,10 @@ const postNewPassword = async (req, res) => {
     }
 };
 
+
+
+
 /* const userProfile = async (req, res) => {
-    try {
-        const userId = req.session.user;
-        const [userData, addressData, orders] = await Promise.all([
-            User.findById(userId),
-            Address.findOne({ userId: userId }),
-            Order.find({ userId: userId }).populate('orderedItems.product').sort({ createdOn: -1 }) // Populates product details
-        ]);
-
-        res.render('profile', {
-            user: userData,
-            userAddress: addressData,
-            orders: orders || []
-        });
-    } catch (error) {
-        console.error('something went wrong to render profile page:', error);
-        res.redirect('/page404');
-    }
-}; */
-
-
-const userProfile = async (req, res) => {
     try {
       const userId = req.session.user;
   
@@ -195,8 +177,83 @@ const userProfile = async (req, res) => {
       console.error('Error rendering profile page:', error);
       res.redirect('/page404');
     }
-  };
+  }; */
 
+
+const userProfile = async (req, res) => {
+  try {
+    const userId = req.session.user;
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.redirect('/login');
+    }
+
+    // Pagination parameters
+    const ordersPage = parseInt(req.query.ordersPage) || 1;
+    const walletPage = parseInt(req.query.walletPage) || 1;
+    const limit = 3; // Number of records per page
+    const activeTab = req.query.tab || 'dashboard'; // Default to 'dashboard' if no tab specified
+
+    // Fetch user data
+    const userData = await User.findById(userId);
+    if (!userData) {
+      return res.redirect('/login');
+    }
+
+    // Fetch paginated orders
+    const ordersCount = await Order.countDocuments({ userId });
+    const orders = await Order.find({ userId })
+      .populate('orderedItems.product')
+      .sort({ createdOn: -1 })
+      .skip((ordersPage - 1) * limit)
+      .limit(limit);
+
+    // Fetch paginated wallet transactions
+    const wallet = await Wallet.findOne({ userId });
+    let walletTransactions = [];
+    let walletCount = 0;
+    if (wallet && wallet.transactions) {
+      walletCount = wallet.transactions.length;
+      walletTransactions = wallet.transactions
+        .slice((walletPage - 1) * limit, walletPage * limit)
+        .map(transaction => ({
+          ...transaction._doc,
+          transactionId: transaction.transactionId || 'N/A',
+          transactionDate: transaction.transactionDate || new Date(),
+          type: transaction.type || 'Unknown',
+          description: transaction.description || 'No description',
+          amount: transaction.amount || 0,
+          balanceAfter: transaction.balanceAfter || 0,
+          status: transaction.status || 'Unknown'
+        }));
+    }
+
+    const walletBalance = userData.wallet || 0;
+
+    // Calculate pagination metadata
+    const ordersTotalPages = Math.ceil(ordersCount / limit);
+    const walletTotalPages = Math.ceil(walletCount / limit);
+
+    res.render('profile', {
+      user: userData,
+      userAddress: (await Address.findOne({ userId })) || { address: [] },
+      orders: orders || [],
+      wallet,
+      walletBalance,
+      walletTransactions: walletTransactions || [],
+      moment,
+      ordersPage,
+      walletPage,
+      ordersTotalPages,
+      walletTotalPages,
+      limit,
+      activeTab // Pass activeTab to the template
+    });
+  } catch (error) {
+    console.error('Error rendering profile page:', error);
+    res.redirect('/page404');
+  }
+};
 // Optional: Route to view individual order details
 const getOrderDetails = async (req, res) => {
     try {

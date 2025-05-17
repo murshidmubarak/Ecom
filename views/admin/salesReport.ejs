@@ -40,21 +40,21 @@
 
   .btn {
     margin: 0 5px;
-    padding: 8px 15px; /* Increased padding for better look */
-    border-radius: 6px; /* Rounded corners */
+    padding: 8px 15px;
+    border-radius: 6px;
     text-decoration: none;
     transition: all 0.2s ease;
     background-color: #4a4a4a;
     border: 1px solid #5a5a5a;
     color: var(--text-color);
-    font-weight: 500; /* Slightly bold text */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
   .btn:hover {
     background-color: #5a5a5a;
-    transform: translateY(-1px); /* Slight lift on hover */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Enhanced shadow on hover */
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   }
 
   .btn-primary {
@@ -73,8 +73,8 @@
     background-color: #3c3c3c;
     color: var(--text-color);
     border: 1px solid #5a5a5a;
-    height: 38px; /* Match button height */
-    border-radius: 6px; /* Consistent rounding */
+    height: 38px;
+    border-radius: 6px;
   }
 
   .alert {
@@ -99,7 +99,6 @@
     color: #bbb;
   }
 
-  /* Card colors based on reference */
   .card-sales { border-left: 4px solid #007bff; }
   .card-orders { border-left: 4px solid #28a745; }
   .card-returned { border-left: 4px solid #dc3545; }
@@ -107,18 +106,40 @@
   .card-delivered { border-left: 4px solid #17a2b8; }
   .card-shipped { border-left: 4px solid #6f42c1; }
 
-  /* Custom styling for filter and button area */
   .filter-actions {
     display: flex;
     align-items: center;
-    gap: 10px; /* Space between elements */
+    gap: 10px;
   }
 
   .download-buttons {
     display: flex;
     justify-content: flex-end;
-    gap: 10px; /* Space between download buttons */
-    margin-left: auto; /* Push to the right */
+    gap: 10px;
+    margin-left: auto;
+  }
+
+  /* New styles for top products/categories and chart */
+  .list-group-item {
+    background-color: #3c3c3c;
+    color: var(--text-color);
+    border: 1px solid #5a5a5a;
+    margin-bottom: 5px;
+    border-radius: 6px;
+    padding: 10px;
+  }
+
+  .list-group-item span {
+    font-weight: bold;
+    color: #007bff;
+    margin-right: 5px;
+  }
+
+  .chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+    margin-bottom: 20px;
   }
 </style>
 
@@ -199,6 +220,59 @@
         <div class="stat-label">Shipped Orders</div>
       </div>
     </div>
+
+    <!-- Sales Graph -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5>Sales Trend</h5>
+      </div>
+      <div class="card-body">
+        <div class="chart-container">
+          <canvas id="salesChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top 10 Best-Selling Products -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5>Top 10 Best-Selling Products</h5>
+      </div>
+      <div class="card-body">
+        <% if (topProducts && topProducts.length > 0) { %>
+          <% topProducts.forEach((product, index) => { %>
+            <div class="list-group-item">
+              <span><%= index + 1 %></span> <%= product.name %> - Sold: <%= product.sold %> | Revenue: ₹<%= product.revenue.toFixed(2) %>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <div class="alert alert-info text-center">
+            No top-selling products found for the selected criteria.
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Top 10 Best-Selling Categories -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5>Top 10 Best-Selling Categories</h5>
+      </div>
+      <div class="card-body">
+        <% if (topCategories && topCategories.length > 0) { %>
+          <% topCategories.forEach((category, index) => { %>
+            <div class="list-group-item">
+              <span><%= index + 1 %></span> <%= category.name %> - Sold: <%= category.sold %> | Revenue: ₹<%= category.revenue.toFixed(2) %>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <div class="alert alert-info text-center">
+            No top-selling categories found for the selected criteria.
+          </div>
+        <% } %>
+      </div>
+    </div>
+
   <% } else { %>
     <div class="alert alert-info text-center">
       No orders found for the selected criteria.
@@ -207,6 +281,7 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
   <script>
     function dateWiseFilter() {
       const selectedDate = document.getElementById("selectedDate").value;
@@ -215,7 +290,6 @@
       }
     }
 
-    // Declare salesData and grandTotal as global variables for the script
     let salesData = [];
     let grandTotal = 0;
 
@@ -236,6 +310,55 @@
         date: "",
         payment: "",
         totalAmount: grandTotal
+      });
+    <% } %>
+
+    // Sales Chart
+    <% if (salesGraphData && salesGraphData.length > 0) { %>
+      const salesChartCtx = document.getElementById('salesChart').getContext('2d');
+      const salesLabels = <%- JSON.stringify(salesGraphData.map(item => item.date)) %>;
+      const salesValues = <%- JSON.stringify(salesGraphData.map(item => item.sales)) %>;
+
+      new Chart(salesChartCtx, {
+        type: 'line',
+        data: {
+          labels: salesLabels,
+          datasets: [
+            {
+              label: 'Sales',
+              data: salesValues,
+              fill: true,
+              backgroundColor: 'rgba(0, 123, 255, 0.1)',
+              borderColor: '#007bff',
+              tension: 0.1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Date',
+              },
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Sales (₹)',
+              },
+              beginAtZero: true,
+            },
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+            },
+          },
+        },
       });
     <% } %>
 

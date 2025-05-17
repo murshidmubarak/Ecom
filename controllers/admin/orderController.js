@@ -294,14 +294,15 @@ const approveReturnRequest = async (req, res) => {
       console.log("Order not found for ID:", orderId);
       return res.status(404).json({ message: "Order not found" });
     }
-    console.log("Order details:", { 
-      orderId: order._id, 
-      payment: order.payment, 
-      totalPrice: order.totalPrice, 
-      userId: order.userId 
+    console.log("Order details:", {
+      orderId: order._id,
+      payment: order.payment,
+      totalPrice: order.totalPrice,
+      finalAmount: order.finalAmount,
+      discount: order.discount,
+      couponApplied: order.couponApplied,
+      userId: order.userId,
     });
-
-    let walletUpdateAmount = 0;
 
     if (singleProductId) {
       // Single product return request
@@ -325,15 +326,47 @@ const approveReturnRequest = async (req, res) => {
       }
 
       if (action === "approve") {
-        walletUpdateAmount = order.orderedItems[productIndex].price;
-        const newPrice = order.totalPrice - walletUpdateAmount;
-        console.log("Single product return approved. Refund amount:", walletUpdateAmount, "New totalPrice:", newPrice);
+        const orderedItemPrice = order.orderedItems[productIndex].price;
+        const originalTotalPrice = order.totalPrice + order.discount;
+        const newTotalPrice = order.totalPrice - orderedItemPrice;
+        let newDiscount = order.discount;
+        let newFinalAmount = order.finalAmount;
+        let refundAmount = orderedItemPrice;
 
+        // Adjust discount and final amount if coupon applied
+        if (order.couponApplied.includes("true") && order.discount > 0) {
+          const priceProportion = newTotalPrice / originalTotalPrice;
+          newDiscount = Number((order.discount * priceProportion).toFixed(2));
+          newFinalAmount = Number((newTotalPrice - newDiscount).toFixed(2));
+          refundAmount = Number(
+            (orderedItemPrice - (order.discount * (orderedItemPrice / originalTotalPrice))).toFixed(2)
+          );
+          console.log("Discount calculation:", {
+            priceProportion,
+            newDiscount,
+            newFinalAmount,
+            refundAmount,
+          });
+        } else {
+          newFinalAmount = newTotalPrice;
+          console.log("No coupon applied, refund full item price:", refundAmount);
+        }
+
+        console.log("Single product return approved:", {
+          refundAmount,
+          newTotalPrice,
+          newDiscount,
+          newFinalAmount,
+        });
+
+        // Update order
         const filter = { _id: orderId };
         const update = {
           $set: {
             "orderedItems.$[elem].productStatus": "returned",
-            totalPrice: newPrice,
+            totalPrice: newTotalPrice,
+            finalAmount: newFinalAmount,
+            discount: newDiscount,
           },
         };
         const options = { arrayFilters: [{ "elem.product": oid }] };
@@ -351,66 +384,74 @@ const approveReturnRequest = async (req, res) => {
           product.quantity = parseInt(product.quantity) + order.orderedItems[productIndex].quantity;
           await product.save();
           console.log("Stock restored for product:", singleProductId, "New quantity:", product.quantity);
-        }
-
-        // Check if all items are returned
-        const updatedOrder = await Order.findOne({ _id: orderId });
-        const allReturned = updatedOrder.orderedItems.every(item => item.productStatus === "returned");
-        if (allReturned) {
-          await Order.updateOne({ _id: orderId }, { status: "returned" });
-          console.log("All items returned, order status set to 'returned'");
-        }
-
-        // Refund to wallet
-        console.log("Checking payment method for refund eligibility:", order.payment);
-        if (["razorpay", "online", "wallet", "cod"].includes(order.payment)) {
-          const user = await User.findById(order.userId);
-          if (!user) {
-            console.log("User not found for ID:", order.userId);
-            return res.status(404).json({ message: "User not found" });
-          }
-          console.log("User found:", { id: user._id, currentWallet: user.wallet });
-
-          const oldWalletBalance = user.wallet || 0;
-          user.wallet = oldWalletBalance + walletUpdateAmount;
-          const userSaveResult = await user.save();
-          console.log("User wallet update attempted:", {
-            oldBalance: oldWalletBalance,
-            refundAmount: walletUpdateAmount,
-            newBalance: user.wallet,
-            saveResult: { modifiedCount: userSaveResult.modifiedCount, wallet: userSaveResult.wallet }
-          });
-
-          if (userSaveResult.wallet !== user.wallet) {
-            console.log("User wallet save failed - balance mismatch");
-            return res.status(500).json({ message: "Failed to update user wallet" });
-          }
-
-          let userWallet = await Wallet.findOne({ userId: order.userId });
-          if (!userWallet) {
-            console.log("No wallet found for user. Creating new wallet.");
-            userWallet = new Wallet({ userId: order.userId, transactions: [] });
-          }
-
-          const transaction = {
-            amount: walletUpdateAmount,
-            type: "credit",
-            description: "refund",
-            orderId: orderId,
-            balanceAfter: user.wallet,
-            status: "completed",
-            transactionDate: Date.now()
-          };
-          userWallet.transactions.push(transaction);
-          userWallet.updatedAt = Date.now();
-          const walletSaveResult = await userWallet.save();
-          console.log("Wallet transaction added:", transaction, "Save result:", walletSaveResult);
-
-          res.status(200).json({ message: "Return request approved for product" });
         } else {
-          console.log("No refund processed - payment method not eligible:", order.payment);
-          res.status(200).json({ message: "Return request approved, no wallet refund (ineligible payment method)" });
+          console.log("Product not found for stock update:", singleProductId);
         }
+
+        // Check if all items are returned or cancelled
+        const updatedOrder = await Order.findOne({ _id: orderId });
+        const allReturnedOrCancelled = updatedOrder.orderedItems.every(
+          (item) => item.productStatus === "returned" || item.productStatus === "cancelled"
+        );
+        if (allReturnedOrCancelled) {
+          await Order.updateOne(
+            { _id: orderId },
+            {
+              status: "returned",
+              totalPrice: 0,
+              finalAmount: 0,
+              discount: 0,
+              couponApplied: ["false"],
+            }
+          );
+          console.log("All items returned or cancelled, order status set to 'returned'");
+        }
+
+        // Refund to wallet for all payment methods
+        const user = await User.findById(order.userId);
+        if (!user) {
+          console.log("User not found for ID:", order.userId);
+          return res.status(404).json({ message: "User not found" });
+        }
+        console.log("User found:", { id: user._id, currentWallet: user.wallet });
+
+        const oldWalletBalance = user.wallet || 0;
+        user.wallet = oldWalletBalance + refundAmount;
+        const userSaveResult = await user.save();
+        console.log("User wallet update:", {
+          oldBalance: oldWalletBalance,
+          refundAmount,
+          newBalance: user.wallet,
+          saveResult: { modifiedCount: userSaveResult.modifiedCount, wallet: userSaveResult.wallet },
+        });
+
+        if (userSaveResult.wallet !== user.wallet) {
+          console.log("User wallet save failed - balance mismatch");
+          return res.status(500).json({ message: "Failed to update user wallet" });
+        }
+
+        let userWallet = await Wallet.findOne({ userId: order.userId });
+        if (!userWallet) {
+          console.log("No wallet found for user. Creating new wallet.");
+          userWallet = new Wallet({ userId: order.userId, transactions: [] });
+        }
+
+        const transaction = {
+          transactionId: `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          amount: refundAmount,
+          type: "credit",
+          description: "refund",
+          orderId: orderId,
+          balanceAfter: user.wallet,
+          status: "completed",
+          transactionDate: Date.now(),
+        };
+        userWallet.transactions.push(transaction);
+        userWallet.updatedAt = Date.now();
+        const walletSaveResult = await userWallet.save();
+        console.log("Wallet transaction added:", transaction, "Save result:", walletSaveResult);
+
+        res.status(200).json({ message: "Return request approved for product", order: updatedOrder });
       } else if (action === "reject") {
         const filter = { _id: orderId };
         const update = { $set: { "orderedItems.$[elem].productStatus": "return-rejected" } };
@@ -427,14 +468,25 @@ const approveReturnRequest = async (req, res) => {
       }
 
       if (action === "approve") {
-        walletUpdateAmount = order.totalPrice;
-        console.log("Full order return approved. Refund amount:", walletUpdateAmount);
+        const refundAmount = order.finalAmount; // Refund the final amount (after discount)
+        console.log("Full order return approved. Refund amount:", refundAmount);
 
-        const orderUpdateResult = await Order.updateOne({ _id: orderId }, { status: "returned" });
+        // Update order status and reset prices
+        const orderUpdateResult = await Order.updateOne(
+          { _id: orderId },
+          {
+            status: "returned",
+            totalPrice: 0,
+            finalAmount: 0,
+            discount: 0,
+            couponApplied: ["false"],
+            "orderedItems.$[].productStatus": "returned",
+          }
+        );
         console.log("Order status update result:", orderUpdateResult);
 
+        // Restore stock for all items
         for (const item of order.orderedItems) {
-          item.productStatus = "returned";
           const product = await Product.findById(item.product);
           if (product) {
             product.quantity = parseInt(product.quantity) + item.quantity;
@@ -442,68 +494,59 @@ const approveReturnRequest = async (req, res) => {
             console.log("Stock restored for product:", item.product, "New quantity:", product.quantity);
           }
         }
-        await order.save();
-        console.log("Order saved with updated product statuses");
 
-        // Refund to wallet
-        console.log("Checking payment method for refund eligibility:", order.payment);
-        if (["razorpay", "online", "wallet", "cod"].includes(order.payment)) {
-          const user = await User.findById(order.userId);
-          if (!user) {
-            console.log("User not found for ID:", order.userId);
-            return res.status(404).json({ message: "User not found" });
-          }
-          console.log("User found:", { id: user._id, currentWallet: user.wallet });
-
-          const oldWalletBalance = user.wallet || 0;
-          user.wallet = oldWalletBalance + walletUpdateAmount;
-          const userSaveResult = await user.save();
-          console.log("User wallet update attempted:", {
-            oldBalance: oldWalletBalance,
-            refundAmount: walletUpdateAmount,
-            newBalance: user.wallet,
-            saveResult: { modifiedCount: userSaveResult.modifiedCount, wallet: userSaveResult.wallet }
-          });
-
-          if (userSaveResult.wallet !== user.wallet) {
-            console.log("User wallet save failed - balance mismatch");
-            return res.status(500).json({ message: "Failed to update user wallet" });
-          }
-
-          let userWallet = await Wallet.findOne({ userId: order.userId });
-          if (!userWallet) {
-            console.log("No wallet found for user. Creating new wallet.");
-            userWallet = new Wallet({ userId: order.userId, transactions: [] });
-          }
-
-          const transaction = {
-            amount: walletUpdateAmount,
-            type: "credit",
-            description: "refund",
-            orderId: orderId,
-            balanceAfter: user.wallet,
-            status: "completed",
-            transactionDate: Date.now()
-          };
-          userWallet.transactions.push(transaction);
-          userWallet.updatedAt = Date.now();
-          const walletSaveResult = await userWallet.save();
-          console.log("Wallet transaction added:", transaction, "Save result:", walletSaveResult);
-
-          res.status(200).json({ message: "Return request approved for order" });
-        } else {
-          console.log("No refund processed - payment method not eligible:", order.payment);
-          res.status(200).json({ message: "Return request approved, no wallet refund (ineligible payment method)" });
+        // Refund to wallet for all payment methods
+        const user = await User.findById(order.userId);
+        if (!user) {
+          console.log("User not found for ID:", order.userId);
+          return res.status(404).json({ message: "User not found" });
         }
+        console.log("User found:", { id: user._id, currentWallet: user.wallet });
+
+        const oldWalletBalance = user.wallet || 0;
+        user.wallet = oldWalletBalance + refundAmount;
+        const userSaveResult = await user.save();
+        console.log("User wallet update:", {
+          oldBalance: oldWalletBalance,
+          refundAmount,
+          newBalance: user.wallet,
+          saveResult: { modifiedCount: userSaveResult.modifiedCount, wallet: userSaveResult.wallet },
+        });
+
+        if (userSaveResult.wallet !== user.wallet) {
+          console.log("User wallet save failed - balance mismatch");
+          return res.status(500).json({ message: "Failed to update user wallet" });
+        }
+
+        let userWallet = await Wallet.findOne({ userId: order.userId });
+        if (!userWallet) {
+          console.log("No wallet found for user. Creating new wallet.");
+          userWallet = new Wallet({ userId: order.userId, transactions: [] });
+        }
+
+        const transaction = {
+          transactionId: `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          amount: refundAmount,
+          type: "credit",
+          description: "refund",
+          orderId: orderId,
+          balanceAfter: user.wallet,
+          status: "completed",
+          transactionDate: Date.now(),
+        };
+        userWallet.transactions.push(transaction);
+        userWallet.updatedAt = Date.now();
+        const walletSaveResult = await userWallet.save();
+        console.log("Wallet transaction added:", transaction, "Save result:", walletSaveResult);
+
+        const updatedOrder = await Order.findOne({ _id: orderId }).populate("orderedItems.product");
+        res.status(200).json({ message: "Return request approved for order", order: updatedOrder });
       } else if (action === "reject") {
-        await Order.updateOne({ _id: orderId }, { status: "delivered" });
-        for (const item of order.orderedItems) {
-          if (item.productStatus === "return-requested") {
-            item.productStatus = "return-rejected";
-          }
-        }
-        await order.save();
-        console.log("Return request rejected for order:", orderId);
+        const updateResult = await Order.updateOne(
+          { _id: orderId },
+          { status: "delivered", "orderedItems.$[].productStatus": "return-rejected" }
+        );
+        console.log("Return request rejected for order:", orderId, "Update result:", updateResult);
         res.status(200).json({ message: "Return request rejected for order" });
       }
     }

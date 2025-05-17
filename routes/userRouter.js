@@ -59,8 +59,8 @@ router.post("/change-password",profileController.changePasswordValid)
 router.post("/verify-changepassword-otp",profileController.verrifyChangePassOtp)
 
 
-router.get("/cart", cartController.getCartPage)
-router.post("/addToCart",userAuth, cartController.addToCart)
+router.get("/cart",checkUserBlocked, cartController.getCartPage)
+router.post("/addToCart", cartController.addToCart)
 router.post("/changeQuantity", userAuth,cartController.changeQuantity)
 router.get("/deleteItem", userAuth, cartController.deleteProduct)
 

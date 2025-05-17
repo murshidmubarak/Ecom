@@ -1,5 +1,8 @@
 <%- include("../../views/partials/user/header") %>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<!-- Updated: Added SweetAlert2 CDN for alerts -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <style>
   .btn {
       display: inline-block;
@@ -90,6 +93,7 @@
       background-color: #ff4c4c;
   }
 </style>
+
 <section class="hero">
   <div class="hero__slider owl-carousel">
       <div class="hero__items set-bg" data-setbg="img/hero/hero-1.jpg">
@@ -122,6 +126,7 @@
       </div>
   </div>
 </section>
+
 <section class="banner spad">
   <div class="container">
       <div class="row">
@@ -161,6 +166,7 @@
       </div>
   </div>
 </section>
+
 <section class="product spad">
   <div class="container">
       <div class="row">
@@ -177,7 +183,7 @@
                       <div class="product-img-action-wrap">
                           <div class="product-img product-img-zoom">
                               <a href="/productDetails?id=<%= products[i]._id %>">
-                                  <img class="default-img" src="uploads/<%= products[i].productImage[0] %>" alt="<%= products[i].productName %>">
+                                  <img class="default-img" src="Uploads/<%= products[i].productImage[0] %>" alt="<%= products[i].productName %>">
                               </a>
                           </div>
                           <a href="" class="wishlist-btn">
@@ -187,7 +193,8 @@
                       <div class="product-content-wrap">
                           <h6><%= products[i].productName %></h6>
                           <h5><%= products[i].salePrice %></h5>
-                          <a href="/addToCart">Add to cart</a>
+                          <!-- Updated: Changed button to use addToCart function instead of direct href -->
+                          <button class="btn" onclick="addToCart('<%= products[i]._id %>')">Add to cart</button>
                       </div>
                   </div>
               </div>
@@ -195,4 +202,68 @@
       </div>
   </div>
 </section>
+
+<!-- Updated: Added JavaScript for SweetAlert2 addToCart function -->
+<script>
+   
+        const isUserLoggedIn = <%- locals.user ? 'true' : 'false' %>
+
+    // Updated: Added simplified addToCart function with SweetAlert2 integration
+    async function addToCart(productId) {
+        if (!isUserLoggedIn) {
+            Swal.fire({
+                title: 'Login Required',
+                text: 'Please login to add items to cart',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#088178',
+                confirmButtonText: 'Login',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/login';
+                }
+            });
+            return;
+        }
+
+        try {
+            const response = await fetch('/addToCart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ productId })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Added to Cart',
+                    text: result.message,
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(() => {
+                    // Redirect to cart page after success
+                    window.location.href = '/cart';
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: result.message
+                });
+            }
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Something went wrong. Please try again.'
+            });
+        }
+    }
+</script>
+
 <%- include("../../views/partials/user/footer") %>

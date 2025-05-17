@@ -11,9 +11,9 @@ const getCartPage = async (req, res) => {
         const userId = req.session.user;
 
         const user = await User.findById(userId);
-        // if (!user) {
-        //     return res.redirect("/login");
-        // }
+         if (!user) {
+             return res.redirect("/login");
+         }
 
         const cart = await Cart.findOne({ userId }).populate("items.productId");
         const productIds = cart?.items.map(item => item.productId) || [];

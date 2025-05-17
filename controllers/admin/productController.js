@@ -57,7 +57,7 @@ const addProducts = async (req, res) => {
             });
         }
 
-        // Process images
+        
         const images = [];
         if (req.files && req.files.length > 0) {
             if (req.files.length < 3) {
@@ -105,7 +105,7 @@ const addProducts = async (req, res) => {
             productOffer: productOffer,
             createdOn: new Date(),
             quantity: quantity,
-            size: products.size || "", // Optional field
+            size: products.size || "",
             color: products.color,
             productImage: images,
         });

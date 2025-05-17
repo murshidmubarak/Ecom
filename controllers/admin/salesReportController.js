@@ -1,6 +1,7 @@
 const Order = require('../../models/orderSchema');
 const User = require('../../models/userSchema');
 const Product = require('../../models/productSchema');
+const Category = require('../../models/categorySchema');
 const moment = require('moment');
 const PDFDocument = require('pdfkit');
 const ExcelJS = require('exceljs');
@@ -8,11 +9,10 @@ const ExcelJS = require('exceljs');
 const getSalesReportPage = async (req, res) => {
   try {
     const { day, page = 1, date } = req.query;
-    const limit = 10; // Match frontend pagination
+    const limit = 10;
     const currentPage = parseInt(page) || 1;
-    let query = { status: { $in: ['confirmed', 'processing', 'shipped', 'delivered'] } }; // Exclude cancelled/returned
+    let query = { status: { $in: ['confirmed', 'processing', 'shipped', 'delivered'] } };
 
-    // Date-based filtering
     if (day) {
       if (day === 'salesToday') {
         query.createdOn = {
@@ -44,7 +44,6 @@ const getSalesReportPage = async (req, res) => {
       };
     }
 
-    // Fetch orders with pagination
     const totalOrders = await Order.countDocuments(query);
     const totalPages = Math.ceil(totalOrders / limit);
     const orders = await Order.find(query)
@@ -54,19 +53,93 @@ const getSalesReportPage = async (req, res) => {
       .skip((currentPage - 1) * limit)
       .limit(limit);
 
-    // Format data to match frontend
     const formattedOrders = orders.map(order => ({
       _id: order._id,
-      address: [order.address], // Match data[i].address[0].name
+      address: [order.address],
       product: order.orderedItems.map(item => ({
         _id: item.product._id,
         productName: item.product.productName,
-      })), // Include productName
+      })),
       createdOn: order.createdOn,
       payment: order.payment,
       status: order.status,
       totalPrice: order.totalPrice,
     }));
+
+    // Calculate top 10 best-selling products
+    const productSales = {};
+    for (const order of orders) {
+      for (const item of order.orderedItems) {
+        const productId = item.product._id.toString();
+        if (!productSales[productId]) {
+          productSales[productId] = {
+            name: item.product.productName,
+            sold: 0,
+            revenue: 0,
+          };
+        }
+        productSales[productId].sold += item.quantity;
+        productSales[productId].revenue += item.price * item.quantity;
+      }
+    }
+
+    const topProducts = Object.entries(productSales)
+      .map(([id, data]) => ({ id, ...data }))
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 10);
+
+    // Calculate top 10 best-selling categories
+    const allOrders = await Order.find(query)
+      .populate({
+        path: 'orderedItems.product',
+        populate: { path: 'category', select: 'name' },
+      });
+
+    const categorySales = {};
+    for (const order of allOrders) {
+      for (const item of order.orderedItems) {
+        const categoryName = item.product.category.name;
+        if (!categorySales[categoryName]) {
+          categorySales[categoryName] = {
+            sold: 0,
+            revenue: 0,
+          };
+        }
+        categorySales[categoryName].sold += item.quantity;
+        categorySales[categoryName].revenue += item.price * item.quantity;
+      }
+    }
+
+    const topCategories = Object.entries(categorySales)
+      .map(([name, data]) => ({ name, ...data }))
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 10);
+
+    // Prepare data for sales graph
+    const salesGraphData = [];
+    const startDate = query.createdOn?.$gte || moment().startOf('year').toDate();
+    const endDate = query.createdOn?.$lte || moment().endOf('year').toDate();
+    const diffDays = moment(endDate).diff(moment(startDate), 'days') + 1;
+    const interval = diffDays > 30 ? 'month' : 'day';
+
+    let currentDate = moment(startDate);
+    while (currentDate <= moment(endDate)) {
+      const nextDate = moment(currentDate).add(1, interval).startOf(interval);
+      const ordersInRange = await Order.find({
+        createdOn: {
+          $gte: currentDate.toDate(),
+          $lt: nextDate.toDate(),
+        },
+        status: { $in: ['confirmed', 'processing', 'shipped', 'delivered'] },
+      });
+
+      const totalSales = ordersInRange.reduce((sum, order) => sum + order.totalPrice, 0);
+      salesGraphData.push({
+        date: currentDate.format('YYYY-MM-DD'),
+        sales: totalSales,
+      });
+      currentDate = nextDate;
+    }
 
     res.render('salesReport', {
       data: formattedOrders,
@@ -77,6 +150,9 @@ const getSalesReportPage = async (req, res) => {
       salesMonthly: day === 'salesMonthly',
       salesYearly: day === 'salesYearly',
       date: date || '',
+      topProducts,
+      topCategories,
+      salesGraphData,
     });
   } catch (err) {
     console.error('Error in getSalesReportPage:', err);
@@ -86,7 +162,7 @@ const getSalesReportPage = async (req, res) => {
 
 const dateWiseFilter = async (req, res) => {
   try {
-    const { date } = req.query; // Changed to query for GET
+    const { date } = req.query;
     if (date) {
       res.redirect(`/admin/salesReport?date=${date}`);
     } else {

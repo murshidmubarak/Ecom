@@ -130,6 +130,7 @@
             padding: 8px;
             border: 1px solid #e9ecef;
             border-radius: 5px;
+            font-size: 0.9rem;
         }
         .coupon-section button {
             padding: 8px 15px;
@@ -139,6 +140,48 @@
             color: #28a745;
             font-weight: 600;
             margin-bottom: 10px;
+        }
+        .debug-coupons {
+            margin-top: 40px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+        .debug-coupons h5 {
+            font-weight: 700;
+            color: #111111;
+            margin-bottom: 20px;
+        }
+        .debug-coupons ul {
+            list-style: none;
+            padding: 0;
+        }
+        .debug-coupons li {
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .debug-coupons .no-coupons {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        .swal2-custom-popup {
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .swal2-custom-title {
+            font-size: 1.5rem;
+            color: #111111;
+        }
+        .swal2-custom-content {
+            font-size: 1rem;
+            color: #333;
+        }
+        /* UPDATED: Style for COD message */
+        #codMessage {
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: block;
         }
         @media (max-width: 768px) {
             body {
@@ -202,8 +245,8 @@
                                                     <td>₹<%= ((item.productDetails.salePrice || 0) * (item.cart.quantity || 0)).toFixed(2) %></td>
                                                     <td>
                                                         <a class="btn btn-sm btn-danger" 
-                                                           href="/deleteItem?id=<%= item.productDetails._id %>"
-                                                           onclick="return confirm('Are you sure you want to remove this product from cart?')">
+                                                           href="javascript:void(0)"
+                                                           onclick="confirmRemove('<%= item.productDetails._id %>')">
                                                             <i class="fa fa-trash"></i> Remove
                                                         </a>
                                                     </td>
@@ -274,23 +317,28 @@
                 <div class="col-lg-4 section-gap">
                     <div class="payment-method mb-4">
                         <h5>Payment Method</h5>
+                        <!-- UPDATED: Added conditional disabled and checked attributes, and COD message -->
                         <div class="form-check">
                             <input class="form-check-input payment" 
                                    type="radio" 
                                    value="cod" 
                                    name="payment_option" 
-                                   id="CashOnDelivery" 
-                                   checked>
+                                   id="CashOnDelivery"
+                                   <%= grandTotal < 1000 ? 'disabled' : 'checked' %>>
                             <label class="form-check-label" for="CashOnDelivery">
                                 Cash on Delivery
                             </label>
+                            <small id="codMessage" class="form-text text-danger" style="<%= grandTotal >= 1000 ? 'display: none;' : '' %>">
+                                No Cash on Delivery for orders below ₹1000
+                            </small>
                         </div>
                         <div class="form-check mt-2">
                             <input class="form-check-input payment" 
                                    type="radio" 
                                    value="razorpay" 
                                    name="payment_option" 
-                                   id="Razorpay">
+                                   id="Razorpay"
+                                   <%= grandTotal < 1000 ? 'checked' : '' %>>
                             <label class="form-check-label" for="Razorpay">
                                 Online Payment (Razorpay)
                             </label>
@@ -309,15 +357,15 @@
                     <div class="order-summary">
                         <h5>Order Summary</h5>
                         <div class="coupon-section">
-                            <input type="text" id="couponCode" placeholder="Enter coupon code">
-                            <button class="btn btn-outline-primary" onclick="applyCoupon()">Apply</button>
+                            <input type="text" id="couponCode" class="form-control" placeholder="Enter coupon code">
+                            <button class="btn btn-outline-primary" id="applyCouponBtn">Apply</button>
                         </div>
                         <div id="couponMessage" class="coupon-applied" style="display: none;"></div>
                         <table class="table">
                             <tbody>
                                 <tr>
                                     <th>Subtotal</th>
-                                    <td>₹<%= grandTotal.toFixed(2) %></td>
+                                    <td>₹<%= typeof grandTotal === 'number' ? grandTotal.toFixed(2) : '0.00' %></td>
                                 </tr>
                                 <tr id="couponDiscountRow" style="display: none;">
                                     <th>Coupon Discount</th>
@@ -331,7 +379,7 @@
                                     <th>Total</th>
                                     <td>
                                         <span class="fw-bold" id="totalValue">
-                                            ₹<%= grandTotal.toFixed(2) %>
+                                            ₹<%= typeof grandTotal === 'number' ? grandTotal.toFixed(2) : '0.00' %>
                                         </span>
                                     </td>
                                 </tr>
@@ -343,12 +391,40 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- Debug Section for Available Coupons -->
+                <div class="col-lg-12 section-gap">
+                    <div class="debug-coupons">
+                        <h5>Available Coupons</h5>
+                        <% if (coupons && coupons.length > 0) { %>
+                            <ul>
+                                <% coupons.forEach(coupon => { %>
+                                    <li>
+                                        <%= coupon.couponName %>: ₹<%= coupon.offerPrice %> off (Min. ₹<%= coupon.minimumPrice %>)
+                                        <br>
+                                        Status: <%= coupon.status %>, Active: <%= coupon.isActive ? 'Yes' : 'No' %>, 
+                                        Start: <%= coupon.startDate.toISOString().split('T')[0] %>, 
+                                        End: <%= coupon.endDate.toISOString().split('T')[0] %>
+                                    </li>
+                                <% }) %>
+                            </ul>
+                        <% } else { %>
+                            <p class="no-coupons">No coupons available</p>
+                        <% } %>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- Scripts -->
-    <script src="/js/jquery-3.3.1.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script>
+        // Fallback for jQuery if CDN fails
+        if (typeof jQuery === 'undefined') {
+            document.write('<script src="/js/jquery-3.3.1.min.js"><\/script>');
+        }
+    </script>
     <script src="/js/bootstrap.min.js"></script>
     <script src="/js/jquery.nice-select.min.js"></script>
     <script src="/js/jquery.nicescroll.min.js"></script>
@@ -357,78 +433,192 @@
     <script src="/js/jquery.slicknav.js"></script>
     <script src="/js/mixitup.min.js"></script>
     <script src="/js/owl.carousel.min.js"></script>
-    <script src="/js/main.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+    <script src="/js/main.js"></script>
 
     <script>
+        // Debug: Log script loading status
+        console.log('Script section loaded at:', new Date().toISOString());
+        console.log('jQuery status:', typeof jQuery !== 'undefined' ? `Loaded, version ${jQuery().jquery}` : 'Not loaded');
+        console.log('SweetAlert2 status:', typeof Swal !== 'undefined' ? 'Loaded' : 'Not loaded');
+        console.log('Available coupons:', <%- JSON.stringify(coupons || []) %>);
+        console.log('Cart data:', <%- JSON.stringify(product || []) %>);
+        console.log('Grand Total:', <%= grandTotal %>);
+
         let appliedCoupon = null;
 
+        // Ensure DOM is fully loaded before binding events
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM fully loaded at:', new Date().toISOString());
+
+            // Verify button exists
+            const applyButton = document.getElementById('applyCouponBtn');
+            if (!applyButton) {
+                console.error('Apply button (#applyCouponBtn) not found in DOM');
+                return;
+            }
+            console.log('Apply button found:', applyButton);
+
+            // Remove any existing listeners to prevent duplicates
+            applyButton.removeEventListener('click', applyCoupon);
+            applyButton.addEventListener('click', function(event) {
+                console.log('Apply button clicked at:', new Date().toISOString());
+                applyCoupon();
+            });
+
+            // Verify input element exists
+            const couponInput = document.getElementById('couponCode');
+            if (!couponInput) {
+                console.error('Coupon input (#couponCode) not found in DOM');
+            } else {
+                console.log('Coupon input found:', couponInput);
+            }
+
+            // Handle error message on page load
+            <% if (errorMessage) { %>
+                Swal.fire({
+                    title: 'Error',
+                    text: '<%= errorMessage %>',
+                    icon: 'error',
+                    confirmButtonText: 'Go to Cart',
+                    allowOutsideClick: false,
+                    confirmButtonColor: '#3085d6',
+                    customClass: {
+                        popup: 'swal2-custom-popup',
+                        title: 'swal2-custom-title',
+                        content: 'swal2-custom-content'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/cart';
+                    }
+                });
+            <% } %>
+        });
+
+        function confirmRemove(productId) {
+            console.log('confirmRemove called for productId:', productId);
+            Swal.fire({
+                title: 'Remove Item?',
+                text: "Are you sure you want to remove this item from your cart?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, remove it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = `/deleteItem?id=${productId}`;
+                }
+            });
+        }
+
         async function applyCoupon() {
-            const couponCode = $("#couponCode").val().trim();
+            console.log('applyCoupon: Function called');
+            
+            // Verify jQuery availability
+            if (typeof jQuery === 'undefined') {
+                console.error('applyCoupon: jQuery is not available');
+                alert('jQuery is not loaded. Please check the console for errors.');
+                return;
+            }
+
+            // Verify SweetAlert2 availability
+            if (typeof Swal === 'undefined') {
+                console.error('applyCoupon: SweetAlert2 is not available');
+                alert('SweetAlert2 is not loaded. Please check the console for errors.');
+                return;
+            }
+
+            const couponCode = $("#couponCode").val()?.trim();
+            console.log('applyCoupon: Entered coupon:', couponCode);
+
             if (!couponCode) {
+                console.log('applyCoupon: No coupon entered');
                 Swal.fire({
                     title: "Error",
                     text: "Please enter a coupon code",
                     icon: "error",
                     timer: 3000,
+                    confirmButtonColor: '#3085d6'
                 });
                 return;
             }
 
             try {
-                console.log("Applying coupon:", { couponCode, totalPrice: <%= grandTotal %> });
+                const totalPrice = <%= typeof grandTotal === 'number' ? grandTotal : 0 %>;
+                console.log('applyCoupon: Preparing AJAX request', { couponCode, totalPrice });
+
                 const response = await $.ajax({
                     url: "/applyCoupon",
                     method: "POST",
-                    data: {
+                    contentType: "application/json",
+                    data: JSON.stringify({
                         couponCode: couponCode,
-                        totalPrice: <%= grandTotal %>
-                    },
+                        totalPrice: totalPrice
+                    })
                 });
 
-                console.log("Apply coupon response:", response);
+                console.log('applyCoupon: Response received', response);
 
                 if (response.success) {
                     appliedCoupon = {
                         discount: response.discount,
                         couponName: response.couponName,
                     };
-                    const newTotal = <%= grandTotal %> - response.discount;
+                    const newTotal = totalPrice - response.discount;
                     $("#couponMessage")
-                        .text(
-                            `Coupon "${response.couponName}" applied! ₹${response.discount.toFixed(2)} off`
-                        )
+                        .text(`Coupon "${response.couponName}" applied! ₹${response.discount.toFixed(2)} off`)
                         .show();
                     $("#couponDiscount").text(`-₹${response.discount.toFixed(2)}`);
                     $("#couponDiscountRow").show();
                     $("#totalValue").text(`₹${newTotal.toFixed(2)}`);
+
+                    // UPDATED: Update COD availability based on new total
+                    if (newTotal < 1000) {
+                        $("#CashOnDelivery").prop("disabled", true);
+                        $("#codMessage").show();
+                        // If COD was selected, switch to Razorpay
+                        if ($("#CashOnDelivery").is(":checked")) {
+                            $("#Razorpay").prop("checked", true);
+                        }
+                    } else {
+                        $("#CashOnDelivery").prop("disabled", false);
+                        $("#codMessage").hide();
+                    }
+
                     Swal.fire({
                         title: "Success",
                         text: `Coupon "${response.couponName}" applied successfully`,
                         icon: "success",
                         timer: 3000,
+                        confirmButtonColor: '#3085d6'
                     });
                 } else {
+                    console.log('applyCoupon: Response error', response.error);
                     Swal.fire({
                         title: "Error",
                         text: response.error || "Invalid coupon code",
                         icon: "error",
                         timer: 3000,
+                        confirmButtonColor: '#3085d6'
                     });
                 }
             } catch (error) {
-                console.error("Coupon apply error:", error.responseJSON || error);
+                console.error('applyCoupon: AJAX error', error);
                 const errorMessage = error.responseJSON?.error || "Failed to apply coupon. Please try again.";
                 Swal.fire({
                     title: "Error",
                     text: errorMessage,
                     icon: "error",
                     timer: 3000,
+                    confirmButtonColor: '#3085d6'
                 });
             }
         }
 
         async function placeOrder(userId) {
+            console.log('placeOrder: Started', { userId });
             const address = $("input[name='selectedAddress']:checked").val();
             const totalPrice = parseFloat(
                 document.getElementById("totalValue").textContent.replace("₹", "")
@@ -437,34 +627,39 @@
             const walletBalance = parseFloat('<%= walletBalance ? walletBalance : 0 %>');
 
             if (!address) {
-                return Swal.fire({
+                Swal.fire({
                     title: "No Address Selected",
                     text: "Please select a delivery address.",
                     icon: "error",
                     timer: 3000,
+                    confirmButtonColor: '#3085d6'
                 });
+                return;
             }
 
             if (paymentMethod === "wallet" && walletBalance < totalPrice) {
-                return Swal.fire({
+                Swal.fire({
                     title: "Insufficient Wallet Balance",
                     text: "Your wallet does not have enough funds to complete this order.",
                     icon: "error",
                     timer: 3000,
+                    confirmButtonColor: '#3085d6'
                 });
+                return;
             }
 
             try {
                 const response = await $.ajax({
                     url: "/orderPlaced",
                     method: "POST",
-                    data: {
+                    contentType: "application/json",
+                    data: JSON.stringify({
                         totalPrice,
                         addressId: address,
                         paymentMethod,
                         couponApplied: !!appliedCoupon,
                         discount: appliedCoupon ? appliedCoupon.discount : 0,
-                    },
+                    })
                 });
 
                 if (response.error) {
@@ -473,6 +668,7 @@
                         text: response.error,
                         icon: "error",
                         timer: 3000,
+                        confirmButtonColor: '#3085d6'
                     });
                     return;
                 }
@@ -485,6 +681,8 @@
                         showCancelButton: true,
                         confirmButtonText: "View Order",
                         cancelButtonText: "Continue Shopping",
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#6c757d'
                     }).then((result) => {
                         if (result.isConfirmed) {
                             location.href = `/orderDetails?id=${response.orderId}`;
@@ -505,15 +703,13 @@
                                 const verifyResponse = await $.ajax({
                                     url: "/verifyPayment",
                                     method: "POST",
-                                    data: {
+                                    contentType: "application/json",
+                                    data: JSON.stringify({
                                         orderId: response.orderId,
-                                        razorpay_payment_id:
-                                            razorpayResponse.razorpay_payment_id,
-                                        razorpay_order_id:
-                                            razorpayResponse.razorpay_order_id,
-                                        razorpay_signature:
-                                            razorpayResponse.razorpay_signature,
-                                    },
+                                        razorpay_payment_id: razorpayResponse.razorpay_payment_id,
+                                        razorpay_order_id: razorpayResponse.razorpay_order_id,
+                                        razorpay_signature: razorpayResponse.razorpay_signature,
+                                    })
                                 });
 
                                 if (verifyResponse.success) {
@@ -524,6 +720,8 @@
                                         showCancelButton: true,
                                         confirmButtonText: "View Order",
                                         cancelButtonText: "Continue Shopping",
+                                        confirmButtonColor: '#3085d6',
+                                        cancelButtonColor: '#6c757d'
                                     }).then((result) => {
                                         if (result.isConfirmed) {
                                             location.href = `/orderDetails?id=${verifyResponse.orderId}`;
@@ -538,14 +736,14 @@
                                     title: "Payment Verification Failed",
                                     text: "Please contact support",
                                     icon: "error",
+                                    confirmButtonColor: '#3085d6'
                                 });
                             }
                         },
                         prefill: {
                             name: "<%= user.name %>",
                             email: "<%= user.email %>",
-                            contact:
-                                "<%= userAddress && userAddress.address.length > 0 ? userAddress.address[0].phone : '' %>",
+                            contact: "<%= userAddress && userAddress.address.length > 0 ? userAddress.address[0].phone : '' %>",
                         },
                         theme: {
                             color: "#111111",
@@ -562,6 +760,7 @@
                     text: "Failed to place order. Please try again.",
                     icon: "error",
                     timer: 5000,
+                    confirmButtonColor: '#3085d6'
                 });
             }
         }
