@@ -1,4 +1,3 @@
-// controllers/admin/coupenController.js
 const Coupon = require("../../models/coupenSchema");
 
 const loadCoupen = async (req, res) => {
@@ -21,22 +20,10 @@ const createCoupon = async (req, res) => {
     const todayDateObj = new Date();
     todayDateObj.setHours(0, 0, 0, 0);
 
-    if (sDateObj > eDateObj) {
-      return res.status(400).json({ error: "End date must be after start date" });
+    const existingCoupon = await Coupon.findOne({ couponName });
+    if (existingCoupon) {
+      return res.status(400).json({ success: false, message: "Coupon name already existssssss" });
     }
-    if (sDateObj <= todayDateObj) {
-      return res.status(400).json({ error: "Start date must be today or later" });
-    }
-    if (!/^[A-Za-z0-9]{1,50}$/.test(couponName)) {
-      return res.status(400).json({ error: "Invalid coupon name" });
-    }
-    if (isNaN(offerPrice) || isNaN(minimumPrice) || offerPrice >= minimumPrice) {
-      return res.status(400).json({ error: "Offer price must be less than minimum price" });
-    }
-    if (!["Active", "Expired", "Inactive"].includes(status)) {
-      return res.status(400).json({ error: "Invalid status" });
-    }
-
     const newCoupon = new Coupon({
       couponName,
       startDate: sDateObj,
@@ -45,16 +32,19 @@ const createCoupon = async (req, res) => {
       minimumPrice: parseFloat(minimumPrice),
       status, // Use status from form
     });
+     await newCoupon.save();
+    return res.status(200).json({ success: true, message: "Coupon created successfully" });
 
-    await newCoupon.save();
+   
+
     
     return res.redirect("/admin/coupen");
   } catch (error) {
     console.error("Error creating coupon:", error);
     if (error.code === 11000) {
-      return res.status(400).json({ error: "Coupon name already exists" });
+      return res.status(400).json({ success: false, message: "Coupon name already exists" });
     }
-    return res.status(500).json({ error: "Failed to create coupon" });
+    return res.status(500).json({ success: false, message: "Failed to create coupon" });
   }
 };
 
@@ -68,20 +58,9 @@ const editCoupon = async (req, res) => {
     const todayDateObj = new Date();
     todayDateObj.setHours(0, 0, 0, 0);
 
-    if (sDateObj > eDateObj) {
-      return res.status(400).json({ error: "End date must be after start date" });
-    }
-    if (sDateObj <= todayDateObj) {
-      return res.status(400).json({ error: "Start date must be today or later" });
-    }
-    if (!/^[A-Za-z0-9]{1,50}$/.test(couponName)) {
-      return res.status(400).json({ error: "Invalid coupon name" });
-    }
-    if (isNaN(offerPrice) || isNaN(minimumPrice) || offerPrice >= minimumPrice) {
-      return res.status(400).json({ error: "Offer price must be less than minimum price" });
-    }
-    if (!["Active", "Expired", "Inactive"].includes(status)) {
-      return res.status(400).json({ error: "Invalid status" });
+   const existingCoupon = await Coupon.findOne({ couponName });
+    if (existingCoupon) {
+      return res.status(400).json({ success: false, message: "Coupon name already existssssss" });
     }
 
     const updatedCoupon = await Coupon.findByIdAndUpdate(
@@ -98,11 +77,14 @@ const editCoupon = async (req, res) => {
       { new: true, runValidators: true }
     );
 
-    if (!updatedCoupon) {
-      return res.status(404).json({ error: "Coupon not found" });
-    }
+     await updatedCoupon.save();
+    return res.status(200).json({ success: true, message: "Coupon updated successfully" });
 
-    return res.redirect("/admin/coupen");
+    // if (!updatedCoupon) {
+    //   return res.status(404).json({ error: "Coupon not found" });
+    // }
+
+    // return res.redirect("/admin/coupen");
   } catch (error) {
     console.error("Error editing coupon:", error);
     if (error.code === 11000) {

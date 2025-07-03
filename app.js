@@ -5,6 +5,8 @@ const fs = require("fs")
 const env = require("dotenv").config();
 const session = require("express-session")
 const nocache=require('nocache')
+const csurf = require("csurf");
+const cookieParser = require("cookie-parser");
  
 const db = require("./config/db");
 const userRouter = require("./routes/userRouter")
@@ -16,6 +18,8 @@ db();
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
 app.use(session({
     secret:process.env.SESSION_SECRET,
     resave:false,
@@ -26,6 +30,41 @@ app.use(session({
         maxAge:72*60*66*1000
     }
 }))
+
+// const csrfProtection = csurf({ cookie: true });
+// app.use((req, res, next) => {
+//   csrfProtection(req, res, (err) => {
+//     if (err && err.code === "EBADCSRFTOKEN") {
+//       return res.status(403).json({ message: "Invalid CSRF token" });
+//     }
+//     res.locals.csrfToken = req.csrfToken ? req.csrfToken() : null;
+//     next(err);
+//   });
+// });
+const csrfProtection = csurf({ cookie: true });
+
+// Apply csrf middleware globally
+app.use(csrfProtection);
+
+// Make token available in EJS views
+app.use((req, res, next) => {
+  res.locals.csrfToken = req.csrfToken();
+  next();
+});
+
+// Optional: CSRF error handler
+app.use((err, req, res, next) => {
+  if (err.code === 'EBADCSRFTOKEN') {
+    // return res.status(403).render("csrfError", { message: "Invalid CSRF token" });
+    // return res.status(403).render("csrfError", { message: "Invalid CSRF token" });
+   console.log('req.body._csrf:', res.locals.csrfToken);
+
+
+    return res.status(403).json({success: false, message: "Invalid CSRF token" });
+
+  }
+  next(err);
+});
 
 app.use(passport.initialize());
 app.use(passport.session());

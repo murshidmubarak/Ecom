@@ -37,8 +37,15 @@
                             <div class="text">
                                 <h6 class="mb-2" style="font-size: 1.1rem; color: #1a1a1a;">Order Info</h6>
                                 <p class="mb-0" style="color: #6c757d; font-size: 0.95rem;">
-                                    Pay Method: <strong><%= orders.payment %></strong><br>
-                                    Status: <strong><%= orders.status.charAt(0).toUpperCase() + orders.status.slice(1) %></strong><br>
+                                    Pay Method: <strong><%= orders.payment.charAt(0).toUpperCase() + orders.payment.slice(1) %></strong><br>
+                                    Order Status: <strong><%= orders.status.charAt(0).toUpperCase() + orders.status.slice(1) %></strong><br>
+                                    <% if (orders.payment === 'cod') { %>
+                                        Payment Status: <strong><%= orders.status === 'delivered' ? 'Successful' : 'Pending' %></strong><br>
+                                    <% } else if (orders.payment === 'wallet') { %>
+                                        Payment Status: <strong>Successful</strong><br>
+                                    <% } else if (orders.payment === 'online' || orders.payment === 'failed') { %>
+                                        Payment Status: <strong><%= (orders.status === 'confirmed' || orders.status === 'delivered') ? 'Successful' : 'Pending' %></strong><br>
+                                    <% } %>
                                     Grand Total: <strong>₹<%= totalGrant.toLocaleString() %></strong><br>
                                     Paid Amount: <strong>₹<%= (totalPrice).toLocaleString() %></strong><br>
                                     Discount: <strong>₹<%= (totalGrant - totalPrice).toLocaleString() %></strong><br>
@@ -63,7 +70,7 @@
                                 <% } else { %>
                                     <p class="mb-2" style="color: #6c757d; font-size: 0.95rem;">Address not available</p>
                                 <% } %>
-                                <% if (orders.status === "delivered" || orders.status === "Delivered") { %>
+                                <% if (orders.status === 'delivered' || orders.status === 'Delivered') { %>
                                     <a href="/downloadInvoice/<%= orders._id %>" class="btn btn-sm" style="background-color: #007bff; color: #fff; border-radius: 5px; padding: 6px 12px; transition: background-color 0.2s;">
                                         <i class="material-icons" style="vertical-align: middle;">file_download</i> Download Invoice
                                     </a>
@@ -72,6 +79,18 @@
                         </article>
                     </div>
                 </div>
+
+                <!-- Action Buttons -->
+                <% if (orders.status === 'confirmed' || (orders.payment === 'failed' && orders.status === 'pending')) { %>
+                    <div style="margin-bottom: 20px;">
+                        <% if (orders.payment === 'failed' && orders.status === 'pending') { %>
+                            <button class="btn btn-sm btn-primary" onclick="retryPayment('<%= orders.orderId %>')" style="border-radius: 5px; padding: 6px 12px; transition: background-color 0.2s; margin-right: 10px;">Retry Payment</button>
+                        <% } %>
+                        <% if (orders.status === 'confirmed') { %>
+                            <button class="btn btn-sm btn-danger" onclick="confirmCancelOrder('<%= orders._id %>')" style="border-radius: 5px; padding: 6px 12px; transition: background-color 0.2s;">Cancel Order</button>
+                        <% } %>
+                    </div>
+                <% } %>
 
                 <!-- Order Items Table -->
                 <div class="table-responsive">
@@ -92,7 +111,7 @@
                                     <tr style="border-bottom: 1px solid #e9ecef;">
                                         <td class="text-center" style="padding: 20px;">
                                             <a href="#" class="itemside d-flex justify-content-center">
-                                                <img src="/uploads/<%= item.product.productImage[0] %>" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);" alt="<%= item.product.productName %>">
+                                                <img src="/Uploads/<%= item.product.productImage[0] %>" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);" alt="<%= item.product.productName %>">
                                             </a>
                                         </td>
                                         <td class="text-center" style="padding: 20px;">
@@ -118,10 +137,9 @@
                                                 <span style="color: #991b1b; font-style: italic;">Return Rejected</span>
                                             <% } else { %>
                                                 <% if (orders.status === "confirmed") { %>
-                                                    <button class="btn btn-sm btn-danger" onclick="confirmCancelOrder('<%= orders._id %>')" style="margin-right: 5px; border-radius: 5px; padding: 6px 12px; transition: background-color 0.2s;">Cancel Order</button>
                                                     <button class="btn btn-sm btn-warning" onclick="confirmCancelSingleProduct('<%= orders._id %>', '<%= item.product._id %>')" style="border-radius: 5px; padding: 6px 12px; transition: background-color 0.2s;">Cancel Product</button>
                                                 <% } else if (orders.status === "shipped" || orders.status === "delivered") { %>
-                                                    <button class="btn btn-sm btn-warning" onclick="confirmReturnSingleProduct('<%= orders._id %>', '<%= item.product._id %>')" style="border-radius: 5px; padding: 6px 12px; transition: background-color 0.2s;">Request Return</button>
+                                                    <button class="btn btn-sm btn-warning" onclick="showReturnModal('<%= orders._id %>', '<%= item.product._id %>')" style="border-radius: 5px; padding: 6px 12px; transition: background-color 0.2s;">Request Return</button>
                                                 <% } %>
                                             <% } %>
                                         </td>
@@ -139,27 +157,44 @@
             </div>
         </div>
     </section>
+
+    <!-- Return Request Modal -->
+    <div class="modal fade" id="returnModal" tabindex="-1" aria-labelledby="returnModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="returnModalLabel">Request Return</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Please provide the reason for returning this product:</p>
+                    <textarea id="returnReason" class="form-control" rows="4" placeholder="Enter return reason" required></textarea>
+                    <input type="hidden" id="modalOrderId">
+                    <input type="hidden" id="modalProductId">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="submitReturnRequest()">Submit Return</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
 
-<script src="assets/js/vendors/jquery-3.6.0.min.js"></script>
-<script src="assets/js/vendors/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+<script src="/js/jquery-3.3.1.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <script>
+console.log('orderDetails.ejs loaded at:', new Date().toISOString());
+console.log('Order ID:', '<%= orders.orderId %>');
+console.log('Order Status:', '<%= orders.status %>');
+console.log('Payment Status:', '<%= orders.payment %>');
+
 function confirmCancelOrder(orderId) {
-    Swal.fire({
-        title: 'Confirm Cancel Order',
-        text: 'Are you sure you want to cancel this entire order?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#007bff',
-        cancelButtonColor: '#dc3545',
-        confirmButtonText: 'Yes, cancel it!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            cancelOrder(orderId);
-        }
-    });
+    if (confirm('Are you sure you want to cancel this entire order?')) {
+        cancelOrder(orderId);
+    }
 }
 
 function cancelOrder(orderId) {
@@ -170,41 +205,142 @@ function cancelOrder(orderId) {
         data: JSON.stringify({ orderId: orderId }),
         success: (response) => {
             if (response.message === "Order cancelled successfully") {
-                Swal.fire({
-                    title: 'Order Cancelled',
-                    text: 'The entire order has been cancelled successfully.',
-                    icon: 'success',
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    window.location.reload();
-                });
+                alert('The entire order has was cancelled successfully.');
+                window.location.reload();
             }
         },
         error: (error) => {
-            Swal.fire({
-                title: 'Error',
-                text: "Error cancelling order: " + error.responseText,
-                icon: 'error',
-                confirmButtonText: 'OK'
+            alert("Error cancelling order: " + (error.responseJSON?.message || error.responseText));
+        }
+    });
+}
+
+async function retryPayment(orderId) {
+    console.log('retryPayment: Initiated for orderId:', orderId);
+    try {
+        const response = await $.ajax({
+            url: `/retryPayment?orderId=${orderId}`,
+            method: "GET",
+            contentType: "application/json"
+        });
+        console.log('retryPayment: Response received', response);
+
+        if (response.payment && response.method === "razorpay") {
+            const options = {
+                key: response.key,
+                amount: response.amount,
+                currency: "INR",
+                name: "Male Fashion",
+                description: "Retry Order Payment",
+                order_id: response.razorpayOrderId,
+                handler: async function (razorpayResponse) {
+                    try {
+                        console.log('retryPayment: Razorpay payment response', razorpayResponse);
+                        const verifyResponse = await $.ajax({
+                            url: "/verifyPayment",
+                            method: "POST",
+                            contentType: "application/json",
+                            data: JSON.stringify({
+                                orderId: response.orderId,
+                                razorpay_payment_id: razorpayResponse.razorpay_payment_id,
+                                razorpay_order_id: razorpayResponse.razorpay_order_id,
+                                razorpay_signature: razorpayResponse.razorpay_signature,
+                            })
+                        });
+
+                        if (verifyResponse.success) {
+                            console.log('retryPayment: Payment verified, orderId:', verifyResponse.orderId);
+                            await clearCart();
+                            alert("Order placed successfully");
+                            location.href = `/orderDetails?id=${verifyResponse.orderId}`;
+                        } else {
+                            console.log('retryPayment: Payment verification failed', verifyResponse);
+                            await changeStatus({ orderId: response.orderId, status: 'failed' });
+                            location.href = `/paymentFailed?orderId=${response.orderId}`;
+                        }
+                    } catch (error) {
+                        console.error("retryPayment: Payment verification error:", error);
+                        await changeStatus({ orderId: response.orderId, status: 'failed' });
+                        location.href = `/paymentFailed?orderId=${response.orderId}`;
+                    }
+                },
+                prefill: {
+                    name: "<%= orders.address.name %>",
+                    email: "<%= user.email %>",
+                    contact: "<%= orders.address.phone %>"
+                },
+                theme: {
+                    color: "#111111",
+                },
+                modal: {
+                    ondismiss: async function () {
+                        console.log("retryPayment: Razorpay modal closed by user, orderId:", response.orderId);
+                        await changeStatus({ orderId: response.orderId, status: 'failed' });
+                        location.href = `/paymentFailed?orderId=${response.orderId}`;
+                    }
+                }
+            };
+
+            const rzp = new Razorpay(options);
+            rzp.on('payment.failed', async function (razorpayResponse) {
+                console.error("retryPayment: Razorpay payment failed:", razorpayResponse.error, "orderId:", response.orderId);
+                await changeStatus({ orderId: response.orderId, status: 'failed' });
+                location.href = `/paymentFailed?orderId=${response.orderId}`;
             });
+            rzp.open();
+        } else {
+            console.log('retryPayment: Invalid response', response);
+            alert("Unable to initiate payment retry.");
+        }
+    } catch (error) {
+        console.error('retryPayment: Error', error);
+        alert(error.responseJSON?.error || "Failed to retry payment.");
+    }
+}
+
+function showReturnModal(orderId, singleProductId) {
+    $('#modalOrderId').val(orderId);
+    $('#modalProductId').val(singleProductId);
+    $('#returnReason').val('');
+    $('#returnModal').modal('show');
+}
+
+function submitReturnRequest() {
+    const orderId = $('#modalOrderId').val();
+    const singleProductId = $('#modalProductId').val();
+    const returnReason = $('#returnReason').val().trim();
+
+    if (!returnReason) {
+        alert('Please provide a reason for the return.');
+        return;
+    }
+
+    returnSingleProduct(orderId, singleProductId, returnReason);
+}
+
+function returnSingleProduct(orderId, singleProductId, returnReason) {
+    $.ajax({
+        url: '/returnSingleProduct',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ orderId: orderId, singleProductId: singleProductId, returnReason: returnReason }),
+        success: (response) => {
+            if (response.message === "Return request submitted to admin for approval") {
+                alert('Your return request has been submitted to the admin for approval.');
+                $('#returnModal').modal('hide');
+                window.location.reload();
+            }
+        },
+        error: (error) => {
+            alert("Error submitting return request: " + (error.responseJSON?.message || error.responseText));
         }
     });
 }
 
 function confirmCancelSingleProduct(orderId, singleProductId) {
-    Swal.fire({
-        title: 'Confirm Cancel Product',
-        text: 'Are you sure you want to cancel this product?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#007bff',
-        cancelButtonColor: '#dc3545',
-        confirmButtonText: 'Yes, cancel it!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            cancelSingleProduct(orderId, singleProductId);
-        }
-    });
+    if (confirm('Are you sure you want to cancel this product?')) {
+        cancelSingleProduct(orderId, singleProductId);
+    }
 }
 
 function cancelSingleProduct(orderId, singleProductId) {
@@ -215,79 +351,49 @@ function cancelSingleProduct(orderId, singleProductId) {
         data: JSON.stringify({ orderId: orderId, singleProductId: singleProductId }),
         success: (response) => {
             if (response.message === "All products cancelled, order status updated to cancelled") {
-                Swal.fire({
-                    title: 'Order Cancelled',
-                    text: 'All products in this order have been cancelled, and the order status is now cancelled.',
-                    icon: 'success',
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    window.location.reload();
-                });
+                alert('All products in this order have been cancelled, and the order status is now cancelled.');
+                window.location.reload();
             } else if (response.message === "Product status updated successfully") {
-                Swal.fire({
-                    title: 'Product Cancelled',
-                    text: 'The product has been cancelled successfully.',
-                    icon: 'success',
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    window.location.reload();
-                });
+                alert('The product has been cancelled successfully.');
+                window.location.reload();
             }
         },
         error: (error) => {
-            Swal.fire({
-                title: 'Error',
-                text: "Error cancelling product: " + error.responseText,
-                icon: 'error',
-                confirmButtonText: 'OK'
-            });
+            alert("Error cancelling product: " + (error.responseJSON?.message || error.responseText));
         }
     });
 }
 
-function confirmReturnSingleProduct(orderId, singleProductId) {
-    Swal.fire({
-        title: 'Confirm Return Request',
-        text: 'Are you sure you want to request a return for this product?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#007bff',
-        cancelButtonColor: '#dc3545',
-        confirmButtonText: 'Yes, request it!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            returnSingleProduct(orderId, singleProductId);
-        }
-    });
+async function clearCart() {
+    try {
+        console.log('clearCart: Attempting to clear cart for user:', '<%= user._id %>');
+        await $.ajax({
+            url: "/clearCart",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({
+                userId: '<%= user._id %>'
+            })
+        });
+        console.log('clearCart: Cart cleared successfully');
+    } catch (error) {
+        console.error('clearCart: Error clearing cart:', error);
+    }
 }
 
-function returnSingleProduct(orderId, singleProductId) {
-    $.ajax({
-        url: '/returnSingleProduct',
-        method: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify({ orderId: orderId, singleProductId: singleProductId }),
-        success: (response) => {
-            if (response.message === "Return request submitted to admin for approval") {
-                Swal.fire({
-                    title: 'Return Requested',
-                    text: 'Your return request has been submitted to the admin for approval.',
-                    icon: 'success',
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    window.location.reload();
-                });
-            }
-        },
-        error: (error) => {
-            Swal.fire({
-                title: 'Error',
-                text: "Error submitting return request: " + error.responseText,
-                icon: 'error',
-                confirmButtonText: 'OK'
-            });
-        }
-    });
+async function changeStatus(params) {
+    try {
+        console.log('changeStatus: Sending request with params:', params);
+        await $.ajax({
+            url: "/changeOrderStatus",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(params)
+        });
+        console.log('changeStatus: Status updated successfully');
+    } catch (error) {
+        console.error('changeStatus: Error updating status:', error);
+    }
 }
 </script>
 

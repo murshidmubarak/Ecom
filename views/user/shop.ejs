@@ -259,18 +259,35 @@
   top: 10px;
   right: 10px;
   background-color: #fff;
-  color: #ff4444;
   padding: 5px;
   border-radius: 50%;
   cursor: pointer;
   font-size: 16px;
   border: 1px solid #eee;
   transition: all 0.2s;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .wishlist-btn:hover {
-  background-color: #ff4444;
-  color: #fff;
+  background-color: #f8f9fa;
+  border-color: #ff4444;
+  transform: scale(1.1);
+}
+
+.wishlist-btn.in-wishlist {
+  color: #ff4444;
+  background-color: #ffebee;
+  border-color: #ff4444;
+}
+
+.wishlist-btn.not-in-wishlist {
+  color: #ccc;
+  background-color: #fff;
+  border-color: #eee;
 }
 
 .add-to-cart-btn {
@@ -435,6 +452,7 @@
 </style>
 
 <div class="main-container">
+  <meta name="csrf-token" content="<%= csrfToken %>">
   <section class="shop-page container">
     <div class="shop-topbar">
       <div class="search-bar">
@@ -498,7 +516,15 @@
         <% if(products.length > 0) { %>
           <% for(let i = 0; i < products.length; i++) { %>
             <div class="product-card">
-              <span class="wishlist-btn" onclick="addToWishlist('<%= products[i]._id %>')">❤️</span>
+              <!-- Updated wishlist button with conditional styling -->
+              <span class="wishlist-btn <%= products[i].isInWishlist ? 'in-wishlist' : 'not-in-wishlist' %>" 
+                    onclick="toggleWishlist('<%= products[i]._id %>', this)">
+                <% if (products[i].isInWishlist) { %>
+                  ❤️
+                <% } else { %>
+                  🤍
+                <% } %>
+              </span>
               <a href="/productDetails?id=<%= products[i]._id %>">
                 <img src="/uploads/<%= products[i].productImage[0]%>" alt="<%= products[i].productName %>" />
                 <h4><%= products[i].productName %></h4>
@@ -536,11 +562,13 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 async function addToCart(productId) {
-    try {
-        const response = await fetch('/addToCart', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+  try {
+      const response = await fetch('/addToCart', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+              'CSRF-Token': csrfToken
             },
             body: JSON.stringify({ productId })
         });
@@ -574,16 +602,23 @@ async function addToCart(productId) {
     }
 }
 
-async function addToWishlist(productId) {
+async function toggleWishlist(productId, element) {
     try {
         const response = await fetch('/addToWishlist', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json',
+              'CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+             },
             body: JSON.stringify({ productId })
         });
         const result = await response.json();
 
         if (result.status) {
+            // Product added to wishlist
+            element.innerHTML = '❤️';
+            element.classList.remove('not-in-wishlist');
+            element.classList.add('in-wishlist');
+            
             Swal.fire({
                 icon: 'success',
                 title: 'Added to Wishlist',
@@ -592,12 +627,27 @@ async function addToWishlist(productId) {
                 timer: 1500
             });
         } else {
-            Swal.fire({
-                icon: 'info',
-                title: 'Already in Wishlist',
-                text: result.message,
-                timer: 1500
-            });
+            // Product already in wishlist or removed
+            if (result.message.includes('already')) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Already in Wishlist',
+                    text: result.message,
+                    timer: 1500
+                });
+            } else {
+                // If it's a remove operation, update the icon
+                element.innerHTML = '🤍';
+                element.classList.remove('in-wishlist');
+                element.classList.add('not-in-wishlist');
+                
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Removed from Wishlist',
+                    text: 'Product removed from wishlist',
+                    timer: 1500
+                });
+            }
         }
     } catch (error) {
         Swal.fire({

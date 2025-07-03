@@ -1,5 +1,12 @@
 <%- include("../../views/partials/admin/header") %>
 
+<head>
+  <!-- jQuery CDN -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- SweetAlert2 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
 <style>
   :root {
     --sidebar-width: 250px;
@@ -126,7 +133,7 @@
   }
 
   .table th {
-    background-color: #2a2a2a;
+    background-color: #a2a2a2;
     font-weight: 600;
     color: var(--primary-color);
   }
@@ -168,6 +175,7 @@
     z-index: 1000;
     align-items: center;
     justify-content: center;
+    overflow-y: auto;
   }
 
   .modal.show {
@@ -179,20 +187,23 @@
     padding: 20px;
     border-radius: 10px;
     width: 90%;
-    max-width: 500px;
+    max-width: 400px;
+    max-height: 90vh;
     color: var(--text-color);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    overflow-y: auto;
+    margin: auto;
   }
 
   .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
   }
 
   .modal-title {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     font-weight: bold;
   }
 
@@ -207,6 +218,19 @@
   .close-btn:hover {
     color: #ff4d4d;
   }
+
+  .modal .form-control {
+    margin-bottom: 8px;
+  }
+
+  .modal .form-label {
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+  }
+
+  .modal .d-grid {
+    margin-top: 15px;
+  }
 </style>
 
 <section class="content-main">
@@ -219,7 +243,7 @@
     <div class="card-body">
       <div class="row">
         <div class="col-md-3">
-          <form method="post" action="/admin/createCoupen">
+          <form id="createCouponForm" method="post" action="/admin/createCoupen">
             <div class="mb-4">
               <label for="coupon-name" class="form-label">Coupon Name</label>
               <input
@@ -292,7 +316,7 @@
             </div>
 
             <div class="d-grid">
-              <button class="btn btn-primary" type="submit" onclick="return validateForm()">
+              <button class="btn btn-primary" type="submit">
                 Add Coupon
               </button>
             </div>
@@ -363,7 +387,7 @@
     </div>
     <form id="editCouponForm" method="post" action="">
       <input type="hidden" name="id" id="edit-coupon-id" />
-      <div class="mb-4">
+      <div>
         <label for="edit-coupon-name" class="form-label">Coupon Name</label>
         <input
           type="text"
@@ -435,7 +459,7 @@
         </select>
       </div>
       <div class="d-grid">
-        <button class="btn btn-primary" type="submit" onclick="return validateEditForm()">
+        <button class="btn btn-primary" type="submit">
           Save Changes
         </button>
       </div>
@@ -444,6 +468,107 @@
 </div>
 
 <script>
+  // Handle create coupon form submission
+  document.getElementById('createCouponForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    // First validate the form
+    if (!validateForm()) {
+      return;
+    }
+    
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    try {
+      const response = await fetch('/admin/createCoupen', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Success!',
+          text: result.message || 'Coupon created successfully',
+          confirmButtonText: 'OK',
+        }).then(() => {
+          window.location.reload();
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: result.message || 'Failed to create coupon',
+        });
+      }
+    } catch (error) {
+      console.error('Error creating coupon:', error);
+      console.log('Error response:', error.response);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: 'An error occurred while creating the coupon',
+      });
+    }
+  });
+
+  // Handle edit coupon form submission
+  document.getElementById('editCouponForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    // First validate the form
+    if (!validateEditForm()) {
+      return;
+    }
+    
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    const couponId = data.id;
+    
+    try {
+      const response = await fetch(`/admin/editcoupon/${couponId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+      });
+      
+      const result = await response.json();
+      
+      if (result.success || response.redirected || response.ok) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Success!',
+          text: 'Coupon updated successfully',
+          confirmButtonText: 'OK',
+        }).then(() => {
+          closeEditModal();
+          window.location.reload();
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: result.error || result.message || 'Failed to update coupon',
+        });
+      }
+    } catch (error) {
+      console.error('Error updating coupon:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: 'An error occurred while updating the coupon',
+      });
+    }
+  });
+
   function validateForm() {
     document.querySelectorAll(".error-message").forEach((element) => (element.innerHTML = ""));
 
@@ -502,8 +627,10 @@
   }
 
   function validateEditForm() {
+    // Clear existing error messages
     document.querySelectorAll(".error-message").forEach((element) => (element.innerHTML = ""));
 
+    // Get values
     const sDate = document.getElementById("edit-startingDate").value;
     const eDate = document.getElementById("edit-expiringDate").value;
     const sDateObj = new Date(sDate);
@@ -511,9 +638,9 @@
     const todayDateObj = new Date();
     todayDateObj.setHours(0, 0, 0, 0);
 
+    // Date validations
     if (sDateObj > eDateObj) {
-      document.getElementById("edit-error-end-date").innerHTML =
-        "End date should be after the start date";
+      document.getElementById("edit-error-end-date").innerHTML = "End date should be after the start date";
       return false;
     }
 
@@ -523,6 +650,7 @@
       return false;
     }
 
+    // Name validation
     let name = document.getElementById("edit-coupon-name").value;
     const nameRegex = /^[A-Za-z0-9]{1,50}$/;
     if (!nameRegex.test(name)) {
@@ -531,6 +659,7 @@
       return false;
     }
 
+    // Price validations
     const offerPrice = parseFloat(document.getElementById("edit-offer-price").value);
     const minimumPrice = parseFloat(document.getElementById("edit-minimum-price").value);
 
@@ -546,6 +675,7 @@
       return false;
     }
 
+    // Status validation
     const status = document.getElementById("edit-status").value;
     if (!["Active", "Expired", "Inactive"].includes(status)) {
       document.getElementById("edit-error-status").innerHTML = "Please select a valid status";
@@ -621,6 +751,13 @@
       },
     });
   }
+
+  // Close modal when clicking outside
+  document.getElementById('editModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeEditModal();
+    }
+  });
 </script>
 
 <%- include("../../views/partials/admin/footer") %>

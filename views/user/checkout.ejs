@@ -1,3 +1,4 @@
+
 <%- include("../../views/partials/user/header") %>
 
 <!DOCTYPE html>
@@ -25,6 +26,7 @@
 
     <!-- Razorpay Checkout Script -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <meta name="csrf-token" content="<%= csrfToken %>">
 
     <style>
         body {
@@ -177,7 +179,6 @@
             font-size: 1rem;
             color: #333;
         }
-        /* UPDATED: Style for COD message */
         #codMessage {
             font-size: 0.85rem;
             margin-top: 5px;
@@ -244,11 +245,10 @@
                                                     <td><%= item.cart.quantity || 0 %></td>
                                                     <td>₹<%= ((item.productDetails.salePrice || 0) * (item.cart.quantity || 0)).toFixed(2) %></td>
                                                     <td>
-                                                        <a class="btn btn-sm btn-danger" 
-                                                           href="javascript:void(0)"
-                                                           onclick="confirmRemove('<%= item.productDetails._id %>')">
+                                                        <button class="btn btn-sm btn-danger" 
+                                                                onclick="confirmRemove('<%= item.productDetails._id %>')">
                                                             <i class="fa fa-trash"></i> Remove
-                                                        </a>
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             <% } %>
@@ -294,9 +294,10 @@
                                             <% } %>
                                             <div class="d-flex gap-2">
                                                 <a href="/editAddress?id=<%= address._id %>" class="btn btn-sm btn-outline-primary">Edit</a>
-                                                <a href="/deleteAddress?id=<%= address._id %>" 
-                                                   class="btn btn-sm btn-outline-danger"
-                                                   onclick="return confirm('Are you sure you want to delete this address?')">Delete</a>
+                                                <button class="btn btn-sm btn-outline-danger" 
+                                                        onclick="confirmDeleteAddress('<%= address._id %>')">
+                                                    Delete
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -317,19 +318,18 @@
                 <div class="col-lg-4 section-gap">
                     <div class="payment-method mb-4">
                         <h5>Payment Method</h5>
-                        <!-- UPDATED: Added conditional disabled and checked attributes, and COD message -->
                         <div class="form-check">
                             <input class="form-check-input payment" 
                                    type="radio" 
                                    value="cod" 
                                    name="payment_option" 
                                    id="CashOnDelivery"
-                                   <%= grandTotal < 1000 ? 'disabled' : 'checked' %>>
+                                   <%= grandTotal > 1000 ? 'disabled' : 'checked' %>>
                             <label class="form-check-label" for="CashOnDelivery">
                                 Cash on Delivery
                             </label>
-                            <small id="codMessage" class="form-text text-danger" style="<%= grandTotal >= 1000 ? 'display: none;' : '' %>">
-                                No Cash on Delivery for orders below ₹1000
+                            <small id="codMessage" class="form-text text-danger" style="<%= grandTotal <= 1000 ? 'display: none;' : '' %>">
+                                No Cash on Delivery for orders above ₹1000
                             </small>
                         </div>
                         <div class="form-check mt-2">
@@ -338,7 +338,7 @@
                                    value="razorpay" 
                                    name="payment_option" 
                                    id="Razorpay"
-                                   <%= grandTotal < 1000 ? 'checked' : '' %>>
+                                   <%= grandTotal > 1000 ? 'checked' : '' %>>
                             <label class="form-check-label" for="Razorpay">
                                 Online Payment (Razorpay)
                             </label>
@@ -356,10 +356,13 @@
                     </div>
                     <div class="order-summary">
                         <h5>Order Summary</h5>
-                        <div class="coupon-section">
-                            <input type="text" id="couponCode" class="form-control" placeholder="Enter coupon code">
-                            <button class="btn btn-outline-primary" id="applyCouponBtn">Apply</button>
-                        </div>
+                        <form id="couponForm">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <div class="coupon-section">
+                                <input type="text" id="couponCode" name="couponCode" class="form-control" placeholder="Enter coupon code">
+                                <button type="submit" class="btn btn-outline-primary" id="applyCouponBtn">Apply</button>
+                            </div>
+                        </form>
                         <div id="couponMessage" class="coupon-applied" style="display: none;"></div>
                         <table class="table">
                             <tbody>
@@ -437,6 +440,17 @@
     <script src="/js/main.js"></script>
 
     <script>
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        // Setup CSRF token for all jQuery AJAX requests
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRF-Token", csrfToken);
+                }
+            }
+        });
+
         // Debug: Log script loading status
         console.log('Script section loaded at:', new Date().toISOString());
         console.log('jQuery status:', typeof jQuery !== 'undefined' ? `Loaded, version ${jQuery().jquery}` : 'Not loaded');
@@ -459,12 +473,17 @@
             }
             console.log('Apply button found:', applyButton);
 
-            // Remove any existing listeners to prevent duplicates
-            applyButton.removeEventListener('click', applyCoupon);
-            applyButton.addEventListener('click', function(event) {
-                console.log('Apply button clicked at:', new Date().toISOString());
-                applyCoupon();
-            });
+            // Handle coupon form submission
+            const couponForm = document.getElementById('couponForm');
+            if (couponForm) {
+                couponForm.addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    console.log('Coupon form submitted at:', new Date().toISOString());
+                    applyCoupon();
+                });
+            } else {
+                console.error('Coupon form (#couponForm) not found in DOM');
+            }
 
             // Verify input element exists
             const couponInput = document.getElementById('couponCode');
@@ -508,14 +527,86 @@
                 confirmButtonText: 'Yes, remove it!'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    window.location.href = `/deleteItem?id=${productId}`;
+                    // Create a form to send CSRF token with the request
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/deleteItem`;
+                    form.style.display = 'none';
+
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_csrf';
+                    csrfInput.value = csrfToken;
+
+                    const productIdInput = document.createElement('input');
+                    productIdInput.type = 'hidden';
+                    productIdInput.name = 'id';
+                    productIdInput.value = productId;
+
+                    form.appendChild(csrfInput);
+                    form.appendChild(productIdInput);
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
+
+        function confirmDeleteAddress(addressId) {
+            console.log('confirmDeleteAddress called for addressId:', addressId);
+            Swal.fire({
+                title: 'Delete Address?',
+                text: "Are you sure you want to delete this address?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Create a form to send CSRF token with the request
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/deleteAddress`;
+                    form.style.display = 'none';
+
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_csrf';
+                    csrfInput.value = csrfToken;
+
+                    const addressIdInput = document.createElement('input');
+                    addressIdInput.type = 'hidden';
+                    addressIdInput.name = 'id';
+                    addressIdInput.value = addressId;
+
+                    form.appendChild(csrfInput);
+                    form.appendChild(addressIdInput);
+                    document.body.appendChild(form);
+                    form.submit();
                 }
             });
         }
 
         async function applyCoupon() {
             console.log('applyCoupon: Function called');
-            
+
+            if (!csrfToken) {
+                console.error('applyCoupon: CSRF token is missing');
+                Swal.fire({
+                    title: "Error",
+                    text: "CSRF token is missing. Please refresh the page and try again.",
+                    icon: "error",
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#3085d6',
+                    customClass: {
+                        popup: 'swal2-custom-popup',
+                        title: 'swal2-custom-title',
+                        content: 'swal2-custom-content'
+                    }
+                });
+                return;
+            }
+
             // Verify jQuery availability
             if (typeof jQuery === 'undefined') {
                 console.error('applyCoupon: jQuery is not available');
@@ -539,8 +630,13 @@
                     title: "Error",
                     text: "Please enter a coupon code",
                     icon: "error",
-                    timer: 3000,
-                    confirmButtonColor: '#3085d6'
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#3085d6',
+                    customClass: {
+                        popup: 'swal2-custom-popup',
+                        title: 'swal2-custom-title',
+                        content: 'swal2-custom-content'
+                    }
                 });
                 return;
             }
@@ -555,7 +651,8 @@
                     contentType: "application/json",
                     data: JSON.stringify({
                         couponCode: couponCode,
-                        totalPrice: totalPrice
+                        totalPrice: totalPrice,
+                        _csrf: csrfToken
                     })
                 });
 
@@ -574,11 +671,10 @@
                     $("#couponDiscountRow").show();
                     $("#totalValue").text(`₹${newTotal.toFixed(2)}`);
 
-                    // UPDATED: Update COD availability based on new total
-                    if (newTotal < 1000) {
+                    // Update COD availability based on new total
+                    if (newTotal > 1000) {
                         $("#CashOnDelivery").prop("disabled", true);
                         $("#codMessage").show();
-                        // If COD was selected, switch to Razorpay
                         if ($("#CashOnDelivery").is(":checked")) {
                             $("#Razorpay").prop("checked", true);
                         }
@@ -591,8 +687,13 @@
                         title: "Success",
                         text: `Coupon "${response.couponName}" applied successfully`,
                         icon: "success",
-                        timer: 3000,
-                        confirmButtonColor: '#3085d6'
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#3085d6',
+                        customClass: {
+                            popup: 'swal2-custom-popup',
+                            title: 'swal2-custom-title',
+                            content: 'swal2-custom-content'
+                        }
                     });
                 } else {
                     console.log('applyCoupon: Response error', response.error);
@@ -600,8 +701,13 @@
                         title: "Error",
                         text: response.error || "Invalid coupon code",
                         icon: "error",
-                        timer: 3000,
-                        confirmButtonColor: '#3085d6'
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#3085d6',
+                        customClass: {
+                            popup: 'swal2-custom-popup',
+                            title: 'swal2-custom-title',
+                            content: 'swal2-custom-content'
+                        }
                     });
                 }
             } catch (error) {
@@ -611,14 +717,60 @@
                     title: "Error",
                     text: errorMessage,
                     icon: "error",
-                    timer: 3000,
-                    confirmButtonColor: '#3085d6'
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#3085d6',
+                    customClass: {
+                        popup: 'swal2-custom-popup',
+                        title: 'swal2-custom-title',
+                        content: 'swal2-custom-content'
+                    }
                 });
+            }
+        }
+
+        async function clearCart() {
+            if (!csrfToken) {
+                console.error('clearCart: CSRF token is missing');
+                return;
+            }
+
+            try {
+                console.log('clearCart: Attempting to clear cart for user:', '<%= user._id %>');
+                await $.ajax({
+                    url: "/clearCart",
+                    method: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({
+                        userId: '<%= user._id %>',
+                        _csrf: csrfToken
+                    })
+                });
+                console.log('clearCart: Cart cleared successfully');
+            } catch (error) {
+                console.error('clearCart: Error clearing cart:', error);
             }
         }
 
         async function placeOrder(userId) {
             console.log('placeOrder: Started', { userId });
+
+            if (!csrfToken) {
+                console.error('placeOrder: CSRF token is missing');
+                Swal.fire({
+                    title: "Error",
+                    text: "CSRF token is missing. Please refresh the page and try again.",
+                    icon: "error",
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#3085d6',
+                    customClass: {
+                        popup: 'swal2-custom-popup',
+                        title: 'swal2-custom-title',
+                        content: 'swal2-custom-content'
+                    }
+                });
+                return;
+            }
+
             const address = $("input[name='selectedAddress']:checked").val();
             const totalPrice = parseFloat(
                 document.getElementById("totalValue").textContent.replace("₹", "")
@@ -631,8 +783,13 @@
                     title: "No Address Selected",
                     text: "Please select a delivery address.",
                     icon: "error",
-                    timer: 3000,
-                    confirmButtonColor: '#3085d6'
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#3085d6',
+                    customClass: {
+                        popup: 'swal2-custom-popup',
+                        title: 'swal2-custom-title',
+                        content: 'swal2-custom-content'
+                    }
                 });
                 return;
             }
@@ -642,8 +799,13 @@
                     title: "Insufficient Wallet Balance",
                     text: "Your wallet does not have enough funds to complete this order.",
                     icon: "error",
-                    timer: 3000,
-                    confirmButtonColor: '#3085d6'
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#3085d6',
+                    customClass: {
+                        popup: 'swal2-custom-popup',
+                        title: 'swal2-custom-title',
+                        content: 'swal2-custom-content'
+                    }
                 });
                 return;
             }
@@ -657,23 +819,38 @@
                         totalPrice,
                         addressId: address,
                         paymentMethod,
-                        couponApplied: !!appliedCoupon,
+                        couponApplied: appliedCoupon ? appliedCoupon.couponName : '',
                         discount: appliedCoupon ? appliedCoupon.discount : 0,
+                        _csrf: csrfToken,
                     })
                 });
+                console.log('placeOrder: Order response', response);
 
                 if (response.error) {
+                    console.log('placeOrder: Error response', response.error);
                     Swal.fire({
                         title: "Error",
-                        text: response.error,
+                        text: response.error || "Failed to place order.",
                         icon: "error",
-                        timer: 3000,
-                        confirmButtonColor: '#3085d6'
+                        confirmButtonText: "OK",
+                        confirmButtonColor: '#3085d6',
+                        customClass: {
+                            popup: 'swal2-custom-popup',
+                            title: 'swal2-custom-title',
+                            content: 'swal2-custom-content'
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            console.log('placeOrder: Reloading page due to error', response.error);
+                            window.location.reload();
+                        }
                     });
                     return;
                 }
 
                 if (response.method === "cod" || response.method === "wallet") {
+                    console.log('placeOrder: COD/Wallet order placed, orderId:', response.orderId);
+                    await clearCart();
                     Swal.fire({
                         title: "Order Success",
                         text: "Order placed successfully",
@@ -682,7 +859,12 @@
                         confirmButtonText: "View Order",
                         cancelButtonText: "Continue Shopping",
                         confirmButtonColor: '#3085d6',
-                        cancelButtonColor: '#6c757d'
+                        cancelButtonColor: '#6c757d',
+                        customClass: {
+                            popup: 'swal2-custom-popup',
+                            title: 'swal2-custom-title',
+                            content: 'swal2-custom-content'
+                        }
                     }).then((result) => {
                         if (result.isConfirmed) {
                             location.href = `/orderDetails?id=${response.orderId}`;
@@ -691,6 +873,7 @@
                         }
                     });
                 } else if (response.method === "razorpay") {
+                    console.log('placeOrder: Razorpay order initiated, orderId:', response.orderId, 'razorpayOrderId:', response.razorpayOrderId);
                     const options = {
                         key: response.key,
                         amount: response.amount,
@@ -700,6 +883,7 @@
                         order_id: response.razorpayOrderId,
                         handler: async function (razorpayResponse) {
                             try {
+                                console.log('placeOrder: Razorpay payment response', razorpayResponse);
                                 const verifyResponse = await $.ajax({
                                     url: "/verifyPayment",
                                     method: "POST",
@@ -709,10 +893,13 @@
                                         razorpay_payment_id: razorpayResponse.razorpay_payment_id,
                                         razorpay_order_id: razorpayResponse.razorpay_order_id,
                                         razorpay_signature: razorpayResponse.razorpay_signature,
+                                        _csrf: csrfToken
                                     })
                                 });
 
                                 if (verifyResponse.success) {
+                                    console.log('placeOrder: Payment verified, orderId:', verifyResponse.orderId);
+                                    await clearCart();
                                     Swal.fire({
                                         title: "Payment Success",
                                         text: "Order placed successfully",
@@ -721,7 +908,12 @@
                                         confirmButtonText: "View Order",
                                         cancelButtonText: "Continue Shopping",
                                         confirmButtonColor: '#3085d6',
-                                        cancelButtonColor: '#6c757d'
+                                        cancelButtonColor: '#6c757d',
+                                        customClass: {
+                                            popup: 'swal2-custom-popup',
+                                            title: 'swal2-custom-title',
+                                            content: 'swal2-custom-content'
+                                        }
                                     }).then((result) => {
                                         if (result.isConfirmed) {
                                             location.href = `/orderDetails?id=${verifyResponse.orderId}`;
@@ -729,15 +921,17 @@
                                             location.href = "/shop";
                                         }
                                     });
+                                } else {
+                                    console.log('placeOrder: Payment verification failed', verifyResponse);
+                                    await clearCart();
+                                    await changeStatus({ orderId: response.orderId, status: 'online', _csrf: csrfToken });
+                                    location.href = `/paymentFailed?orderId=${response.orderId}`;
                                 }
                             } catch (error) {
                                 console.error("Payment verification error:", error);
-                                Swal.fire({
-                                    title: "Payment Verification Failed",
-                                    text: "Please contact support",
-                                    icon: "error",
-                                    confirmButtonColor: '#3085d6'
-                                });
+                                await clearCart();
+                                await changeStatus({ orderId: response.orderId, status: 'online', _csrf: csrfToken });
+                                location.href = `/paymentFailed?orderId=${response.orderId}`;
                             }
                         },
                         prefill: {
@@ -748,24 +942,65 @@
                         theme: {
                             color: "#111111",
                         },
+                        modal: {
+                            ondismiss: async function () {
+                                console.log("Razorpay modal closed by user, orderId:", response.orderId);
+                                await clearCart();
+                                await changeStatus({ orderId: response.orderId, status: 'online', _csrf: csrfToken });
+                                location.href = `/paymentFailed?orderId=${response.orderId}`;
+                            }
+                        }
                     };
 
                     const rzp = new Razorpay(options);
+                    rzp.on('payment.failed', async function (razorpayResponse) {
+                        console.error("Razorpay payment failed:", razorpayResponse.error, "orderId:", response.orderId);
+                        await changeStatus({ orderId: response.orderId, status: 'online', _csrf: csrfToken });
+                        await clearCart();
+                        location.href = `/paymentFailed?orderId=${response.orderId}`;
+                    });
                     rzp.open();
                 }
             } catch (error) {
                 console.error("Place order error:", error);
                 Swal.fire({
                     title: "Error",
-                    text: "Failed to place order. Please try again.",
+                    text: error.responseJSON?.error || "Failed to place order.",
                     icon: "error",
-                    timer: 5000,
-                    confirmButtonColor: '#3085d6'
+                    confirmButtonText: "OK",
+                    confirmButtonColor: '#3085d6',
+                    customClass: {
+                        popup: 'swal2-custom-popup',
+                        title: 'swal2-custom-title',
+                        content: 'swal2-custom-content'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        location.href = "/shop";
+                    }
                 });
+            }
+        }
+
+        async function changeStatus(params) {
+            if (!csrfToken) {
+                console.error('changeStatus: CSRF token is missing');
+                return;
+            }
+
+            try {
+                console.log('changeStatus: Sending request with params:', params);
+                await $.ajax({
+                    url: "/changeOrderStatus",
+                    method: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(params)
+                });
+                console.log('changeStatus: Status updated successfully');
+            } catch (error) {
+                console.error('changeStatus: Error updating status:', error);
             }
         }
     </script>
 </body>
 </html>
-
-<%- include("../../views/partials/user/footer") %>

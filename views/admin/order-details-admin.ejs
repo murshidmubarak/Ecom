@@ -181,6 +181,7 @@
                     <th>Quantity</th>
                     <th>Price</th>
                     <th>Total</th>
+                    <th>Return Reason</th>
                 </tr>
             </thead>
             <tbody>
@@ -197,6 +198,7 @@
                         <td><%= item.quantity || 1 %></td>
                         <td>₹<%= (item.price || 0).toFixed(2) %></td>
                         <td>₹<%= ((item.price || 0) * (item.quantity || 1)).toFixed(2) %></td>
+                        <td><%= item.returnReason || 'product not returned yet' %></td>
                     </tr>
                 <% }) %>
             </tbody>

@@ -93,7 +93,8 @@ const addProducts = async (req, res) => {
         // Calculate sale price based on offers
         const categoryOffer = parseFloat(category.categoryOffer) || 0;
         const effectiveOffer = Math.max(productOffer, categoryOffer);
-        const salePrice = regularPrice * (1 - effectiveOffer / 100);
+        // const salePrice = regularPrice * (1 - effectiveOffer / 100);
+        const salePrice = Math.round(regularPrice * (1 - effectiveOffer / 100));
 
         // Create new product
         const newProduct = new Product({
@@ -304,7 +305,9 @@ const editProduct = async (req, res) => {
         // Calculate sale price based on offers
         const categoryOffer = parseFloat(category.categoryOffer) || 0;
         const effectiveOffer = Math.max(productOffer, categoryOffer);
-        const salePrice = regularPrice * (1 - effectiveOffer / 100);
+        // const salePrice = regularPrice * (1 - effectiveOffer / 100);
+        const salePrice = Math.round(regularPrice * (1 - effectiveOffer / 100));
+
 
         // Update product fields
         const updateFields = {

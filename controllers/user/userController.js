@@ -7,6 +7,7 @@ const Order = require("../../models/orderSchema");
 const env = require("dotenv").config();
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
+const whishlist = require("../../models/wishlistSchema");
 
 const loadsignup = async (req, res) => {
     try {
@@ -312,7 +313,7 @@ const resendOtp = async (req, res) => {
 const loadLogin = async (req, res) => {
     try {
         console.log('load');
-        res.render('login');
+        res.render('login', { csrfToken: req.csrfToken() });
     } catch (error) {
         console.error("Load login error:", error);
         res.redirect("/pageNotFound");
@@ -362,11 +363,152 @@ const logout = (req, res) => {
     }
 };
 
+// const loadShop = async (req, res) => {
+//     try {
+//         const user = req.session.user;
+//         const userData = user ? await User.findOne({ _id: user }) : null;
+//         const categories = await Category.find({ isListed: true });
+//         const listedCategoryIds = categories.map(category => category._id);
+
+//         const categoryId = req.query.category;
+//         const priceRange = req.query.price;
+//         const sortOption = req.query.sort || 'newest';
+//         const searchQuery = req.query.search;
+//         const page = parseInt(req.query.page) || 1;
+//         const limit = 9;
+//         const skip = (page - 1) * limit;
+
+//         const query = {
+//             isBlocked: false,
+//             category: { $in: listedCategoryIds } // Only products from listed categories
+//         };
+
+//         // Validate categoryId
+//         if (categoryId && categoryId !== 'all') {
+//             const categoryExists = categories.find(cat => cat._id.toString() === categoryId);
+//             if (categoryExists) {
+//                 query.category = categoryId;
+//                 console.log(`Filtering by listed category: ${categoryExists.name} (${categoryId})`);
+//             } else {
+//                 console.log(`Category ${categoryId} is unlisted or invalid; using all listed categories`);
+//             }
+//         } else {
+//             console.log(`No specific category selected; using all listed categories: ${listedCategoryIds}`);
+//         }
+
+//         if (priceRange) {
+//             switch (priceRange) {
+//                 case 'under500':
+//                     query.salePrice = { $lt: 500 };
+//                     break;
+//                 case '500to1000':
+//                     query.salePrice = { $gte: 500, $lte: 1000 };
+//                     break;
+//                 case '1000to1500':
+//                     query.salePrice = { $gte: 1000, $lte: 1500 };
+//                     break;
+//                 case 'above1500':
+//                     query.salePrice = { $gt: 1500 };
+//                     break;
+//             }
+//         }
+
+//         if (searchQuery) {
+//             query.productName = { $regex: searchQuery, $options: 'i' };
+//         }
+
+//         let sortCriteria = {};
+//         switch (sortOption) {
+//             case 'newest':
+//                 sortCriteria = { createdAt: -1 };
+//                 break;
+//             case 'price-low-high':
+//                 sortCriteria = { salePrice: 1 };
+//                 break;
+//             case 'price-high-low':
+//                 sortCriteria = { salePrice: -1 };
+//                 break;
+//             default:
+//                 sortCriteria = { createdOn: -1 };
+//         }
+
+//         const products = await Product.find(query)
+//             .populate('category') // Ensure category data is available
+//             .sort(sortCriteria)
+//             .limit(limit)
+//             .skip(skip);
+
+//         const totalProducts = await Product.countDocuments(query);
+//         const totalPages = Math.ceil(totalProducts / limit);
+
+//         console.log(`Found ${totalProducts} products for query: ${JSON.stringify(query, null, 2)}`);
+
+//         if (user && userData && categoryId && query.category !== listedCategoryIds) {
+//             const searchEntry = {
+//                 category: categoryId,
+//                 searchedOn: new Date()
+//             };
+//             userData.searchHistory.push(searchEntry);
+//             await userData.save();
+//         }
+
+//         const categoriesWithLinks = categories.map(category => ({
+//             _id: category._id,
+//             name: category.name,
+//             link: `/shop?category=${category._id}`
+//         }));
+
+//         const priceFilters = [
+//             { id: 'under500', name: 'Under ₹500', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}price=under500${sortOption !== 'newest' ? '&sort=' + sortOption : ''}` },
+//             { id: '500to1000', name: '₹500 - ₹1000', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}price=500to1000${sortOption !== 'newest' ? '&sort=' + sortOption : ''}` },
+//             { id: '1000to1500', name: '₹1000 - ₹1500', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}price=1000to1500${sortOption !== 'newest' ? '&sort=' + sortOption : ''}` },
+//             { id: 'above1500', name: 'Above ₹1500', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}price=above1500${sortOption !== 'newest' ? '&sort=' + sortOption : ''}` },
+//             { id: 'all', name: 'All Prices', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId : ''}${sortOption !== 'newest' ? '&sort=' + sortOption : ''}` }
+//         ];
+
+//         const sortLinks = [
+//             { id: 'newest', name: 'Newest', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}sort=newest` },
+//             { id: 'price-low-high', name: 'Price: Low to High', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}sort=price-low-high` },
+//             { id: 'price-high-low', name: 'Price: High to Low', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}sort=price-high-low` }
+//         ];
+
+//         const paginationLinks = [];
+//         for (let i = 1; i <= totalPages; i++) {
+//             paginationLinks.push({
+//                 pageNumber: i,
+//                 link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}${sortOption !== 'newest' ? 'sort=' + sortOption + '&' : ''}page=${i}`,
+//                 active: i === page
+//             });
+//         }
+
+//         res.render('shop', {
+//             user: userData,
+//             products: products,
+//             categories: categories,
+//             categoriesWithLinks: categoriesWithLinks,
+//             priceFilters: priceFilters,
+//             sortLinks: sortLinks,
+//             paginationLinks: paginationLinks,
+//             totalProducts: totalProducts,
+//             currentPage: page,
+//             totalPages: totalPages,
+//             selectedCategory: categoryId || 'all',
+//             selectedPrice: priceRange || 'all',
+//             selectedSort: sortOption || 'newest',
+//             prevPageLink: page > 1 ? `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}${sortOption !== 'newest' ? 'sort=' + sortOption + '&' : ''}page=${page - 1}` : null,
+//             nextPageLink: page < totalPages ? `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}${sortOption !== 'newest' ? 'sort=' + sortOption + '&' : ''}page=${page + 1}` : null
+//         });
+//     } catch (error) {
+//         console.error('Error loading shop page:', error);
+//         res.redirect("/pageNotFound");
+//     }
+// };
 const loadShop = async (req, res) => {
     try {
         const user = req.session.user;
         const userData = user ? await User.findOne({ _id: user }) : null;
         const categories = await Category.find({ isListed: true });
+        const listedCategoryIds = categories.map(category => category._id);
 
         const categoryId = req.query.category;
         const priceRange = req.query.price;
@@ -376,10 +518,22 @@ const loadShop = async (req, res) => {
         const limit = 9;
         const skip = (page - 1) * limit;
 
-        const query = { isBlocked: false };
+        const query = {
+            isBlocked: false,
+            category: { $in: listedCategoryIds }
+        };
 
+        // Validate categoryId
         if (categoryId && categoryId !== 'all') {
-            query.category = categoryId;
+            const categoryExists = categories.find(cat => cat._id.toString() === categoryId);
+            if (categoryExists) {
+                query.category = categoryId;
+                console.log(`Filtering by listed category: ${categoryExists.name} (${categoryId})`);
+            } else {
+                console.log(`Category ${categoryId} is unlisted or invalid; using all listed categories`);
+            }
+        } else {
+            console.log(`No specific category selected; using all listed categories: ${listedCategoryIds}`);
         }
 
         if (priceRange) {
@@ -419,19 +573,38 @@ const loadShop = async (req, res) => {
         }
 
         const products = await Product.find(query)
+            .populate('category')
             .sort(sortCriteria)
             .limit(limit)
             .skip(skip);
 
+        // Get user's wishlist if user is logged in
+        let userWishlist = null;
+        if (userData) {
+            userWishlist = await whishlist.findOne({ userId: userData._id });
+        }
+
+        // Add wishlist status to each product
+        const productsWithWishlistStatus = products.map(product => {
+            const isInWishlist = userWishlist && userWishlist.products.some(
+                wishlistProduct => wishlistProduct.productId.toString() === product._id.toString()
+            );
+            return {
+                ...product.toObject(),
+                isInWishlist
+            };
+        });
+
         const totalProducts = await Product.countDocuments(query);
         const totalPages = Math.ceil(totalProducts / limit);
 
-        if (user && userData && categoryId) {
+        console.log(`Found ${totalProducts} products for query: ${JSON.stringify(query, null, 2)}`);
+
+        if (user && userData && categoryId && query.category !== listedCategoryIds) {
             const searchEntry = {
                 category: categoryId,
                 searchedOn: new Date()
             };
-
             userData.searchHistory.push(searchEntry);
             await userData.save();
         }
@@ -443,33 +616,31 @@ const loadShop = async (req, res) => {
         }));
 
         const priceFilters = [
-            { id: 'under500', name: 'Under ₹500', link: `/shop?${categoryId ? 'category=' + categoryId + '&' : ''}price=under500${sortOption !== 'newest' ? '&sort=' + sortOption : ''}` },
-            { id: '500to1000', name: '₹500 - ₹1000', link: `/shop?${categoryId ? 'category=' + categoryId + '&' : ''}price=500to1000${sortOption !== 'newest' ? '&sort=' + sortOption : ''}` },
-            { id: '1000to1500', name: '₹1000 - ₹1500', link: `/shop?${categoryId ? 'category=' + categoryId + '&' : ''}price=1000to1500${sortOption !== 'newest' ? '&sort=' + sortOption : ''}` },
-            { id: 'above1500', name: 'Above ₹1500', link: `/shop?${categoryId ? 'category=' + categoryId + '&' : ''}price=above1500${sortOption !== 'newest' ? '&sort=' + sortOption : ''}` },
-            { id: 'all', name: 'All Prices', link: `/shop?${categoryId ? 'category=' + categoryId : ''}${sortOption !== 'newest' ? '&sort=' + sortOption : ''}` }
+            { id: 'under500', name: 'Under ₹500', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}price=under500${sortOption !== 'newest' ? '&sort=' + sortOption : ''}` },
+            { id: '500to1000', name: '₹500 - ₹1000', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}price=500to1000${sortOption !== 'newest' ? '&sort=' + sortOption : ''}` },
+            { id: '1000to1500', name: '₹1000 - ₹1500', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}price=1000to1500${sortOption !== 'newest' ? '&sort=' + sortOption : ''}` },
+            { id: 'above1500', name: 'Above ₹1500', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}price=above1500${sortOption !== 'newest' ? '&sort=' + sortOption : ''}` },
+            { id: 'all', name: 'All Prices', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId : ''}${sortOption !== 'newest' ? '&sort=' + sortOption : ''}` }
         ];
 
         const sortLinks = [
-            { id: 'newest', name: 'Newest', link: `/shop?${categoryId ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}sort=newest` },
-            { id: 'price-low-high', name: 'Price: Low to High', link: `/shop?${categoryId ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}sort=price-low-high` },
-            { id: 'price-high-low', name: 'Price: High to Low', link: `/shop?${categoryId ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}sort=price-high-low` }
+            { id: 'newest', name: 'Newest', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}sort=newest` },
+            { id: 'price-low-high', name: 'Price: Low to High', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}sort=price-low-high` },
+            { id: 'price-high-low', name: 'Price: High to Low', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}sort=price-high-low` }
         ];
 
         const paginationLinks = [];
         for (let i = 1; i <= totalPages; i++) {
             paginationLinks.push({
                 pageNumber: i,
-                link: `/shop?${categoryId ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}${sortOption !== 'newest' ? 'sort=' + sortOption + '&' : ''}page=${i}`,
+                link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}${sortOption !== 'newest' ? 'sort=' + sortOption + '&' : ''}page=${i}`,
                 active: i === page
             });
         }
 
-        console.log("Shop products:", products);
-
         res.render('shop', {
             user: userData,
-            products: products,
+            products: productsWithWishlistStatus, // Pass products with wishlist status
             categories: categories,
             categoriesWithLinks: categoriesWithLinks,
             priceFilters: priceFilters,
@@ -481,8 +652,8 @@ const loadShop = async (req, res) => {
             selectedCategory: categoryId || 'all',
             selectedPrice: priceRange || 'all',
             selectedSort: sortOption || 'newest',
-            prevPageLink: page > 1 ? `/shop?${categoryId ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}${sortOption !== 'newest' ? 'sort=' + sortOption + '&' : ''}page=${page - 1}` : null,
-            nextPageLink: page < totalPages ? `/shop?${categoryId ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}${sortOption !== 'newest' ? 'sort=' + sortOption + '&' : ''}page=${page + 1}` : null
+            prevPageLink: page > 1 ? `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}${sortOption !== 'newest' ? 'sort=' + sortOption + '&' : ''}page=${page - 1}` : null,
+            nextPageLink: page < totalPages ? `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}${sortOption !== 'newest' ? 'sort=' + sortOption + '&' : ''}page=${page + 1}` : null
         });
     } catch (error) {
         console.error('Error loading shop page:', error);

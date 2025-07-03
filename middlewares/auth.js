@@ -30,26 +30,50 @@ const isLogin=async (req,res,next)=>{
 
 
 
-const checkUserBlocked= async (req, res, next) => {
-    try {
-        const userId = req.session.user;
-        if (!userId) {
-            return next();
-        }
+// const checkUserBlocked= async (req, res, next) => {
+//     try {
+//         const userId = req.session.user;
+//         if (!userId) {
+//             return next();
+//         }
   
-        const userData = await User.findById(userId);
-        
-        if (userData?.isBlocked) {
-            res.redirect("/login");
-        }
+//         const userData = await User.findById(userId);
+
+//         if (userData?.isBlocked === true) {
+//             res.redirect("/login");
+//         }
   
-        next();
+//         next();
   
-    } catch (error) {
-        console.log("Error in block check middleware:", error);
-        next();
+//     } catch (error) {
+//         console.log("Error in block check middleware:", error);
+//         next();
+//     }
+//   };
+const checkUserBlocked = async (req, res, next) => {
+  try {
+    const skipPaths = ["/login", "/signup", "/logout"]; // ✅ Skip checking these routes
+    if (skipPaths.includes(req.path)) {
+      return next();
     }
-  };
+
+    const userId = req.session.user;
+    if (!userId) {
+      return next(); // not logged in
+    }
+
+    const userData = await User.findById(userId);
+    if (userData?.isBlocked) {
+      req.session.destroy(); // logout
+      return res.redirect("/login"); // redirect to login
+    }
+
+    next(); // ✅ user is okay
+  } catch (error) {
+    console.log("Error in checkUserBlocked middleware:", error);
+    next();
+  }
+};
 
 
 

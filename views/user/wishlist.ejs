@@ -1,6 +1,7 @@
 <%- include("../../views/partials/user/header") %>
 <main class="main">
     <!-- Breadcrumb -->
+       <meta name="csrf-token" content="<%= csrfToken %>">
     <div class="page-header breadcrumb-wrap" style="background-color: #f8f9fa; padding: 20px 0;">
         <div class="container">
             <div class="breadcrumb" style="font-size: 14px; color: #666;">
@@ -208,6 +209,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 },
                 body: JSON.stringify({ productId })
             });
@@ -281,6 +283,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 },
                 body: JSON.stringify({ productId })
             });

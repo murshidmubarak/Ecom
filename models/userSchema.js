@@ -140,7 +140,7 @@ const userSchema = new Schema(
         couponApplied: {
             type: [String], 
             default: []
-          },
+        },
         password: {
             type: String,
             required: function () {
@@ -156,22 +156,10 @@ const userSchema = new Schema(
             type: Boolean,
             default: false,
         },
-    /*     cart: [{
-            productId: {
-                type: Schema.Types.ObjectId,
-                ref: "Product",
-                required: true,
-            },
-            quantity: {
-                type: Number,
-                required: true,
-                min: [1, "Quantity must be at least 1"],
-                max: [3, "Maximum quantity per item is 3"], // Matches MAX_QUANTITY_PER_ITEM
-                default: 1,
-            },
-        }], */
-
-        
+        profilePhoto: {
+            type: String,
+            default: null
+        },
         wallet: {
             type: Number,
             default: 0,
@@ -217,7 +205,7 @@ const userSchema = new Schema(
         }],
     },
     {
-        timestamps: true, // Adds createdAt and updatedAt fields
+        timestamps: true,
     }
 );
 
