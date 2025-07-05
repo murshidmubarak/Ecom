@@ -9,6 +9,7 @@ const getProductAddPage = async (req, res) => {
         const category = await Category.find({ isListed: true });
         res.render("product-add", {
             cat: category,
+            csrfToken: req.csrfToken() ? req.csrfToken() : null, // Pass CSRF token to the view
         });
     } catch (error) {
         console.error("Error loading add product page:", error);
@@ -222,6 +223,7 @@ const getEditProduct = async (req, res) => {
         res.render("product-edit", {
             product: product,
             cat: category,
+            csrfToken: req.csrfToken() ? req.csrfToken() : null, // Pass CSRF token to the view
         });
     } catch (error) {
         console.error("Error loading edit product page:", error);

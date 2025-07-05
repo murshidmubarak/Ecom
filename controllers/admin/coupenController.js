@@ -3,7 +3,8 @@ const Coupon = require("../../models/coupenSchema");
 const loadCoupen = async (req, res) => {
   try {
     const coupons = await Coupon.find().sort({ createdAt: -1 });
-    return res.render("coupen", { coupons });
+    const csrfToken = req.csrfToken ? req.csrfToken() : null; // Get CSRF token if available
+    return res.render("coupen", { coupons, csrfToken });
   } catch (error) {
     console.error("Error loading coupons:", error);
     return res.redirect("/pageerror");

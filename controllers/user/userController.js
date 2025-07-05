@@ -12,7 +12,7 @@ const whishlist = require("../../models/wishlistSchema");
 const loadsignup = async (req, res) => {
     try {
         console.log('signup renderd');
-        return res.render('signup');
+        return res.render('signup', { csrfToken: req.csrfToken() });
     } catch (error) {
         res.status(500).send("server error");
     }
@@ -156,7 +156,7 @@ const getotp = async (req, res) => {
     try {
         const otp = req.session.userOtp;
         console.log("Rendering verify-otp, OTP:", otp);
-        res.render("verify-otp");
+        res.render("verify-otp", { csrfToken: req.csrfToken(), otp });
     } catch (error) {
         console.error("Error rendering OTP page:", error);
         return res.status(500).json({ success: false, message: "Internal server error" });

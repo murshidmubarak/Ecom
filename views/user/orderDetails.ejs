@@ -1,6 +1,7 @@
 <%- include("../../views/partials/user/header") %>
 
 <main class="container" style="margin-top: 140px; padding-bottom: 60px;">
+    <meta name="csrf-token" content="<%= csrfToken %>">
     <section class="content-main">
         <div class="content-header" style="margin-bottom: 30px;">
             <h2 class="content-title" style="font-size: 2rem; color: #1a1a1a; font-weight: 700;">Order Details</h2>
@@ -203,6 +204,10 @@ function cancelOrder(orderId) {
         method: 'POST',
         contentType: 'application/json',
         data: JSON.stringify({ orderId: orderId }),
+        csrfToken: $('meta[name="csrf-token"]').attr('content'),
+        headers: {
+            'X-CSRF-Token': $('meta[name="csrf-token"]').attr('content')
+        },
         success: (response) => {
             if (response.message === "Order cancelled successfully") {
                 alert('The entire order has was cancelled successfully.');
@@ -221,7 +226,11 @@ async function retryPayment(orderId) {
         const response = await $.ajax({
             url: `/retryPayment?orderId=${orderId}`,
             method: "GET",
-            contentType: "application/json"
+            contentType: "application/json",
+            csrfToken: $('meta[name="csrf-token"]').attr('content'),
+            headers: {
+                'X-CSRF-Token': $('meta[name="csrf-token"]').attr('content')
+            }
         });
         console.log('retryPayment: Response received', response);
 
@@ -245,7 +254,11 @@ async function retryPayment(orderId) {
                                 razorpay_payment_id: razorpayResponse.razorpay_payment_id,
                                 razorpay_order_id: razorpayResponse.razorpay_order_id,
                                 razorpay_signature: razorpayResponse.razorpay_signature,
-                            })
+                                csrfToken: $('meta[name="csrf-token"]').attr('content')
+                            }),
+                            headers: {
+                                'X-CSRF-Token': $('meta[name="csrf-token"]').attr('content')
+                            }
                         });
 
                         if (verifyResponse.success) {
@@ -323,10 +336,13 @@ function returnSingleProduct(orderId, singleProductId, returnReason) {
         url: '/returnSingleProduct',
         method: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({ orderId: orderId, singleProductId: singleProductId, returnReason: returnReason }),
+        data: JSON.stringify({ orderId: orderId, singleProductId: singleProductId, returnReason: returnReason , csrfToken: $('meta[name="csrf-token"]').attr('content')}),
+        headers: {
+            'X-CSRF-Token': $('meta[name="csrf-token"]').attr('content')
+        },
         success: (response) => {
             if (response.message === "Return request submitted to admin for approval") {
-                alert('Your return request has been submitted to the admin for approval.');
+                // alert('Your return request has been submitted to the admin for approval.');
                 $('#returnModal').modal('hide');
                 window.location.reload();
             }
@@ -348,10 +364,12 @@ function cancelSingleProduct(orderId, singleProductId) {
         url: '/cancelSingleProduct',
         method: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({ orderId: orderId, singleProductId: singleProductId }),
+        data: JSON.stringify({ orderId: orderId, singleProductId: singleProductId, csrfToken: $('meta[name="csrf-token"]').attr('content')}),
+        headers: {
+            'X-CSRF-Token': $('meta[name="csrf-token"]').attr('content')
+        },
         success: (response) => {
             if (response.message === "All products cancelled, order status updated to cancelled") {
-                alert('All products in this order have been cancelled, and the order status is now cancelled.');
                 window.location.reload();
             } else if (response.message === "Product status updated successfully") {
                 alert('The product has been cancelled successfully.');

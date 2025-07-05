@@ -6,6 +6,7 @@
 </style>
  
     <div class="row justify-content-center">
+        <meta name="csrf-token" content="<%= csrfToken %>">
         <div class="col-md-6 mt-60 cat">
             <form method="post" action="/admin/editCategory/<%= category._id %>">
                

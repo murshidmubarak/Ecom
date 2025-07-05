@@ -2,6 +2,8 @@
 
 <!-- Include Cropper.js CSS and JS via CDN -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" rel="stylesheet">
+    <meta name="csrf-token" content="<%= csrfToken %>">
+
 
 <style>
   /* Importing Google Material Icons */
@@ -551,65 +553,66 @@
                       <strong>Email:</strong> <%= user.email %>
                     </p>
                     <div class="d-flex justify-content-center flex-wrap mt-4">
-                      <!-- <a href="/change-email" class="btn btn-success mx-2 mb-2">Change Email</a> -->
-                      <a href="/change-password" class="btn btn-success mx-2 mb-2">Change Password</a>
-                    </div>
+                      <!-- <a href="/change-email?csrf=<%= csrfToken %>" class="btn btn-success mx-2 mb-2">Change Email</a> -->
+                    <a href="/change-password?csrf=<%= csrfToken %>" class="btn btn-success mx-2 mb-2">Change Password</a>
+                   </div>
+
                   </div>
                 </div>
               </div>
 
-              <div class="tab-pane fade <%= activeTab === 'address' ? 'show active' : '' %>" id="address" role="tabpanel" aria-labelledby="address-tab">
-                <div class="row">
-                  <% if (userAddress && userAddress.address && userAddress.address.length > 0) { %>
-                    <% userAddress.address.forEach(address => { %>
-                      <div class="col-lg-6">
-                        <div class="card mb-3">
-                          <div class="card-header">
-                            <h5 class="mb-0"><%= address.addressType || 'Address' %></h5>
-                          </div>
-                          <div class="card-body">
-                            <address>
-                              <%= address.name || 'N/A' %><br>
-                              <%= address.city || '' %>, <%= address.state || '' %><br>
-                              <%= address.landMark || '' %><br>
-                              PIN: <%= address.pincode || 'N/A' %>
-                            </address>
-                            <p>Phone: <%= address.phone || 'N/A' %></p>
-                            <% if (address.altPhone) { %>
-                              <p>Alt: <%= address.altPhone %></p>
-                            <% } %>
-                            <div class="d-flex justify-content-between mt-3">
-                              <a href="/editAddress?id=<%= address._id %>" class="btn btn-sm btn-success">Edit</a>
-                              <a href="/deleteAddress?id=<%= address._id %>" 
-                                 class="btn btn-sm btn-danger text-center" >Delete</a>
-                                
+             <div class="tab-pane fade <%= activeTab === 'address' ? 'show active' : '' %>" id="address" role="tabpanel" aria-labelledby="address-tab">
+                  <div class="row">
+                    <% if (userAddress && userAddress.address && userAddress.address.length > 0) { %>
+                      <% userAddress.address.forEach(address => { %>
+                        <div class="col-lg-6">
+                          <div class="card mb-3">
+                            <div class="card-header">
+                              <h5 class="mb-0"><%= address.addressType || 'Address' %></h5>
+                            </div>
+                            <div class="card-body">
+                              <address>
+                                <%= address.name || 'N/A' %><br>
+                                <%= address.city || '' %>, <%= address.state || '' %><br>
+                                <%= address.landMark || '' %><br>
+                                PIN: <%= address.pincode || 'N/A' %>
+                              </address>
+                              <p>Phone: <%= address.phone || 'N/A' %></p>
+                              <% if (address.altPhone) { %>
+                                <p>Alt: <%= address.altPhone %></p>
+                              <% } %>
+                              <div class="d-flex justify-content-between mt-3">
+                                <a href="/editAddress?id=<%= address._id %>" class="btn btn-sm btn-success">Edit</a>
+                                <a href="/deleteAddress?id=<%= address._id %>" 
+                                   class="btn btn-sm btn-outline-danger">Delete</a>
+                                   
+                              </div>
                             </div>
                           </div>
                         </div>
+                      <% }) %>
+                    <% } else { %>
+                      <div class="col-12">
+                        <div class="card">
+                          <div class="card-body text-center">
+                            <p class="text-muted">No addresses saved</p>
+                          </div>
+                        </div>
                       </div>
-                    <% }) %>
-                  <% } else { %>
-                    <div class="col-12">
+                    <% } %>
+                    <div class="col-lg-6">
                       <div class="card">
+                        <div class="card-header">
+                          <h5 class="mb-0">Add New Address</h5>
+                        </div>
                         <div class="card-body text-center">
-                          <p class="text-muted">No addresses saved</p>
+                          <i class="fi-rs-marker" style="font-size: 48px; color: #487379; margin-bottom: 15px;"></i>
+                          <a href="/addAddress" class="btn btn-success">Add Address</a>
                         </div>
                       </div>
                     </div>
-                  <% } %>
-                  <div class="col-lg-6">
-                    <div class="card">
-                      <div class="card-header">
-                        <h5 class="mb-0">Add New Address</h5>
-                      </div>
-                      <div class="card-body text-center">
-                        <i class="fi-rs-marker" style="font-size: 48px; color: #487379; margin-bottom: 15px;"></i>
-                        <a href="/addAddress" class="btn btn-success">Add Address</a>
-                      </div>
-                    </div>
                   </div>
-                </div>
-              </div>
+                </div>   
 
               <div class="tab-pane fade <%= activeTab === 'orders' ? 'show active' : '' %>" id="orders" role="tabpanel" aria-labelledby="orders-tab">
                 <div class="card">
@@ -815,8 +818,10 @@
             <p>Current profile photo:</p>
             <img src="<%= user.profilePhoto %>" alt="Current Profile Photo" class="profile-photo mb-3" style="display: block; margin: 0 auto;">
             <form action="/removeProfilePhoto" method="POST" style="display:inline;" id="removePhotoForm">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
               <button type="submit" class="btn btn-danger w-100 mb-3">Remove Photo</button>
-            </form>
+              </form>
+
           <% } else { %>
             <p>No profile photo set. Upload a new one:</p>
             <span class="modal-profile-icon mb-3">person</span>
@@ -994,7 +999,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
           fetch("/uploadProfilePhoto", {
             method: "POST",
-            body: formData
+            body: formData,
+            headers: {
+              "X-CSRF-Token": "<%= csrfToken %>"
+            }
           })
             .then(response => {
               if (response.redirected) {
@@ -1050,7 +1058,11 @@ document.addEventListener("DOMContentLoaded", function () {
     removePhotoForm.addEventListener("submit", function (event) {
       event.preventDefault();
       fetch("/removeProfilePhoto", {
-        method: "POST"
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "<%= csrfToken %>"
+        },
       })
         .then(response => {
           if (response.redirected) {

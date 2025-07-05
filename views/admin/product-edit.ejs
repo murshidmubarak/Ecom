@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+     <meta name="csrf-token" content="<%= csrfToken %>">
     <style>
         /* Existing styles unchanged */
         :root {
@@ -499,8 +500,10 @@
                     try {
                         const response = await fetch('/admin/deleteImage', {
                             method: 'POST',
+                            csrfToken: document.querySelector('meta[name="csrf-token"]').content,
                             headers: {
-                                'Content-Type': 'application/json'
+                                'Content-Type': 'application/json',
+                                'CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
                             },
                             body: JSON.stringify({
                                 imageNameToServer: imageName,
@@ -667,7 +670,11 @@
 
                     const response = await fetch(editProductForm.action, {
                         method: 'POST',
-                        body: formData
+                        body: formData,
+                        csrfToken: document.querySelector('meta[name="csrf-token"]').content,
+                        headers: {
+                            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+                        }
                     });
 
                     if (response.ok) {

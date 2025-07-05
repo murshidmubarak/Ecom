@@ -102,7 +102,7 @@ const verifyForgotPassOtp = async (req, res) => {
 
 const getResetPassPage = async (req, res) => {
     try {
-        res.render("reset-password");
+        res.render("reset-password", { csrfToken: req.csrfToken() });
     } catch (error) {
         res.redirect("/pageNotFound");
     }
@@ -199,7 +199,10 @@ const userProfile = async (req, res) => {
         const ordersTotalPages = Math.ceil(ordersCount / limit);
         const walletTotalPages = Math.ceil(walletCount / limit);
 
+        const csrfToken = req.csrfToken();
+
         res.render('profile', {
+            csrfToken,
             user: userData,
             userAddress: (await Address.findOne({ userId })) || { address: [] },
             orders: orders || [],
@@ -372,7 +375,8 @@ const addAddress = async (req, res) => {
     try {
         const user = req.session.user;
         res.render("add-address", {
-            user: user
+            user: user,
+            csrfToken: req.csrfToken()
         });
     } catch (error) {
         console.error("error in add address render");
@@ -424,6 +428,7 @@ const editAddress = async (req, res) => {
         res.render("edit-address", {
             user: user,
             address: addressData,
+            csrfToken: req.csrfToken()
         });
     } catch (error) {
         console.error("error in edit address render", error);
@@ -465,25 +470,25 @@ const postEditAddress = async (req, res) => {
     }
 };
 
-const deleteAddress = async (req, res) => {
-    try {
-        const addressId = req.query.id;
-        const findAddress = await Address.findOne({ "address._id": addressId });
-        if (!findAddress) {
-            return res.status(404).send("address not found");
-        }
+// const deleteAddress = async (req, res) => {
+//     try {
+//         const addressId = req.query.id;
+//         const findAddress = await Address.findOne({ "address._id": addressId });
+//         if (!findAddress) {
+//             return res.status(404).send("address not found");
+//         }
        
-        await Address.updateOne(
-            { "address._id": addressId },
-            { $pull: { address: { _id: addressId } } }
-        );
+//         await Address.updateOne(
+//             { "address._id": addressId },
+//             { $pull: { address: { _id: addressId } } }
+//         );
 
-        res.redirect("/userProfile");
-    } catch (error) {
-        console.error("error in delete address", error);
-        res.redirect('page404');
-    }
-};
+//         res.redirect("/userProfile");
+//     } catch (error) {
+//         console.error("error in delete address", error);
+//         res.redirect('page404');
+//     }
+// };
 
 // New function to handle profile photo upload
 // const uploadProfilePhoto = async (req, res) => {
@@ -506,6 +511,27 @@ const deleteAddress = async (req, res) => {
 //         res.redirect('/userProfile?tab=dashboard&error=Failed to upload photo');
 //     }
 // };
+
+const deleteAddress = async (req, res) => {
+    try {
+        const addressId = req.body.id || req.query.id; // Check both body and query
+        const findAddress = await Address.findOne({ "address._id": addressId });
+        if (!findAddress) {
+            return res.status(404).send("address not found");
+        }
+       
+        await Address.updateOne(
+            { "address._id": addressId },
+            { $pull: { address: { _id: addressId } } }
+        );
+
+        res.redirect("/userProfile");
+    } catch (error) {
+        console.error("error in delete address", error);
+        res.redirect('page404');
+    }
+};
+
 const uploadProfilePhoto = async (req, res) => {
     try {
         const userId = req.session.user;

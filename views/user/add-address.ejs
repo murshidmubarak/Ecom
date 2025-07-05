@@ -1,7 +1,10 @@
 <%- include("../../views/partials/user/header") %>
 <div class="container mt-4">
+        <meta name="csrf-token" content="<%= csrfToken %>">
+
    <h3 class="mt-3" style="color: #046963; margin-bottom:70px">Create User Address</h3>
    <form id="addressForm" method="POST" action="/addAddress" class="border-0 p-3">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
        <div class="row mb-50">
            <div class="form-group col-md-4">
                <label for="addressType">Address Type:</label>

@@ -84,8 +84,9 @@ const addCategory = async(req,res)=>{
             // Calculate total pages
             const totalPages = Math.ceil(totalCategories / limit);
     
-           
+           const csrfToken = req.csrfToken ? req.csrfToken() : null; // Get CSRF token if available
             res.render("category", {
+                csrfToken, // Pass CSRF token to the view
                 cat: categoryData, 
                 currentPage: page,
                 totalPages: totalPages, 
@@ -149,8 +150,10 @@ const addCategory = async(req,res)=>{
             });
     
             console.log(categories);
+            const csrfToken = req.csrfToken ? req.csrfToken() : null; // Get CSRF token if available
     
-            res.render('category', {  // Changed 'category' to 'categories'
+            res.render('category', { 
+                csrfToken, // Pass CSRF token to the view 
                 cat:categories,  
                 message: categories.length ? '' : 'No categories found',
                 currentPage: 1,
@@ -377,7 +380,8 @@ const addCategory = async(req,res)=>{
     const getCategoryPage = async (req, res) => {
         try {
             const categories = await Category.find({}); // Fetch all categories
-            res.render("admin/category", { categories }); // Render the EJS template
+            const csrfToken = req.csrfToken ? req.csrfToken() : null; // Get CSRF token if available
+            res.render("admin/category", { categories, csrfToken }); // Render the EJS template
         } catch (error) {
             console.error(error);
             res.redirect("/pageerror");

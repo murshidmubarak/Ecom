@@ -1874,7 +1874,10 @@ const paymentFailed = async (req, res) => {
       errorMessage: 'Payment failed or was cancelled. Please try again.'
     });
 
+    const csrfToken = req.csrfToken();
+
     res.render('paymentFailed', {
+      csrfToken,
       errorMessage: 'Payment failed or was cancelled. Please try again.',
       orderId,
       user,
@@ -1892,9 +1895,10 @@ const paymentFailed = async (req, res) => {
 };
 
 const retryPayment = async (req, res) => {
+      const { orderId } = req.query;
+      const userId = req.session.user;
   try {
-    const { orderId } = req.query;
-    const userId = req.session.user;
+    
     console.log("retryPayment - Request:", { orderId, userId });
 
     if (!orderId || !userId) {
@@ -1920,6 +1924,22 @@ const retryPayment = async (req, res) => {
     });
     console.log("retryPayment - Razorpay order created:", razorpayOrder);
 
+        order.payment = "online";
+        order.status = "confirmed"; // Reset status to success for retry
+        await order.save();
+        console.log("retryPayment - Order payment method updated to online");
+     for (const item of order.orderedItems) {
+      const product = await Product.findById(item.product);
+      if (product) {
+        const currentQuantity = parseInt(product.quantity, 10);
+        const newQuantity = currentQuantity - item.quantity;
+        product.quantity = newQuantity.toString();
+        await product.save();
+        console.log("verifyPayment - Stock updated for product:", item.product, "New quantity:", product.quantity);
+      }
+    }
+
+
     res.json({
       payment: true,
       method: "razorpay",
@@ -1929,12 +1949,83 @@ const retryPayment = async (req, res) => {
       amount: razorpayOrder.amount,
       key: process.env.RAZORPAY_KEY_ID,
     });
+
+
+    // return res.redirect('/orderDetails');
+    // return res.redirect(`/orderDetails?id=${order._id}`);
+
+
   } catch (error) {
     console.error("retryPayment - Error:", error);
     await Order.findOneAndUpdate({ orderId }, { payment: "failed" });
     res.redirect(`/paymentFailed?orderId=${orderId}`);
   }
 };
+
+// const retryPayment = async (req, res) => {
+//   const { orderId } = req.query;
+//   const userId = req.session.user;
+
+//   try {
+//     console.log("retryPayment - Request:", { orderId, userId });
+
+//     if (!orderId || !userId) {
+//       console.log("retryPayment - Missing orderId or userId");
+//       return res.status(400).json({ error: "Missing orderId or userId" });
+//     }
+
+//     const order = await Order.findOne({ orderId });
+//     if (!order) {
+//       console.log("retryPayment - Order not found for orderId:", orderId);
+//       return res.status(404).json({ error: "Order not found" });
+//     }
+
+//     if (order.status !== "pending") {
+//       console.log("retryPayment - Order is not in pending state:", order.status);
+//       return res.status(400).json({ error: "Order is not eligible for retry" });
+//     }
+
+//     // Create new Razorpay order
+//     const razorpayOrder = await razorpayInstance.orders.create({
+//       amount: Math.round(order.finalAmount * 100),
+//       currency: "INR",
+//       receipt: order._id.toString(),
+//     });
+//     console.log("retryPayment - Razorpay order created:", razorpayOrder);
+
+//     // Update order status and payment method
+//     order.payment = "online";
+//     order.status = "confirmed";
+//     await order.save();
+//     console.log("retryPayment - Order payment method updated to online");
+
+//     // Update product stock
+//     for (const item of order.orderedItems) {
+//       const product = await Product.findById(item.product);
+//       if (product) {
+//         const currentQuantity = parseInt(product.quantity, 10);
+//         const newQuantity = currentQuantity - item.quantity;
+//         product.quantity = newQuantity.toString();
+//         await product.save();
+//         console.log("retryPayment - Stock updated for product:", item.product, "New quantity:", product.quantity);
+//       }
+//     }
+
+//     // Redirect to order details page
+//     return res.redirect(`/orderDetails?id=${order._id}`);
+
+//   } catch (error) {
+//     console.error("retryPayment - Error:", error);
+
+//     // Ensure orderId is available to avoid ReferenceError
+//     const orderIdFromQuery = req.query?.orderId;
+//     if (orderIdFromQuery) {
+//       await Order.findOneAndUpdate({ orderId: orderIdFromQuery }, { payment: "failed" });
+//     }
+
+//     return res.redirect(`/paymentFailed?orderId=${orderIdFromQuery || "unknown"}`);
+//   }
+// };
 
 const deleteProduct = async (req, res) => {
   try {
@@ -1981,7 +2072,10 @@ const getOrderDetailsPage = async (req, res) => {
     const totalPrice = findOrder.totalPrice;
     const finalAmount = findOrder.finalAmount;
 
+    const csrfToken = req.csrfToken();
+
     res.render("orderDetails", {
+      csrfToken,
       orders: findOrder,
       user: findUser,
       totalGrant: totalGrant,
