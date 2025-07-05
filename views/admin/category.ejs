@@ -7,6 +7,7 @@
     <title>Admin Categories</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <meta name="csrf-token" content="<%= csrfToken %>">
     <style>
         :root {
             --sidebar-width: 250px;
@@ -272,7 +273,7 @@
             <a href="/admin/users" class="nav-link mb-2"><i class="fas fa-users"></i><span>Users</span></a>
             <a href="/admin/categories" class="nav-link mb-2"><i class="fas fa-tags"></i><span>Categories</span></a>
             <a href="/admin/order-list" class="nav-link mb-2"><i class="fas fa-undo-alt"></i><span>Returns & Refunds</span></a>
-            <a href="/admin/coupons" class="nav-link mb-2"><i class="fas fa-ticket-alt"></i><span>Coupons</span></a>
+            <a href="/admin/coupen" class="nav-link mb-2"><i class="fas fa-ticket-alt"></i><span>Coupons</span></a>
             <a href="#" class="nav-link mb-2"><i class="fas fa-image"></i><span>Banners</span></a>
             <a href="#" class="nav-link mb-2"><i class="fas fa-cog"></i><span>Settings</span></a>
             <a href="/admin/logout" class="nav-link text-danger mt-auto"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
@@ -289,6 +290,7 @@
             </div>
             <header class="card-header">
                 <form action="/admin/searchCategory" method="post" class="input-group">
+                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <input type="text" name="search" placeholder="Search categories..." class="form-control" id="searchInput">
                     <button type="submit">Search</button>
                 </form>
@@ -441,8 +443,10 @@
 
             fetch('/admin/addCategory', {
                 method: "POST",
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, description })
+                headers: { 'Content-Type': 'application/json',
+                    'CSRF-Token': document.querySelector('meta[name="csrf-token"]').content  // Include CSRF token in headers
+                 },
+                body: JSON.stringify({ name, description, csrfToken: document.querySelector('meta[name="csrf-token"]').content })
             })
             .then(response => response.json())
             .then(data => {
@@ -493,8 +497,10 @@
                     const percentage = parseFloat(result.value);
                     fetch('/admin/addCategoryOffer', {
                         method: "POST",
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ categoryId, percentage })
+                        headers: { 'Content-Type': 'application/json',
+                            'CSRF-Token': document.querySelector('meta[name="csrf-token"]').content  // Include CSRF token in headers
+                         },
+                        body: JSON.stringify({ categoryId, percentage, csrfToken: document.querySelector('meta[name="csrf-token"]').content })
                     })
                     .then(response => {
                         if (!response.ok) {
@@ -542,8 +548,10 @@
                 if (result.isConfirmed) {
                     fetch('/admin/removeCategoryOffer', {
                         method: "POST",
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ categoryId })
+                        headers: { 'Content-Type': 'application/json',
+                            'CSRF-Token': document.querySelector('meta[name="csrf-token"]').content  // Include CSRF token in headers
+                         },
+                        body: JSON.stringify({ categoryId, csrfToken: document.querySelector('meta[name="csrf-token"]').content })
                     })
                     .then(response => {
                         if (!response.ok) {
@@ -591,7 +599,9 @@
                 if (result.isConfirmed) {
                     fetch(`/admin/listCategory?id=${categoryId}`, {
                         method: 'GET',
-                        headers: { 'Content-Type': 'application/json' }
+                        headers: { 'Content-Type': 'application/json',
+                            'CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+                         }
                     })
                     .then(response => {
                         if (!response.ok) {
@@ -634,7 +644,9 @@
                 if (result.isConfirmed) {
                     fetch(`/admin/unlistCategory?id=${categoryId}`, {
                         method: 'GET',
-                        headers: { 'Content-Type': 'application/json' }
+                        headers: { 'Content-Type': 'application/json',
+                            'CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+                         }
                     })
                     .then(response => {
                         if (!response.ok) {
@@ -668,7 +680,9 @@
         function editCategory(categoryId) {
             fetch(`/admin/editCategory?id=${categoryId}`, {
                 method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 'Content-Type': 'application/json',
+                    'CSRF-Token': document.querySelector('meta[name="csrf-token"]').content  // Include CSRF token in headers
+                 }
             })
             .then(response => response.json())
             .then(data => {

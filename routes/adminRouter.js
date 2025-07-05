@@ -60,7 +60,7 @@ router.delete("/deletecoupon",adminAuth, coupenController.deleteCoupon);
 
 
 router.get("/salesReport", adminAuth, salesReportController.getSalesReportPage);
-router.get("/dateWiseFilter", adminAuth, salesReportController.dateWiseFilter);
+// router.get("/dateWiseFilter", adminAuth, salesReportController.dateWiseFilter);
 router.post("/generatePdf", adminAuth, salesReportController.generatePdf);
 router.post("/downloadExcel", adminAuth, salesReportController.downloadExcel);
 

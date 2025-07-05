@@ -1,0 +1,38 @@
+2025-06-14T06:57:35.707Z - orderPlaced - Request body: {"totalPrice":3800,"addressId":"684d1d3bdeedf9fbc70df59a","paymentMethod":"razorpay","couponApplied":true,"discount":100,"userId":"67fdd7c2c5863976859de779"}
+2025-06-14T06:57:35.745Z - orderPlaced - Coupon data: {"couponApplied":true,"discount":100,"rawCouponApplied":true,"typeOfCouponApplied":"boolean"}
+2025-06-14T06:57:35.746Z - orderPlaced - Final Amount: 3800
+2025-06-14T06:57:35.751Z - orderPlaced - Sanitized couponApplied: {"sanitizedCouponApplied":"","willSaveCoupon":false}
+2025-06-14T06:57:35.766Z - orderPlaced - Order saved: {"orderId":"xuz4","mongoId":"684d1d5fdeedf9fbc70df5e8","couponApplied":[],"discount":0}
+2025-06-14T06:57:35.768Z - orderPlaced - Creating Razorpay order with amount (in paise): 380000
+2025-06-14T06:57:37.167Z - orderPlaced - Razorpay order created: {"amount":380000,"amount_due":380000,"amount_paid":0,"attempts":0,"created_at":1749884237,"currency":"INR","entity":"order","id":"order_Qgz8WUIwHtRpH6","notes":[],"offer_id":null,"receipt":"684d1d5fdeedf9fbc70df5e8","status":"created"}
+2025-06-14T06:58:10.001Z - cancelSingleProduct - Request: {"orderId":"684d1d5fdeedf9fbc70df5e8","singleProductId":"67f23a5db755ad731baabc68"}
+2025-06-14T06:58:10.009Z - Order details: {"orderId":"684d1d5fdeedf9fbc70df5e8","payment":"online","discount":0,"couponApplied":[]}
+2025-06-14T06:58:10.012Z - Ordered item details: {"productId":"67f23a5db755ad731baabc68","price":2700,"quantity":1}
+2025-06-14T06:58:10.014Z - Total order amount (before discount): 3800
+2025-06-14T06:58:10.016Z - Product total price: 2700
+2025-06-14T06:58:10.018Z - No coupon discount applied: {"couponApplied":[]}
+2025-06-14T06:58:10.020Z - Refund amount calculated: 2700
+2025-06-14T06:58:10.059Z - Order update result: {"acknowledged":true,"modifiedCount":1,"upsertedId":null,"upsertedCount":0,"matchedCount":1}
+2025-06-14T06:58:10.080Z - Stock restored for product: 67f23a5db755ad731baabc68
+2025-06-14T06:58:10.101Z - User wallet updated: 2700
+2025-06-14T06:58:10.123Z - Wallet transaction added: TXN-1749884290107-hty7du278
+2025-06-14T07:04:45.557Z - cancelSingleProduct - Request: {"orderId":"684d1d5fdeedf9fbc70df5e8","singleProductId":"67f8e6fe6ef17445e96697ee"}
+2025-06-14T07:04:45.568Z - Order details: {"orderId":"684d1d5fdeedf9fbc70df5e8","payment":"online","discount":0,"couponApplied":[]}
+2025-06-14T07:04:45.571Z - Ordered item details: {"productId":"67f8e6fe6ef17445e96697ee","price":1200,"quantity":1}
+2025-06-14T07:04:45.572Z - Total order amount (before discount): 3800
+2025-06-14T07:04:45.574Z - Product total price: 1200
+2025-06-14T07:04:45.577Z - No coupon discount applied: {"couponApplied":[]}
+2025-06-14T07:04:45.580Z - Refund amount calculated: 1200
+2025-06-14T07:04:45.602Z - Order update result: {"acknowledged":true,"modifiedCount":1,"upsertedId":null,"upsertedCount":0,"matchedCount":1}
+2025-06-14T07:04:45.685Z - Stock restored for product: 67f8e6fe6ef17445e96697ee
+2025-06-14T07:04:45.712Z - User wallet updated: 1200
+2025-06-14T07:04:45.780Z - Wallet transaction added: TXN-1749884685727-lkz5v85ac
+2025-06-14T07:04:45.800Z - All items cancelled
+2025-06-14T07:11:23.567Z - orderPlaced - Request body: {"totalPrice":4160,"addressId":"681068e5dfdb113a61fcf94b","paymentMethod":"razorpay","couponApplied":true,"discount":10,"userId":"681068addfdb113a61fcf924"}
+2025-06-14T07:11:23.571Z - orderPlaced - Invalid couponApplied type: boolean
+2025-06-14T07:11:27.245Z - orderPlaced - Request body: {"totalPrice":4160,"addressId":"681068e5dfdb113a61fcf94b","paymentMethod":"razorpay","couponApplied":true,"discount":10,"userId":"681068addfdb113a61fcf924"}
+2025-06-14T07:11:27.248Z - orderPlaced - Invalid couponApplied type: boolean
+2025-06-14T07:11:50.812Z - orderPlaced - Request body: {"totalPrice":4160,"addressId":"681068e5dfdb113a61fcf94b","paymentMethod":"razorpay","couponApplied":true,"discount":10,"userId":"681068addfdb113a61fcf924"}
+2025-06-14T07:11:50.831Z - orderPlaced - Invalid couponApplied type: boolean
+2025-06-14T08:28:45.866Z - orderPlaced - Request body: {"totalPrice":3800,"addressId":"67fde43eb5831bea88edadc2","paymentMethod":"razorpay","couponApplied":true,"discount":100,"userId":"67e502d32dd4d4d0ca7121cf"}
+2025-06-14T08:28:45.871Z - orderPlaced - Invalid couponApplied type: boolean

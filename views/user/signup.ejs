@@ -158,6 +158,7 @@
     
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
     <style>
         body {
@@ -362,7 +363,9 @@
                 try {
                     const response = await fetch("/signup", {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: { "Content-Type": "application/json",
+                            "X-CSRF-Token": document.querySelector('input[name="_csrf"]').value
+                         },
                         body: JSON.stringify({ name, email, password, cPassword,code })
                     });
 

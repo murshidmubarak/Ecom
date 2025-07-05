@@ -6,10 +6,14 @@ const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
 const session = require("express-session");
 const Address = require("../../models/addressSchema");
-const Order = require("../../models/orderSchema"); // Add this line to import Order model
+const Order = require("../../models/orderSchema");
 const mongoose = require('mongoose');
 const Wallet = require("../../models/walletSchema");
-const moment = require('moment'); // Import moment.js for date formatting
+const moment = require('moment');
+const { profileUpload } = require('../../middlewares/multer'); // Import profileUpload
+const sharp = require('sharp'); // Import sharp for image processing
+const path = require('path');
+const fs = require('fs').promises;
 
 
 function generateOtp() {
@@ -98,7 +102,7 @@ const verifyForgotPassOtp = async (req, res) => {
 
 const getResetPassPage = async (req, res) => {
     try {
-        res.render("reset-password");
+        res.render("reset-password", { csrfToken: req.csrfToken() });
     } catch (error) {
         res.redirect("/pageNotFound");
     }
@@ -141,120 +145,85 @@ const postNewPassword = async (req, res) => {
     }
 };
 
-
-
-
-/* const userProfile = async (req, res) => {
-    try {
-      const userId = req.session.user;
-  
-      if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-        return res.redirect('/login');
-      }
-  
-      const [userData, addressData, orders, wallet] = await Promise.all([
-        User.findById(userId),
-        Address.findOne({ userId }),
-        Order.find({ userId }).populate('orderedItems.product').sort({ createdOn: -1 }),
-        Wallet.findOne({ userId })
-      ]);
-  
-      if (!userData) {
-        return res.redirect('/login');
-      }
-  
-      const walletBalance = userData.wallet || 0;
-  
-      res.render('profile', {
-        user: userData,
-        userAddress: addressData || { address: [] },
-        orders: orders || [],
-        wallet, // Can be null if no wallet exists
-        walletBalance,
-        moment
-      });
-    } catch (error) {
-      console.error('Error rendering profile page:', error);
-      res.redirect('/page404');
-    }
-  }; */
-
-
 const userProfile = async (req, res) => {
-  try {
-    const userId = req.session.user;
+    try {
+        const userId = req.session.user;
 
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      return res.redirect('/login');
+        if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+            return res.redirect('/login');
+        }
+
+        // Pagination parameters
+        const ordersPage = parseInt(req.query.ordersPage) || 1;
+        const walletPage = parseInt(req.query.walletPage) || 1;
+        const limit = 3;
+        const activeTab = req.query.tab || 'dashboard';
+
+        // Fetch user data
+        const userData = await User.findById(userId);
+        if (!userData) {
+            return res.redirect('/login');
+        }
+
+        // Fetch paginated orders
+        const ordersCount = await Order.countDocuments({ userId });
+        const orders = await Order.find({ userId })
+            .populate('orderedItems.product')
+            .sort({ createdOn: -1 })
+            .skip((ordersPage - 1) * limit)
+            .limit(limit);
+
+        // Fetch paginated wallet transactions
+        const wallet = await Wallet.findOne({ userId });
+        let walletTransactions = [];
+        let walletCount = 0;
+        if (wallet && wallet.transactions) {
+            walletCount = wallet.transactions.length;
+            walletTransactions = wallet.transactions
+                .slice((walletPage - 1) * limit, walletPage * limit)
+                .map(transaction => ({
+                    ...transaction._doc,
+                    transactionId: transaction.transactionId || 'N/A',
+                    transactionDate: transaction.transactionDate || new Date(),
+                    type: transaction.type || 'Unknown',
+                    description: transaction.description || 'No description',
+                    amount: transaction.amount || 0,
+                    balanceAfter: transaction.balanceAfter || 0,
+                    status: transaction.status || 'Unknown'
+                }));
+        }
+
+        const walletBalance = userData.wallet || 0;
+
+        // Calculate pagination metadata
+        const ordersTotalPages = Math.ceil(ordersCount / limit);
+        const walletTotalPages = Math.ceil(walletCount / limit);
+
+        const csrfToken = req.csrfToken();
+
+        res.render('profile', {
+            csrfToken,
+            user: userData,
+            userAddress: (await Address.findOne({ userId })) || { address: [] },
+            orders: orders || [],
+            wallet,
+            walletBalance,
+            walletTransactions: walletTransactions || [],
+            moment,
+            ordersPage,
+            walletPage,
+            ordersTotalPages,
+            walletTotalPages,
+            limit,
+            activeTab,
+            profilePhoto: userData.profilePhoto // Pass profile photo to view
+        });
+    } catch (error) {
+        console.error('Error rendering profile page:', error);
+        res.redirect('/page404');
     }
-
-    // Pagination parameters
-    const ordersPage = parseInt(req.query.ordersPage) || 1;
-    const walletPage = parseInt(req.query.walletPage) || 1;
-    const limit = 3; // Number of records per page
-    const activeTab = req.query.tab || 'dashboard'; // Default to 'dashboard' if no tab specified
-
-    // Fetch user data
-    const userData = await User.findById(userId);
-    if (!userData) {
-      return res.redirect('/login');
-    }
-
-    // Fetch paginated orders
-    const ordersCount = await Order.countDocuments({ userId });
-    const orders = await Order.find({ userId })
-      .populate('orderedItems.product')
-      .sort({ createdOn: -1 })
-      .skip((ordersPage - 1) * limit)
-      .limit(limit);
-
-    // Fetch paginated wallet transactions
-    const wallet = await Wallet.findOne({ userId });
-    let walletTransactions = [];
-    let walletCount = 0;
-    if (wallet && wallet.transactions) {
-      walletCount = wallet.transactions.length;
-      walletTransactions = wallet.transactions
-        .slice((walletPage - 1) * limit, walletPage * limit)
-        .map(transaction => ({
-          ...transaction._doc,
-          transactionId: transaction.transactionId || 'N/A',
-          transactionDate: transaction.transactionDate || new Date(),
-          type: transaction.type || 'Unknown',
-          description: transaction.description || 'No description',
-          amount: transaction.amount || 0,
-          balanceAfter: transaction.balanceAfter || 0,
-          status: transaction.status || 'Unknown'
-        }));
-    }
-
-    const walletBalance = userData.wallet || 0;
-
-    // Calculate pagination metadata
-    const ordersTotalPages = Math.ceil(ordersCount / limit);
-    const walletTotalPages = Math.ceil(walletCount / limit);
-
-    res.render('profile', {
-      user: userData,
-      userAddress: (await Address.findOne({ userId })) || { address: [] },
-      orders: orders || [],
-      wallet,
-      walletBalance,
-      walletTransactions: walletTransactions || [],
-      moment,
-      ordersPage,
-      walletPage,
-      ordersTotalPages,
-      walletTotalPages,
-      limit,
-      activeTab // Pass activeTab to the template
-    });
-  } catch (error) {
-    console.error('Error rendering profile page:', error);
-    res.redirect('/page404');
-  }
 };
-// Optional: Route to view individual order details
+
 const getOrderDetails = async (req, res) => {
     try {
         const userId = req.session.user;
@@ -406,7 +375,8 @@ const addAddress = async (req, res) => {
     try {
         const user = req.session.user;
         res.render("add-address", {
-            user: user
+            user: user,
+            csrfToken: req.csrfToken()
         });
     } catch (error) {
         console.error("error in add address render");
@@ -438,48 +408,42 @@ const postAddAddress = async (req, res) => {
     }
 };
 
-
 const editAddress = async (req, res) => {
     try {
-
         const addressId = req.query.id;
         const user = req.session.user;
         const currentAddress = await Address.findOne({"address._id": addressId}); 
 
         if (!currentAddress) {
-            return res.redirect('/page404'); // Address not found
+            return res.redirect('/page404');
         }
         const addressData = currentAddress.address.find((item)=>{
             return item._id.toString() === addressId;
         });
 
         if (!addressData) {
-            return res.redirect('/page404'); // Address not found
+            return res.redirect('/page404');
         }
 
         res.render("edit-address", {
             user: user,
             address: addressData,
-            
+            csrfToken: req.csrfToken()
         });
-
-        
     } catch (error) {
         console.error("error in edit address render", error);
         res.redirect('page404');
-        
     }
-}
+};
 
 const postEditAddress = async (req, res) => {
     try {
-
         const data = req.body;
         const addressId = req.query.id;
         const user = req.session.user;
         const findAddress = await Address.findOne({ "address._id": addressId });
         if (!findAddress) {
-            return res.redirect('/page404'); // Address not found
+            return res.redirect('/page404');
         }
 
         await Address.updateOne(
@@ -497,24 +461,63 @@ const postEditAddress = async (req, res) => {
                     altPhone: data.altPhone
                 }
             }}
-        )
+        );
 
-       return res.redirect("/Userprofile");
-        
+        return res.redirect("/userProfile");
     } catch (error) {
         console.error("error in edit address post", error);
         res.redirect('page404');
-        
     }
-}
+};
+
+// const deleteAddress = async (req, res) => {
+//     try {
+//         const addressId = req.query.id;
+//         const findAddress = await Address.findOne({ "address._id": addressId });
+//         if (!findAddress) {
+//             return res.status(404).send("address not found");
+//         }
+       
+//         await Address.updateOne(
+//             { "address._id": addressId },
+//             { $pull: { address: { _id: addressId } } }
+//         );
+
+//         res.redirect("/userProfile");
+//     } catch (error) {
+//         console.error("error in delete address", error);
+//         res.redirect('page404');
+//     }
+// };
+
+// New function to handle profile photo upload
+// const uploadProfilePhoto = async (req, res) => {
+//     try {
+//         const userId = req.session.user;
+//         if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+//             return res.redirect('/login');
+//         }
+
+//         if (!req.file) {
+//             return res.redirect('/userProfile?tab=dashboard&error=No file uploaded');
+//         }
+
+//         const profilePhotoPath = `/uploads/profiles/${req.file.filename}`;
+//         await User.findByIdAndUpdate(userId, { profilePhoto: profilePhotoPath });
+
+//         res.redirect('/userProfile?tab=dashboard');
+//     } catch (error) {
+//         console.error('Error uploading profile photo:', error);
+//         res.redirect('/userProfile?tab=dashboard&error=Failed to upload photo');
+//     }
+// };
 
 const deleteAddress = async (req, res) => {
     try {
-
-        const addressId = req.query.id;
+        const addressId = req.body.id || req.query.id; // Check both body and query
         const findAddress = await Address.findOne({ "address._id": addressId });
         if (!findAddress) {
-            return res.status(404).send("address not found")// Address not found
+            return res.status(404).send("address not found");
         }
        
         await Address.updateOne(
@@ -522,18 +525,72 @@ const deleteAddress = async (req, res) => {
             { $pull: { address: { _id: addressId } } }
         );
 
-        res.redirect("/Userprofile");
-        
+        res.redirect("/userProfile");
     } catch (error) {
         console.error("error in delete address", error);
         res.redirect('page404');
-        
     }
-}
+};
 
+const uploadProfilePhoto = async (req, res) => {
+    try {
+        const userId = req.session.user;
+        if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+            return res.redirect('/login');
+        }
+
+        if (!req.file) {
+            return res.redirect('/userProfile?tab=dashboard&error=No file uploaded');
+        }
+
+        const inputPath = req.file.path;
+        const filename = req.file.filename;
+        const outputPath = path.join('public/uploads/profiles', `cropped-${filename}`);
+        const profilePhotoPath = `/uploads/profiles/cropped-${filename}`;
+
+        // Crop and resize the image to a 300x300 square using sharp
+        await sharp(inputPath)
+            .resize(300, 300, {
+                fit: 'cover', // Crop to cover the entire area
+                position: 'center' // Center the crop
+            })
+            .toFile(outputPath);
+
+        // Delete the original uploaded file
+        await fs.unlink(inputPath);
+
+        // Update user's profile photo in the database
+        const user = await User.findByIdAndUpdate(
+            userId,
+            { profilePhoto: profilePhotoPath },
+            { new: true }
+        );
+
+        if (!user) {
+            return res.redirect('/userProfile?tab=dashboard&error=User not found');
+        }
+
+        res.redirect('/userProfile?tab=dashboard');
+    } catch (error) {
+        console.error('Error uploading profile photo:', error);
+        res.redirect('/userProfile?tab=dashboard&error=Failed to upload photo');
+    }
+};
+
+const removeProfilePhoto = async (req, res) => {
+    try {
+        const userId = req.session.user;
+       
+        await User.findByIdAndUpdate(userId, { profilePhoto: null });
+        res.redirect('/userProfile?tab=dashboard');
+    } catch (error) {
+        console.error('Error removing profile photo:', error);
+        res.redirect('/userProfile?tab=dashboard&error=Failed to remove photo');
+    }
+};
 
 module.exports = {
     getForgotPassPage, forgotEmailValid, verifyForgotPassOtp, getResetPassPage, resendOtp, postNewPassword, userProfile,
     changeEmail, changeEmailValid, veriyfyEmailOtp, updateEmail, changePassword, changePasswordValid, verrifyChangePassOtp,
-    addAddress, postAddAddress, getOrderDetails, editAddress,postEditAddress, deleteAddress
+    addAddress, postAddAddress, getOrderDetails, editAddress, postEditAddress, deleteAddress, uploadProfilePhoto, removeProfilePhoto
 };

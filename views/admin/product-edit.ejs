@@ -7,7 +7,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+     <meta name="csrf-token" content="<%= csrfToken %>">
     <style>
+        /* Existing styles unchanged */
         :root {
             --sidebar-width: 250px;
             --sidebar-collapsed-width: 70px;
@@ -318,7 +320,7 @@
                                         <% if(product.productImage && product.productImage.length > 0) { %>
                                             <% product.productImage.forEach(function(image) { %>
                                                 <div class="existing-image" data-image="<%= image %>">
-                                                    <img src="/uploads/<%= image %>" alt="Product image">
+                                                    <img src="/Uploads/<%= image %>" alt="Product image">
                                                     <span class="delete-icon">×</span>
                                                 </div>
                                             <% }); %>
@@ -498,8 +500,10 @@
                     try {
                         const response = await fetch('/admin/deleteImage', {
                             method: 'POST',
+                            csrfToken: document.querySelector('meta[name="csrf-token"]').content,
                             headers: {
-                                'Content-Type': 'application/json'
+                                'Content-Type': 'application/json',
+                                'CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
                             },
                             body: JSON.stringify({
                                 imageNameToServer: imageName,
@@ -508,8 +512,8 @@
                         });
 
                         const result = await response.json();
-                        if (result.status) {
-                            imageContainer.remove();
+                        if (result.success) { // Changed from result.status to result.success
+                            imageContainer.remove(); // Remove the image from DOM
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Deleted!',
@@ -517,7 +521,7 @@
                                 showConfirmButton: false,
                                 timer: 1500
                             });
-                            validateImageCount();
+                            validateImageCount(); // Update image count validation
                         } else {
                             Swal.fire({
                                 icon: 'error',
@@ -666,7 +670,11 @@
 
                     const response = await fetch(editProductForm.action, {
                         method: 'POST',
-                        body: formData
+                        body: formData,
+                        csrfToken: document.querySelector('meta[name="csrf-token"]').content,
+                        headers: {
+                            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+                        }
                     });
 
                     if (response.ok) {

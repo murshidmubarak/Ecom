@@ -9,6 +9,7 @@ const getProductAddPage = async (req, res) => {
         const category = await Category.find({ isListed: true });
         res.render("product-add", {
             cat: category,
+            csrfToken: req.csrfToken() ? req.csrfToken() : null, // Pass CSRF token to the view
         });
     } catch (error) {
         console.error("Error loading add product page:", error);
@@ -93,7 +94,8 @@ const addProducts = async (req, res) => {
         // Calculate sale price based on offers
         const categoryOffer = parseFloat(category.categoryOffer) || 0;
         const effectiveOffer = Math.max(productOffer, categoryOffer);
-        const salePrice = regularPrice * (1 - effectiveOffer / 100);
+        // const salePrice = regularPrice * (1 - effectiveOffer / 100);
+        const salePrice = Math.round(regularPrice * (1 - effectiveOffer / 100));
 
         // Create new product
         const newProduct = new Product({
@@ -221,6 +223,7 @@ const getEditProduct = async (req, res) => {
         res.render("product-edit", {
             product: product,
             cat: category,
+            csrfToken: req.csrfToken() ? req.csrfToken() : null, // Pass CSRF token to the view
         });
     } catch (error) {
         console.error("Error loading edit product page:", error);
@@ -304,7 +307,9 @@ const editProduct = async (req, res) => {
         // Calculate sale price based on offers
         const categoryOffer = parseFloat(category.categoryOffer) || 0;
         const effectiveOffer = Math.max(productOffer, categoryOffer);
-        const salePrice = regularPrice * (1 - effectiveOffer / 100);
+        // const salePrice = regularPrice * (1 - effectiveOffer / 100);
+        const salePrice = Math.round(regularPrice * (1 - effectiveOffer / 100));
+
 
         // Update product fields
         const updateFields = {

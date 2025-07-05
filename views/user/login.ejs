@@ -38,7 +38,7 @@
         .form-group {
             margin-bottom: 10px;
             text-align: left;
-            position: relative; /* Added for eye toggle positioning */
+            position: relative;
         }
         label {
             display: block;
@@ -117,17 +117,18 @@
         <h2>Login to Your Account</h2>
 
         <!-- Login Form -->
-        <form id="loginForm" >
+        <form id="loginForm">
+            <!-- 👇 Mandatory Change: Fixed CSRF token reference -->
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <div class="form-group">
                 <label for="email">Email</label>
-                <input type="email" id="email" name="email" placeholder="Enter your email" >
+                <input type="email" id="email" name="email" placeholder="Enter your email">
             </div>
             
-
             <div class="form-group">
                 <label for="password">Password</label>
                 <div class="password-container">
-                    <input type="password" id="password" name="password" placeholder="Enter your password" >
+                    <input type="password" id="password" name="password" placeholder="Enter your password">
                     <span class="toggle-password">👁️</span>
                 </div>
             </div>
@@ -160,7 +161,7 @@
             togglePassword.addEventListener("click", function () {
                 if (passwordInput.type === "password") {
                     passwordInput.type = "text";
-                    togglePassword.textContent = "👁️‍🗨️"; // Optional: Change icon when visible
+                    togglePassword.textContent = "👁️‍🗨️";
                 } else {
                     passwordInput.type = "password";
                     togglePassword.textContent = "👁️";
@@ -168,12 +169,12 @@
             });
 
             loginForm.addEventListener("submit", async function (event) {
-                event.preventDefault(); // Prevent default form submission
-    
+                event.preventDefault();
+
                 const email = document.getElementById("email").value.trim();
                 const password = document.getElementById("password").value.trim();
-    
-                // ✅ Frontend validation
+                const csrfToken = document.querySelector('input[name="_csrf"]').value;
+
                 if (!email || !password) {
                     Swal.fire({
                         icon: "warning",
@@ -182,18 +183,19 @@
                     });
                     return;
                 }
-    
+
                 try {
                     const response = await fetch("/login", {
                         method: "POST",
                         headers: {
-                            "Content-Type": "application/json"  // ✅ Fix: Explicitly tell server it's JSON
+                            "Content-Type": "application/json",
+                            "CSRF-Token": csrfToken
                         },
-                        body: JSON.stringify({ email, password }) // ✅ Convert form data to JSON
+                        body: JSON.stringify({ email, password, _csrf: csrfToken })
                     });
-    
+
                     const result = await response.json();
-    
+
                     if (result.success) {
                         Swal.fire({
                             icon: "success",
@@ -219,12 +221,11 @@
                     });
                 }
             });
-    
-            // ✅ Show backend error message if exists in URL params
+
             const params = new URLSearchParams(window.location.search);
             if (params.has("error")) {
                 let message = "";
-    
+
                 switch (params.get("error")) {
                     case "user_not_found":
                         message = "User not found. Please check your email.";
@@ -244,7 +245,7 @@
                     default:
                         message = "An unknown error occurred.";
                 }
-    
+
                 Swal.fire({
                     icon: "error",
                     title: "Login Failed",

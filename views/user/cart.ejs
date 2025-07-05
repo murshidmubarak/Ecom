@@ -1,4 +1,5 @@
 <%- include("../../views/partials/user/header") %>
+<meta name="csrf-token" content="<%= csrfToken %>">
 <main class="main">
     <!-- Breadcrumb -->
     <div class="page-header breadcrumb-wrap bg-light py-4 mb-5" style="border-bottom: 1px solid #e9ecef;">
@@ -40,7 +41,7 @@
                                             <% for (let i = 0; i < data.length; i++) { %>
                                                 <tr data-product-id="<%= data[i].productDetails[0]._id %>" style="transition: background-color 0.2s;">
                                                     <td class="product-thumbnail" style="padding: 20px;">
-                                                        <img src="/uploads/<%= data[i].productDetails[0].productImage[0] %>"
+                                                        <img src="/Uploads/<%= data[i].productDetails[0].productImage[0] %>"
                                                              alt="<%= data[i].productDetails[0].productName %>"
                                                              class="img-fluid rounded shadow-sm"
                                                              style="max-width: 80px; height: auto; border: 1px solid #e9ecef;" />
@@ -52,9 +53,6 @@
                                                                 <%= data[i].productDetails[0].productName %>
                                                             </a>
                                                         </h6>
-                                                        <!-- <small class="text-muted">
-                                                            <%= data[i].productDetails[0].category %> | <%= data[i].productDetails[0].brand %>
-                                                        </small> -->
                                                     </td>
                                                     <td class="price" style="padding: 20px; color: #28a745; font-weight: 500;">
                                                         ₹<span id="subTotal<%= data[i].productDetails[0]._id %>">
@@ -69,8 +67,10 @@
                                                     <td class="quantity" style="padding: 20px;">
                                                         <div class="input-group input-group-sm w-75 mx-auto shadow-sm rounded-pill">
                                                             <button class="btn btn-outline-secondary decrement-button"
+                                                                    id="decrementBtn<%= data[i].productDetails[0]._id %>"
                                                                     onclick="changeQuantity('<%= data[i].productDetails[0]._id %>', -1, <%= data[i].productDetails[0].quantity %>)"
-                                                                    style="border-radius: 50px 0 0 50px;">
+                                                                    style="border-radius: 50px 0 0 50px;"
+                                                                    <%= data[i].quantity <= 1 ? 'disabled' : '' %>>
                                                                 <i class="fa fa-minus"></i>
                                                             </button>
                                                             <input class="form-control text-center quantity-input border-0"
@@ -126,7 +126,8 @@
                                 <a href="/checkout?userId=<%= user._id %>"
                                    class="btn btn-primary btn-block mt-4 d-flex align-items-center justify-content-center shadow-sm"
                                    style="border-radius: 25px; padding: 12px; font-size: 1rem; transition: all 0.3s;">
-                                    <i class="fa fa-arrow-right me-2"></i> Proceed to Checkout
+                                    <i class="fa fa-arrow-right me-2" style="margin-right: 10px;"></i> 
+                                    Proceed to Checkout
                                 </a>
                             </div>
                         </div>
@@ -134,9 +135,8 @@
                 </div>
             <% } else { %>
                 <div class="text-center py-5 bg-white rounded shadow-sm" style="max-width: 500px; margin: 0 auto;">
-                    <img src="/img/empty-cart.png" alt="Empty Cart" class="img-fluid mb-4" style="max-width: 180px;">
                     <h3 class="mb-3" style="font-weight: 600; color: #333;">Your Cart is Empty</h3>
-                    <p class="text-muted mb-4" style="font-size: 1rem;">Looks like you haven’t added anything to your cart yet.</p>
+                    <p class="text-muted mb-4" style="font-size: 1rem;">Looks like you haven't added anything to your cart yet.</p>
                     <a href="/shop" class="btn btn-primary shadow-sm"
                        style="border-radius: 25px; padding: 10px 25px; font-size: 1rem;">
                         <i class="fa fa-shopping-cart me-2"></i> Continue Shopping
@@ -160,6 +160,7 @@
         const priceElement = row.querySelector(`#price${productId}`);
         const totalElement = document.getElementById('total');
         const itemsTotalElement = document.getElementById('items-total');
+        const decrementBtn = document.getElementById(`decrementBtn${productId}`);
 
         const currentQuantity = parseInt(quantityInput.value);
         const pricePerItem = parseInt(priceElement.textContent);
@@ -189,12 +190,21 @@
             }
         });
 
+        // Get CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (!csrfToken) {
+            Swal.close();
+            showError("CSRF token not found. Please refresh the page.");
+            return;
+        }
+
         $.ajax({
             url: '/changeQuantity',
             method: 'POST',
             data: {
                 productId: productId,
-                count: count.toString()
+                count: count.toString(),
+                _csrf: csrfToken
             },
             success: function(response) {
                 Swal.close();
@@ -206,10 +216,13 @@
                     itemsTotalElement.textContent = response.grandTotal;
                     quantityInput.dataset.stock = response.stockQuantity;
                     
+                    updateDecrementButton(productId, response.quantityInput);
+                    
                     showSuccess(count > 0 ? "Quantity increased" : "Quantity decreased");
                 } else {
                     showError(response.error);
                     quantityInput.value = response.currentQuantity || currentQuantity;
+                    updateDecrementButton(productId, response.currentQuantity || currentQuantity);
                 }
             },
             error: function(xhr) {
@@ -217,8 +230,21 @@
                 const errorMessage = xhr.responseJSON?.error || 'Failed to update quantity';
                 showError(errorMessage);
                 quantityInput.value = currentQuantity;
+                updateDecrementButton(productId, currentQuantity);
             }
         });
+    }
+
+    function updateDecrementButton(productId, quantity) {
+        const decrementBtn = document.getElementById(`decrementBtn${productId}`);
+        
+        if (quantity <= 1) {
+            decrementBtn.disabled = true;
+            decrementBtn.classList.add('btn-disabled');
+        } else {
+            decrementBtn.disabled = false;
+            decrementBtn.classList.remove('btn-disabled');
+        }
     }
 
     function confirmRemove(productId) {
@@ -267,11 +293,24 @@
                 }
             });
         });
+
+        // Initialize decrement button states on page load
+        const rows = document.querySelectorAll('tr[data-product-id]');
+        rows.forEach(row => {
+            const productId = row.dataset.productId;
+            const quantityInput = row.querySelector(`#cartProductQuantity${productId}`);
+            const currentQuantity = parseInt(quantityInput.value);
+            
+            updateDecrementButton(productId, currentQuantity);
+        });
+
+        // Debug CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        console.log("Client-side CSRF Token:", csrfToken);
     });
 </script>
 
 <style>
-    /* Custom Styles for Enhanced Beauty */
     .hover-text-primary:hover {
         color: #007bff !important;
         transition: color 0.3s ease;
@@ -305,6 +344,25 @@
     .card:hover {
         transform: translateY(-5px);
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .btn-disabled,
+    .btn:disabled {
+        opacity: 0.5 !important;
+        cursor: not-allowed !important;
+        pointer-events: none;
+    }
+
+    .btn-outline-secondary:disabled {
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+        color: #6c757d;
+    }
+
+    .btn-outline-secondary:disabled:hover {
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+        color: #6c757d;
     }
 </style>
 

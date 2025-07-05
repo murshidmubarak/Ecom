@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <meta name="csrf-token" content="<%= csrfToken %>">
     
     <style>
         :root {
@@ -498,6 +499,10 @@
                     const response = await fetch("/admin/addProducts", {
                         method: "POST",
                         body: formData,
+                        csrfToken: document.querySelector('meta[name="csrf-token"]').content,
+                        headers: {
+                            "CSRF-Token": document.querySelector('meta[name="csrf-token"]').content,
+                        },
                     });
 
                     const data = await response.json();
