@@ -127,6 +127,8 @@
   }
 </style>
 
+<meta name="csrf-token" content="<%= csrfToken || '' %>">
+
 <div class="content-wrapper">
   <div class="content-header row mb-4">
     <div class="d-flex justify-content-between align-items-center">
@@ -139,11 +141,11 @@
       <div class="row gx-3 align-items-center">
         <div class="col-lg-3 col-md-4 col-6">
           <select id="periodSelect" class="form-select w-100" onchange="applyPeriodFilter(this.value)">
-            <option value="" <%= !salesToday && !salesWeekly && !salesMonthly && !salesYearly && !customDate ? 'selected' : '' %>>Select Period</option>
-            <option value="salesToday" <%= salesToday ? 'selected' : '' %>>1 Day</option>
-            <option value="salesWeekly" <%= salesWeekly ? 'selected' : '' %>>1 Week</option>
-            <option value="salesMonthly" <%= salesMonthly ? 'selected' : '' %>>1 Month</option>
-            <option value="salesYearly" <%= salesYearly ? 'selected' : '' %>>1 Year</option>
+            <option value="" <%= !currentFilter || currentFilter === 'default' ? 'selected' : '' %>>Select Period</option>
+            <option value="salesToday" <%= currentFilter === 'salesToday' ? 'selected' : '' %>>1 Day</option>
+            <option value="salesWeekly" <%= currentFilter === 'salesWeekly' ? 'selected' : '' %>>1 Week</option>
+            <option value="salesMonthly" <%= currentFilter === 'salesMonthly' ? 'selected' : '' %>>1 Month</option>
+            <option value="salesYearly" <%= currentFilter === 'salesYearly' ? 'selected' : '' %>>1 Year</option>
           </select>
         </div>
         <div class="col-lg-3 col-md-4 col-6">
@@ -154,6 +156,7 @@
               class="form-control"
               value="<%= startDate || '' %>"
               placeholder="Start Date"
+              max="<%= new Date().toISOString().split('T')[0] %>"
             />
             <input
               type="date"
@@ -161,6 +164,7 @@
               class="form-control"
               value="<%= endDate || '' %>"
               placeholder="End Date"
+              max="<%= new Date().toISOString().split('T')[0] %>"
             />
             <button class="btn btn-primary" onclick="dateWiseFilter()">Apply</button>
           </div>
@@ -179,32 +183,32 @@
     <div class="stats-grid">
       <div class="card card-sales">
         <i class="fas fa-chart-line stat-icon" style="color: #007bff;"></i>
-        <div class="stat-value">₹<%= summaryGrandTotal %></div>
+        <div class="stat-value">₹<%= summaryGrandTotal || '0.00' %></div>
         <div class="stat-label">Total Sales</div>
       </div>
       <div class="card card-orders">
         <i class="fas fa-shopping-cart stat-icon" style="color: #28a745;"></i>
-        <div class="stat-value"><%= totalOrders %></div>
+        <div class="stat-value"><%= totalOrders || 0 %></div>
         <div class="stat-label">Total Orders</div>
       </div>
       <div class="card card-returned">
         <i class="fas fa-undo stat-icon" style="color: #dc3545;"></i>
-        <div class="stat-value"><%= returnedOrders %></div>
+        <div class="stat-value"><%= returnedOrders || 0 %></div>
         <div class="stat-label">Returned Orders</div>
       </div>
       <div class="card card-pending">
         <i class="fas fa-hourglass stat-icon" style="color: #ffc107;"></i>
-        <div class="stat-value"><%= pendingOrders %></div>
+        <div class="stat-value"><%= pendingOrders || 0 %></div>
         <div class="stat-label">Pending Orders</div>
       </div>
       <div class="card card-delivered">
         <i class="fas fa-check-circle stat-icon" style="color: #17a2b8;"></i>
-        <div class="stat-value"><%= deliveredOrders %></div>
+        <div class="stat-value"><%= deliveredOrders || 0 %></div>
         <div class="stat-label">Delivered Orders</div>
       </div>
       <div class="card card-shipped">
         <i class="fas fa-truck stat-icon" style="color: #6f42c1;"></i>
-        <div class="stat-value"><%= shippedOrders %></div>
+        <div class="stat-value"><%= shippedOrders || 0 %></div>
         <div class="stat-label">Shipped Orders</div>
       </div>
     </div>
@@ -215,9 +219,15 @@
         <h5>Sales Trend</h5>
       </div>
       <div class="card-body">
-        <div class="chart-container">
-          <canvas id="salesChart"></canvas>
-        </div>
+        <% if (salesGraphData && salesGraphData.length > 0) { %>
+          <div class="chart-container">
+            <canvas id="salesChart"></canvas>
+          </div>
+        <% } else { %>
+          <div class="alert alert-info text-center">
+            No sales data available for the selected period.
+          </div>
+        <% } %>
       </div>
     </div>
 
@@ -270,6 +280,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
     // Function to apply predefined period filter
     function applyPeriodFilter(period) {
@@ -303,12 +314,20 @@
       }
 
       if (!startDate) {
-        alert("Please select a start date.");
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Please select a start date.'
+        });
         return;
       }
 
       if (!endDate) {
-        alert("Please select an end date.");
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Please select an end date.'
+        });
         return;
       }
 
@@ -316,7 +335,11 @@
       const start = new Date(startDate);
       const end = new Date(endDate);
       if (start > end) {
-        alert("End date cannot be before start date. Please select a valid date range.");
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'End date cannot be before start date. Please select a valid date range.'
+        });
         return;
       }
 
@@ -444,6 +467,7 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "CSRF-Token": document.querySelector('meta[name="csrf-token"]').content
           },
           body: JSON.stringify(salesData),
         });
@@ -457,12 +481,21 @@
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
+          Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: 'PDF generated successfully!'
+          });
         } else {
-          alert("Failed to generate PDF");
+          throw new Error('Failed to generate PDF');
         }
       } catch (error) {
         console.error("PDF generation error:", error);
-        alert("Error generating PDF");
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Error generating PDF'
+        });
       }
     });
 
@@ -474,6 +507,7 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "CSRF-Token": document.querySelector('meta[name="csrf-token"]').content
           },
           body: JSON.stringify(salesData),
         });
@@ -487,12 +521,21 @@
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
+          Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: 'Excel generated successfully!'
+          });
         } else {
-          alert("Failed to generate Excel");
+          throw new Error('Failed to generate Excel');
         }
       } catch (error) {
         console.error("Excel generation error:", error);
-        alert("Error generating Excel");
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Error generating Excel'
+        });
       }
     });
 

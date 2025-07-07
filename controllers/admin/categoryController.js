@@ -133,42 +133,100 @@ const addCategory = async(req,res)=>{
 
 
 
+    // const searchCategory = async (req, res) => {
+    //     const {search} =req.body; // Corrected search query extraction
+    //    console.log(search)
+    
+    //     if (!search) {
+    //         return res.render('category', { 
+    //             cat: [], 
+    //             message: 'Please enter a search term.'
+    //         });
+    //     }
+    
+    //     try {
+    //         const categories = await Category.find({
+    //             name: { $regex: search, $options: 'i' } 
+    //         });
+    
+    //         console.log(categories);
+    //         const csrfToken = req.csrfToken ? req.csrfToken() : null; // Get CSRF token if available
+    
+    //         res.render('category', { 
+    //             csrfToken, // Pass CSRF token to the view 
+    //             cat:categories,  
+    //             message: categories.length ? '' : 'No categories found',
+    //             currentPage: 1,
+    //             totalPages: 1 
+    //         });
+    
+    //     } catch (error) {
+    //         console.error('Search Error:', error);
+    //         res.status(500).render('category', { 
+    //             categories: [], 
+    //             message: 'Error fetching categories.' 
+    //         });
+    //     }
+    // };
     const searchCategory = async (req, res) => {
-        const {search} =req.body; // Corrected search query extraction
-       console.log(search)
-    
-        if (!search) {
-            return res.render('category', { 
-                categories: [], 
-                message: 'Please enter a search term.'
-            });
-        }
-    
-        try {
-            const categories = await Category.find({
-                name: { $regex: search, $options: 'i' } 
-            });
-    
-            console.log(categories);
-            const csrfToken = req.csrfToken ? req.csrfToken() : null; // Get CSRF token if available
-    
-            res.render('category', { 
-                csrfToken, // Pass CSRF token to the view 
-                cat:categories,  
-                message: categories.length ? '' : 'No categories found',
-                currentPage: 1,
-                totalPages: 1 
-            });
-    
-        } catch (error) {
-            console.error('Search Error:', error);
-            res.status(500).render('category', { 
-                categories: [], 
-                message: 'Error fetching categories.' 
-            });
-        }
-    };
-    
+    const { search } = req.body; // Corrected search query extraction
+    console.log(search);
+
+    if (!search) {
+        return res.render('category', { 
+            csrfToken: req.csrfToken ? req.csrfToken() : null,
+            cat: [], 
+            message: 'Please enter a search term.',
+            currentPage: 1,
+            totalPages: 1,
+            totalCategories: 0
+        });
+    }
+
+    try {
+        const page = parseInt(req.query.page) || 1; // Get page number from query
+        const limit = 4; // Number of categories per page
+        const skip = (page - 1) * limit; // Calculate skip
+
+        // Fetch categories with pagination
+        const categories = await Category.find({
+            name: { $regex: search, $options: 'i' } 
+        })
+            .sort({ createdAt: -1 }) // Sort by creation date
+            .skip(skip) // Apply pagination
+            .limit(limit); // Limit results
+
+        // Count total matching categories
+        const totalCategories = await Category.countDocuments({
+            name: { $regex: search, $options: 'i' }
+        });
+
+        // Calculate total pages
+        const totalPages = Math.ceil(totalCategories / limit);
+
+        const csrfToken = req.csrfToken ? req.csrfToken() : null; // Get CSRF token if available
+
+        res.render('category', { 
+            csrfToken, // Pass CSRF token to the view 
+            cat: categories,  
+            message: categories.length ? '' : 'No categories found',
+            currentPage: page,
+            totalPages: totalPages,
+            totalCategories: totalCategories
+        });
+
+    } catch (error) {
+        console.error('Search Error:', error);
+        res.status(500).render('category', { 
+            csrfToken: req.csrfToken ? req.csrfToken() : null,
+            cat: [], 
+            message: 'Error fetching categories.',
+            currentPage: 1,
+            totalPages: 1,
+            totalCategories: 0
+        });
+    }
+};
 
  /*    const addCategoryOffer = async (req, res) => {
         try {

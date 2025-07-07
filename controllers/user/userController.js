@@ -679,7 +679,10 @@ const getProductDetails = async (req, res, next) => {
             .limit(4)
             .select('productName productImage salePrice regularPrice');
 
+            const csrfToken = req.csrfToken();
+
         res.render('product-details', {
+            csrfToken,
             user,
             product,
             relatedProducts,

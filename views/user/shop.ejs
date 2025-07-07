@@ -561,8 +561,27 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+
+  const isUserLoggedIn = <%- locals.user ? 'true' : 'false' %>;
+
 async function addToCart(productId) {
   const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+  if (!isUserLoggedIn) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Not Logged In',
+      text: 'Please log in to add items to your cart.',
+      showCancelButton: true,
+      confirmButtonText: 'Log In',
+      cancelButtonText: 'Cancel'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.href = '/login';
+      }
+    });
+    return;
+  }
+  
   try {
       const response = await fetch('/addToCart', {
           method: 'POST',
@@ -603,6 +622,21 @@ async function addToCart(productId) {
 }
 
 async function toggleWishlist(productId, element) {
+    if (!isUserLoggedIn) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Not Logged In',
+            text: 'Please log in to manage your wishlist.',
+            showCancelButton: true,
+            confirmButtonText: 'Log In',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '/login';
+            }
+        });
+        return;
+    }
     try {
         const response = await fetch('/addToWishlist', {
             method: 'POST',

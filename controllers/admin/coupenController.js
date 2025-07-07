@@ -59,10 +59,10 @@ const editCoupon = async (req, res) => {
     const todayDateObj = new Date();
     todayDateObj.setHours(0, 0, 0, 0);
 
-   const existingCoupon = await Coupon.findOne({ couponName });
-    if (existingCoupon) {
-      return res.status(400).json({ success: false, message: "Coupon name already existssssss" });
-    }
+  //  const existingCoupon = await Coupon.findOne({ couponName });
+  //   if (existingCoupon) {
+  //     return res.status(400).json({ success: false, message: "Coupon name already existssssss" });
+  //   }
 
     const updatedCoupon = await Coupon.findByIdAndUpdate(
       id,

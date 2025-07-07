@@ -2,6 +2,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <!-- Updated: Added SweetAlert2 CDN for alerts -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <meta name="csrf-token" content="<%= csrfToken %>">
+
 
 <style>
   .btn {
@@ -186,7 +188,10 @@
                                   <img class="default-img" src="Uploads/<%= products[i].productImage[0] %>" alt="<%= products[i].productName %>">
                               </a>
                           </div>
-                          <a href="" class="wishlist-btn">
+                          <!-- <a href="" class="wishlist-btn">
+                              <i class="fas fa-heart"></i>
+                          </a> -->
+                          <a class="wishlist-btn" onclick="addToWishlist('<%= products[i]._id %>')">
                               <i class="fas fa-heart"></i>
                           </a>
                       </div>
@@ -232,6 +237,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 },
                 body: JSON.stringify({ productId })
             });
@@ -264,6 +270,58 @@
             });
         }
     }
+
+  async function addToWishlist(productId) {
+    try {
+        if (!isUserLoggedIn) {
+            Swal.fire({
+                title: 'Login Required',
+                text: 'Please login to add items to wishlist',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#088178',
+                confirmButtonText: 'Login',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/login';
+                }
+            });
+            return;
+        }
+        const response = await fetch('/addToWishlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json',
+                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+             },
+            body: JSON.stringify({ productId })
+        });
+        const result = await response.json();
+
+        if (result.status) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Added to Wishlist',
+                text: result.message,
+                showConfirmButton: false,
+                timer: 1500
+            });
+        } else {
+            Swal.fire({
+                icon: 'info',
+                title: 'Already in Wishlist',
+                text: result.message,
+                timer: 1500
+            });
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Something went wrong. Please try again.'
+        });
+    }
+}
 </script>
 
 <%- include("../../views/partials/user/footer") %>

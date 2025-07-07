@@ -10,6 +10,10 @@ const getSalesReportPage = async (req, res) => {
     const currentPage = parseInt(page) || 1;
     let query = { status: { $in: ['confirmed', 'processing', 'shipped', 'delivered'] } };
 
+    // Store the current filter for template rendering
+    let currentFilter = '';
+    let isCustomDate = false;
+
     // Validate and apply date filters
     if (startDate && endDate) {
       const start = new Date(startDate);
@@ -27,6 +31,7 @@ const getSalesReportPage = async (req, res) => {
         $gte: start,
         $lte: end,
       };
+      isCustomDate = true;
     } else if (day) {
       // Apply predefined date ranges
       const now = moment().endOf('day').toDate();
@@ -34,15 +39,19 @@ const getSalesReportPage = async (req, res) => {
       switch (day) {
         case 'salesToday':
           start = moment().startOf('day').toDate();
+          currentFilter = 'salesToday';
           break;
         case 'salesWeekly':
           start = moment().subtract(7, 'days').startOf('day').toDate();
+          currentFilter = 'salesWeekly';
           break;
         case 'salesMonthly':
           start = moment().subtract(30, 'days').startOf('day').toDate();
+          currentFilter = 'salesMonthly';
           break;
         case 'salesYearly':
           start = moment().subtract(1, 'year').startOf('day').toDate();
+          currentFilter = 'salesYearly';
           break;
         default:
           throw new Error('Invalid day filter');
@@ -54,6 +63,7 @@ const getSalesReportPage = async (req, res) => {
         $gte: moment().subtract(30, 'days').startOf('day').toDate(),
         $lte: moment().endOf('day').toDate(),
       };
+      currentFilter = 'default';
     }
 
     // Calculate total orders and paginated orders
@@ -178,11 +188,8 @@ const getSalesReportPage = async (req, res) => {
       data: formattedOrders,
       totalPages,
       currentPage,
-      salesToday: 'salesToday',
-      salesWeekly: 'salesWeekly',
-      salesMonthly: 'salesMonthly',
-      salesYearly: 'salesYearly',
-      customDate: !!(startDate && endDate),
+      currentFilter, // Pass the current filter
+      isCustomDate, // Pass whether it's a custom date range
       startDate: startDate || '',
       endDate: endDate || '',
       topProducts,

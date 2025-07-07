@@ -264,7 +264,7 @@ async function retryPayment(orderId) {
                         if (verifyResponse.success) {
                             console.log('retryPayment: Payment verified, orderId:', verifyResponse.orderId);
                             await clearCart();
-                            alert("Order placed successfully");
+                            
                             location.href = `/orderDetails?id=${verifyResponse.orderId}`;
                         } else {
                             console.log('retryPayment: Payment verification failed', verifyResponse);
