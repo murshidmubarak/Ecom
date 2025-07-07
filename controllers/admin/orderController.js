@@ -476,7 +476,10 @@ const getOrderListPageAdmin = async (req, res) => {
       const endIndex = startIndex + itemsPerPage;
       const currentOrders = orders.slice(startIndex, endIndex);
 
+      const csrfToken = req.csrfToken() ? req.csrfToken() : null
+
       res.render("order-list", {
+          csrfToken,
           orders: currentOrders,
           totalPages,
           currentPage,

@@ -8,6 +8,7 @@
     <title>Orders - Admin Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta name="csrf-token" content="<%= csrfToken %>">
     <style>
         :root {
             --sidebar-width: 250px;
@@ -717,9 +718,12 @@
                     url: '/admin/approveReturnRequest',
                     method: 'POST',
                     contentType: 'application/json',
+                    headers: {
+                            "CSRF-Token": document.querySelector('meta[name="csrf-token"]').content,
+                        },
                     data: JSON.stringify({ orderId, singleProductId, action: 'approve' }),
                     success: (response) => {
-                        alert(response.message);
+                        // alert(response.message);
                         window.location.reload();
                     },
                     error: (error) => alert('Error: ' + (error.responseText || 'Unknown error'))
@@ -733,9 +737,12 @@
                     url: '/admin/approveReturnRequest',
                     method: 'POST',
                     contentType: 'application/json',
+                    headers: {
+                            "CSRF-Token": document.querySelector('meta[name="csrf-token"]').content,
+                        },
                     data: JSON.stringify({ orderId, singleProductId, action: 'reject' }),
                     success: (response) => {
-                        alert(response.message);
+                        // alert(response.message);
                         window.location.reload();
                     },
                     error: (error) => alert('Error: ' + (error.responseText || 'Unknown error'))
