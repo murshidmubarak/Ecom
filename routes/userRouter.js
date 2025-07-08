@@ -116,16 +116,19 @@ router.post("/login", isLogin, userController.login);
 router.get("/logout", userController.logout);
 
 // Google Authentication Routes
-router.get('/auth/google', 
-    passport.authenticate('google', { scope: ['profile', 'email'] })
-);
 router.get('/auth/google/callback',
     passport.authenticate('google', { failureRedirect: '/' }),
     (req, res) => {
-        req.session.user = req.user._id; // Set user ID in session
-        res.redirect('/');
+        req.session.user = req.user._id;
+        res.redirect('/redirecting');
     }
 );
+
+router.get('/redirecting', (req, res) => {
+    if (!req.session.user) return res.redirect('/login'); // Fallback
+    res.redirect('/');
+});
+
 
 // Homepage and Shop Routes
 router.get("/", checkUserBlocked, userController.loadHomepage);
