@@ -123,7 +123,7 @@ router.get('/auth/google/callback',
     passport.authenticate('google', { failureRedirect: '/' }),
     (req, res) => {
         req.session.user = req.user._id; // Set user ID in session
-        res.redirect('/');
+        res.redirect('/home');
     }
 );
 

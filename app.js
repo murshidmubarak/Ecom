@@ -41,16 +41,41 @@ app.use(session({
 //     next(err);
 //   });
 // });
+// const csrfProtection = csurf({ cookie: true });
+
+// // Apply csrf middleware globally
+// app.use(csrfProtection);
+
+// // Make token available in EJS views
+// app.use((req, res, next) => {
+//   res.locals.csrfToken = req.csrfToken();
+//   next();
+// });
+
 const csrfProtection = csurf({ cookie: true });
 
-// Apply csrf middleware globally
-app.use(csrfProtection);
-
-// Make token available in EJS views
+// ⛔ Skip CSRF for Google OAuth routes
 app.use((req, res, next) => {
-  res.locals.csrfToken = req.csrfToken();
+  const csrfExcludedRoutes = [
+    "/auth/google",
+    "/auth/google/callback"
+  ];
+
+  if (csrfExcludedRoutes.includes(req.path)) {
+    return next(); // Skip CSRF protection for these routes
+  }
+
+  csrfProtection(req, res, next); // Apply CSRF to all other routes
+});
+
+// ✅ Attach CSRF token to views
+app.use((req, res, next) => {
+  if (req.csrfToken) {
+    res.locals.csrfToken = req.csrfToken();
+  }
   next();
 });
+
 
 // Optional: CSRF error handler
 app.use((err, req, res, next) => {

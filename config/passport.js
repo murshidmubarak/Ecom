@@ -9,7 +9,7 @@ passport.use(
         {
             clientID: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            callbackURL: "https://malefashion.ddns.net/auth/google/callback",
+            callbackURL:  "https://malefashion.ddns.net/auth/google/callback",
         },
         async (accessToken, refreshToken, profile, done) => {
             try {
@@ -21,6 +21,7 @@ passport.use(
 
                 const email = profile.emails[0].value;
                 let user = await User.findOne({ email });
+                        console.log("Usessssssssssssssssssssssssssssr:", user);
                         
                 if (!user) {
                     const hashPassword = await bcrypt.hash(profile.displayName, 10);
@@ -32,6 +33,7 @@ passport.use(
                     });
 
                     await newUser.save();
+                console.log("New Usersssssssssssssssssssssssssssss:", newUser);
                 
                    
                 }
