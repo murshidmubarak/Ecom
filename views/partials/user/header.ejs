@@ -92,6 +92,267 @@
         .dropdown:hover .dropdown-content {
             display: block;
         }
+
+        /* Mobile Menu Styles */
+        .canvas__open {
+            display: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 8px;
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: 1px solid #333;
+            border-radius: 4px;
+            width: 40px;
+            height: 32px;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .canvas__open:hover {
+            background-color: #f8f9fa;
+            border-color: #007bff;
+        }
+
+        .canvas__open i {
+            color: #333;
+        }
+
+        .header__menu {
+            display: block;
+        }
+
+        .header__menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header__menu ul li {
+            margin-right: 30px;
+        }
+
+        .header__menu ul li a {
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .header__menu ul li a:hover,
+        .header__menu ul li.active a {
+            color: #007bff;
+        }
+
+        .header__nav__option {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .header__nav__option a {
+            margin-left: 15px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .header__nav__option a img {
+            width: 20px;
+            height: 20px;
+            filter: brightness(0) saturate(100%) invert(13%) sepia(12%) saturate(0%) hue-rotate(314deg) brightness(96%) contrast(92%);
+            transition: filter 0.3s ease;
+        }
+
+        .header__nav__option a:hover img {
+            filter: brightness(0) saturate(100%) invert(27%) sepia(88%) saturate(2550%) hue-rotate(212deg) brightness(99%) contrast(101%);
+        }
+
+        .header__nav__option a span {
+            display: none;
+        }
+
+        /* Mobile Navigation Overlay */
+        .mobile-nav-overlay {
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1999;
+            transition: left 0.3s ease;
+        }
+
+        .mobile-nav-overlay.active {
+            left: 0;
+        }
+
+        .mobile-nav-menu {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100vh;
+            background-color: #ffffff;
+            z-index: 2000;
+            transition: left 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .mobile-nav-menu.active {
+            left: 0;
+        }
+
+        .mobile-nav-header {
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mobile-nav-close {
+            font-size: 24px;
+            cursor: pointer;
+            color: #333;
+        }
+
+        .mobile-nav-menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .mobile-nav-menu ul li {
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .mobile-nav-menu ul li a {
+            display: block;
+            padding: 15px 20px;
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .mobile-nav-menu ul li a:hover,
+        .mobile-nav-menu ul li.active a {
+            color: #007bff;
+            background-color: #f8f9fa;
+        }
+
+        .mobile-user-section {
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .mobile-user-section a {
+            display: block;
+            padding: 10px 0;
+            color: #333;
+            text-decoration: none;
+        }
+
+        .mobile-user-section a:hover {
+            color: #007bff;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 991px) {
+            .header__top {
+                padding: 8px 0;
+            }
+
+            .header__top__left {
+                display: none;
+            }
+
+            .header__top__right {
+                justify-content: center;
+            }
+
+            .canvas__open {
+                display: flex;
+            }
+
+            .header__menu {
+                display: none;
+            }
+
+            .header__logo {
+                text-align: left;
+                display: flex;
+                align-items: center;
+            }
+
+            .header__nav__option {
+                justify-content: center;
+            }
+
+            .header__nav__option a {
+                margin: 0 8px;
+            }
+
+            .dropdown-content {
+                position: fixed;
+                top: 60px;
+                right: 10px;
+                left: auto;
+                min-width: 120px;
+            }
+
+            .container .row {
+                position: relative;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .header__top {
+                padding: 5px 0;
+            }
+
+            .header__top__right {
+                font-size: 14px;
+            }
+
+            .header__nav__option a img {
+                width: 18px;
+                height: 18px;
+            }
+
+            .header__nav__option a span {
+                display: none;
+            }
+
+            .dropdown-content {
+                min-width: 100px;
+            }
+
+            .dropdown-content a {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 575px) {
+            .header__logo img {
+                max-height: 40px;
+            }
+
+            .canvas__open {
+                width: 36px;
+                height: 28px;
+                font-size: 16px;
+                right: 10px;
+            }
+        }
     </style>
 </head>
 
@@ -99,6 +360,34 @@
     <!-- Page Preloader -->
     <div id="preloder">
         <div class="loader"></div>
+    </div>
+
+    <!-- Mobile Navigation Overlay -->
+    <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+
+    <!-- Mobile Navigation Menu -->
+    <div class="mobile-nav-menu" id="mobileNavMenu">
+        <div class="mobile-nav-header">
+            <div class="header__logo">
+                <a href="./index.html"><img src="img/logo.png" alt="Logo"></a>
+            </div>
+            <span class="mobile-nav-close" id="mobileNavClose">&times;</span>
+        </div>
+        
+        <div class="mobile-user-section">
+            <% if (locals.user) { %>
+                <div style="font-weight: 600; margin-bottom: 10px;">Welcome, <%= locals.user.name %></div>
+                <a href="/userProfile">Profile</a>
+                <a href="/logout">Logout</a>
+            <% } else { %>
+                <a href="/login">Log In</a>
+            <% } %>
+        </div>
+
+        <ul>
+            <li class="active"><a href="/">Home</a></li>
+            <li><a href="/shop">Shop</a></li>
+        </ul>
     </div>
 
     <!-- Header Section Begin -->
@@ -124,17 +413,6 @@
                             <% } else { %>
                                 <a href="/login">Log In</a>
                             <% } %>
-                            <!-- <div class="header__top__links">
-                                <a href="#">FAQs</a>
-                            </div> -->
-                            <!-- <div class="header__top__hover">
-                                <span>USD <i class="arrow_carrot-down"></i></span>
-                                <ul>
-                                    <li>USD</li>
-                                    <li>EUR</li>
-                                    <li>GBP</li>
-                                </ul>
-                            </div> -->
                         </div>
                     </div>
                 </div>
@@ -153,32 +431,53 @@
                         <ul>
                             <li class="active"><a href="/">Home</a></li>
                             <li><a href="/shop">Shop</a></li>
-                            <!-- <li><a href="#">Pages</a>
-                                <ul class="dropdown">
-                                    <li><a href="./about.html">About Us</a></li>
-                                    <li><a href="./shop-details.html">Shop Details</a></li>
-                                    <li><a href="./shopping-cart.html">Shopping Cart</a></li>
-                                    <li><a href="./checkout.html">Check Out</a></li>
-                                    <li><a href="./blog-details.html">Blog Details</a></li>
-                                </ul>
-                            </li>
-                            <li><a href="./blog.html">Blog</a></li>
-                            <li><a href="./contact.html">Contacts</a></li> -->
                         </ul>
                     </nav>
                 </div>
                 <div class="col-lg-3 col-md-3">
                     <div class="header__nav__option">
-                        <!-- <a href="#" class="search-switch"><img src="img/icon/search.png" alt="Search"></a> -->
                         <a href="/wishlist"><img src="img/icon/heart.png" alt="Wishlist"></a>
                         <a href="/cart"><img src="img/icon/cart.png" alt="Cart"> <span></span></a>
                         <div class="price"></div>
                     </div>
                 </div>
             </div>
-            <div class="canvas__open"><i class="fa fa-bars"></i></div>
+            <div class="canvas__open" id="mobileMenuToggle"><i class="fa fa-bars"></i></div>
         </div>
     </header>
     <!-- Header Section End -->
+
+    <script>
+        // Mobile menu functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const mobileNavOverlay = document.getElementById('mobileNavOverlay');
+            const mobileNavMenu = document.getElementById('mobileNavMenu');
+            const mobileNavClose = document.getElementById('mobileNavClose');
+
+            // Open mobile menu
+            mobileMenuToggle.addEventListener('click', function() {
+                mobileNavOverlay.classList.add('active');
+                mobileNavMenu.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
+
+            // Close mobile menu
+            function closeMobileMenu() {
+                mobileNavOverlay.classList.remove('active');
+                mobileNavMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+            mobileNavClose.addEventListener('click', closeMobileMenu);
+            mobileNavOverlay.addEventListener('click', closeMobileMenu);
+
+            // Close mobile menu when clicking on menu items
+            const mobileMenuLinks = mobileNavMenu.querySelectorAll('a');
+            mobileMenuLinks.forEach(link => {
+                link.addEventListener('click', closeMobileMenu);
+            });
+        });
+    </script>
 </body>
 </html>
