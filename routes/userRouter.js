@@ -122,7 +122,7 @@ router.get('/auth/google',
 router.get('/auth/google/callback',
     passport.authenticate('google', { failureRedirect: '/' }),
     (req, res) => {
-        req.session.user = req.user._id; // Set user ID in session
+        req.session.user = req.user._id;
         res.redirect('/');
     }
 );
