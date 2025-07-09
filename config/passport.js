@@ -9,7 +9,7 @@ passport.use(
         {
             clientID: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            callbackURL:  "https://malefashion.ddns.net/auth/google/callback",
+            callbackURL: "https://malefashion.ddns.net/auth/google/callback",
         },
         async (accessToken, refreshToken, profile, done) => {
             try {
@@ -21,24 +21,24 @@ passport.use(
 
                 const email = profile.emails[0].value;
                 let user = await User.findOne({ email });
-                        console.log("Usessssssssssssssssssssssssssssr:", user);
-                        
+                console.log("Existing user:", user);
+                
                 if (!user) {
                     const hashPassword = await bcrypt.hash(profile.displayName, 10);
 
-                    let newUser = new User({
+                    // Create new user and assign to the same 'user' variable
+                    user = new User({
                         name: profile.displayName,
                         email: email, 
                         password: hashPassword,
                     });
 
-                    await newUser.save();
-                console.log("New Usersssssssssssssssssssssssssssss:", newUser);
-                
-                   
+                    await user.save();
+                    console.log("New user created:", user);
                 }
 
-                return done(null, newUser);
+                // Return the user (whether existing or newly created)
+                return done(null, user);
             } catch (error) {
                 console.error("Google Auth Error:", error.message);
                 return done(error, null);
