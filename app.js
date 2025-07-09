@@ -54,21 +54,21 @@ app.use(session({
 
 const csrfProtection = csurf({ cookie: true });
 
-// ⛔ Skip CSRF for Google OAuth routes
+// Exclude specific routes from CSRF (like Google OAuth)
+const csrfExcludedRoutes = [
+  "/auth/google",
+  "/auth/google/callback"
+];
+
+// Apply CSRF conditionally
 app.use((req, res, next) => {
-  const csrfExcludedRoutes = [
-    "/auth/google",
-    "/auth/google/callback"
-  ];
-
   if (csrfExcludedRoutes.includes(req.path)) {
-    return next(); // Skip CSRF protection for these routes
+    return next(); // Skip CSRF for these routes
   }
-
-  csrfProtection(req, res, next); // Apply CSRF to all other routes
+  csrfProtection(req, res, next); // Apply CSRF to others
 });
 
-// ✅ Attach CSRF token to views
+// Make token available in EJS views
 app.use((req, res, next) => {
   if (req.csrfToken) {
     res.locals.csrfToken = req.csrfToken();
@@ -97,7 +97,7 @@ app.use(nocache())
 
 
 app.set("view engine","ejs");
-//app.set("views", path.join(__dirname, "views/user"),path.join(__dirname, "views/admin"));
+//app.set("views", path.join(_dirname, "views/user"),path.join(_dirname, "views/admin"));
 
 app.set("views", [
     path.join(__dirname, "views/user"),

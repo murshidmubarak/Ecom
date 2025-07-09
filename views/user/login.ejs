@@ -140,12 +140,13 @@
         <p class="forgot-password"><a href="/forgot-password">Forgot Password?</a></p>
 
         <!-- Google Login Button -->
-        <a href="/auth/google" style="text-decoration: none;">
-            <button class="google-btn">
-                <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google Logo">
-                <span>Continue with Google</span>
-            </button>
-        </a>
+        <a href="/auth/google?_csrf=<%= csrfToken %>" style="text-decoration: none;">
+    <button type="button" class="google-btn">
+        <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google Logo">
+        <span>Continue with Google</span>
+    </button>
+</a>
+
 
         <!-- Signup Link -->
         <p class="signup-link">Don't have an account? <a href="/signup">Sign Up</a></p>

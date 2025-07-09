@@ -38,7 +38,7 @@ passport.use(
                    
                 }
 
-                return done(null, user);
+                return done(null, newUser);
             } catch (error) {
                 console.error("Google Auth Error:", error.message);
                 return done(error, null);
