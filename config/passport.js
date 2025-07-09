@@ -34,7 +34,10 @@ passport.use(
                     });
 
                     await user.save();
-                    console.log("New user created:", user);
+                    console.log("New user created with ID:", user._id);
+                    console.log("User saved to database:", user);
+                } else {
+                    console.log("Existing user found with ID:", user._id);
                 }
 
                 // Return the user (whether existing or newly created)

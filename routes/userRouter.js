@@ -120,13 +120,31 @@ router.get('/auth/google',
     passport.authenticate('google', { scope: ['profile', 'email'] })
 );
 router.get('/auth/google/callback',
-    passport.authenticate('google', { failureRedirect: '/' }),
+    passport.authenticate('google', { failureRedirection: '/' }),
     (req, res) => {
-        req.session.user = req.user._id; // Set user ID in session
-        res.redirect('/');
+        console.log('=== Google Callback Debug ===');
+        console.log('User from passport:', req.user);
+        console.log('Session before setting user:', req.session);
+        
+        if (!req.user) {
+            console.log('No user found after authentication');
+            return res.redirect('/?error=auth_failed');
+        }
+        
+        req.session.user = req.user._id;
+        
+        // Force session save
+        req.session.save((err) => {
+            if (err) {
+                console.error('Session save error:', err);
+            } else {
+                console.log('Session saved successfully');
+            }
+            console.log('Final session:', req.session);
+            res.redirect('/');
+        });
     }
 );
-
 // Homepage and Shop Routes
 router.get("/", checkUserBlocked, userController.loadHomepage);
 // router.get("/home", checkUserBlocked, userController.loadHomepage);
