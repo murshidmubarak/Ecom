@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+
   <title>Email Verification</title>
   <style>
     html, body {
@@ -222,6 +224,11 @@
     let otpTimerInterval;
     let timer = 60;
 
+    function getCsrfToken() {
+  return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+}
+
+
     function initializeOtptimer() {
       clearInterval(otpTimerInterval);
       timer = 60;
@@ -254,9 +261,13 @@
 
     function validateOtpForm() {
       const otpInput = document.getElementById('otp').value;
+      const csrfToken = getCsrfToken();
       $.ajax({
         type: 'POST',
         url: '/verify-passForgotOtp',
+        headers: {
+      'CSRF-Token': csrfToken 
+    },
         data: { otp: otpInput },
         success: function (response) {
           if (response.success) {
@@ -288,9 +299,13 @@
     }
 
     function resendOtp() {
+      const csrfToken = getCsrfToken();
       $.ajax({
         type: 'POST',
         url: '/resend-forgot-otp',
+        headers: {
+      'CSRF-Token': csrfToken 
+    },
         success: function (response) {
           Swal.fire({
             icon: 'success',
