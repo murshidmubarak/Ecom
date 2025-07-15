@@ -2178,50 +2178,38 @@ const cancelOrder = async (req, res) => {
 
 const cancelSingleProduct = async (req, res) => {
   const { orderId, singleProductId } = req.body;
-  console.log("cancelSingleProduct - Request:", { orderId, singleProductId });
 
   if (
     !mongoose.Types.ObjectId.isValid(orderId) ||
     !mongoose.Types.ObjectId.isValid(singleProductId)
   ) {
-    console.log("Invalid ID format:", { orderId, singleProductId });
     return res.status(400).json({ message: "Invalid ID format" });
   }
 
   try {
     const order = await Order.findOne({ _id: orderId });
     if (!order) {
-      console.log("Order not found for ID:", orderId);
       return res.status(404).json({ message: "Order not found" });
     }
-    console.log("Order details:", { orderId: order._id, payment: order.payment });
 
     const oid = new mongoose.Types.ObjectId(singleProductId);
     const productIndex = order.orderedItems.findIndex(
       (item) => item.product.toString() === singleProductId
     );
     if (productIndex === -1) {
-      console.log("Product not found in order:", singleProductId);
       return res.status(404).json({ message: "Product not found in order" });
     }
-    console.log("Order details before processing:", order);
     const orderedItem = order.orderedItems[productIndex];
-    console.log("Ordered item details:", orderedItem);
 
     const totalOrderAmount = order.totalPrice + order.discount;
-    console.log("Total order amount (including discount):", totalOrderAmount);
 
     const productPrice = orderedItem.price;
-    console.log("Product price:", productPrice);
 
     const discountPercentage = (productPrice / totalOrderAmount) * 100;
-    console.log("Discount percentage for the product:", discountPercentage);
 
     const discountAmountForSingleProduct = (discountPercentage / 100) * order.discount;
-    console.log("Discount amount for the single product:", discountAmountForSingleProduct);
 
-    const refundAmount = orderedItem.price * orderedItem.quantity - discountAmountForSingleProduct;
-    console.log("Refund amount calculated:", { refundAmount });
+    const refundAmount = orderedItem.price * orderedItem.quantity - discountAmountForSingleProduct * orderedItem.quantity;
 
     const filter = { _id: orderId };
     const update = {
@@ -2231,10 +2219,8 @@ const cancelSingleProduct = async (req, res) => {
     };
     const options = { arrayFilters: [{ "elem.product": oid }] };
     const orderUpdateResult = await Order.updateOne(filter, update, options);
-    console.log("Order update result:", orderUpdateResult);
 
     if (orderUpdateResult.modifiedCount === 0) {
-      console.log("Order update failed - no changes made");
       return res.status(500).json({ message: "Failed to update order status" });
     }
     console.log("Product status updated to 'cancelled'");
@@ -2243,12 +2229,7 @@ const cancelSingleProduct = async (req, res) => {
     if (product) {
       product.quantity = parseInt(product.quantity) + orderedItem.quantity;
       await product.save();
-      console.log(
-        "Stock restored for product:",
-        singleProductId,
-        "New quantity:",
-        product.quantity
-      );
+     
     } else {
       console.log("Product not found for stock update:", singleProductId);
     }
@@ -2256,7 +2237,6 @@ const cancelSingleProduct = async (req, res) => {
     if (order.payment === "online" || order.payment === "wallet") {
       const user = await User.findById(order.userId);
       if (!user) {
-        console.log("User not found for ID:", order.userId);
         return res.status(404).json({ message: "User not found" });
       }
       console.log("User found:", { id: user._id, currentWallet: user.wallet });
@@ -2271,13 +2251,11 @@ const cancelSingleProduct = async (req, res) => {
       });
 
       if (userSaveResult.wallet !== user.wallet) {
-        console.log("User wallet save failed - balance mismatch");
         return res.status(500).json({ message: "Failed to update user wallet" });
       }
 
       let userWallet = await Wallet.findOne({ userId: order.userId });
       if (!userWallet) {
-        console.log("No wallet found for user. Creating new wallet.");
         userWallet = new Wallet({ userId: order.userId, transactions: [] });
       }
 
@@ -2303,7 +2281,6 @@ const cancelSingleProduct = async (req, res) => {
     );
     if (allCancelled) {
       await Order.updateOne({ _id: orderId }, { status: "cancelled" });
-      console.log("All items cancelled, order status updated to 'cancelled'");
       return res.status(200).json({
         message: "All products cancelled, order status updated to cancelled",
       });

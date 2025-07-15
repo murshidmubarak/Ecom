@@ -297,7 +297,7 @@ const editProduct = async (req, res) => {
                 if (typeof imagesArray[i] === "string" && imagesArray[i].startsWith("data:image")) {
                     const base64Data = imagesArray[i].split(",")[1];
                     const filename = `cropped_${Date.now()}_${i}.jpg`;
-                    const filePath = path.join("public", "Uploads", filename);
+                    const filePath = path.join("public", "uploads", filename);
                     await fs.writeFile(filePath, base64Data, "base64");
                     images.push(filename);
                 }

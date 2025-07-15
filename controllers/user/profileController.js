@@ -63,28 +63,58 @@ const getForgotPassPage = async (req, res) => {
     }
 };
 
+// const forgotEmailValid = async (req, res) => {
+//     try {
+//         const email = req.body.email;
+//         const findUser = await User.findOne({ email: email });
+//         if (findUser) {
+//             const otp = generateOtp();
+//             const emailSent = await sendVerificationEmail(email, otp);
+//             if (emailSent) {
+//                 req.session.userOtp = otp;
+//                 req.session.email = email;
+//                 res.render("forgotPass-otp");
+//                 console.log("Email sent successfully", otp);
+//             } else {
+//                 res.json({ success: false, message: "Error sending OTP" });
+//             }
+//         } else {
+//             res.render("forgot-password", { message: "Email not found" });
+//         }
+//     } catch (error) {
+//         res.redirect("/pageNotFound");
+//         console.log(error);
+//     }
+// };
+
 const forgotEmailValid = async (req, res) => {
-    try {
-        const email = req.body.email;
-        const findUser = await User.findOne({ email: email });
-        if (findUser) {
-            const otp = generateOtp();
-            const emailSent = await sendVerificationEmail(email, otp);
-            if (emailSent) {
-                req.session.userOtp = otp;
-                req.session.email = email;
-                res.render("forgotPass-otp");
-                console.log("Email sent successfully", otp);
-            } else {
-                res.json({ success: false, message: "Error sending OTP" });
-            }
-        } else {
-            res.render("forgot-password", { message: "Email not found" });
-        }
-    } catch (error) {
-        res.redirect("/pageNotFound");
-        console.log(error);
+  try {
+    const email = req.body.email;
+    const findUser = await User.findOne({ email: email });
+
+    if (!findUser) {
+      // Show error message in same page using SweetAlert
+      return res.render("forgot-password", {
+        message: "Email not found",
+      });
     }
+
+    const otp = generateOtp();
+    const emailSent = await sendVerificationEmail(email, otp);
+
+    if (emailSent) {
+      req.session.userOtp = otp;
+      req.session.email = email;
+      console.log("Email sent successfully", otp);
+      return res.render("forgotPass-otp");
+    } else {
+      return res.render("forgot-password", {
+        message: "Failed to send OTP. Please try again.",
+      });
+    }
+  } catch (error) {
+    return res.redirect("/pageNotFound");
+  }
 };
 
 const verifyForgotPassOtp = async (req, res) => {
