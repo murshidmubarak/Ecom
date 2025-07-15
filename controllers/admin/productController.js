@@ -231,6 +231,117 @@ const getEditProduct = async (req, res) => {
     }
 };
 
+// const editProduct = async (req, res) => {
+//     try {
+//         const id = req.params.id;
+//         const data = req.body;
+
+//         // Backend validation
+//         if (!data.productName || data.productName.trim() === "") {
+//             return res.status(400).json({ success: false, message: "Product name is required" });
+//         }
+//         if (!data.description || data.description.trim() === "") {
+//             return res.status(400).json({ success: false, message: "Description is required" });
+//         }
+//         if (!data.category) {
+//             return res.status(400).json({ success: false, message: "Category is required" });
+//         }
+//         const regularPrice = parseFloat(data.regularPrice);
+//         if (isNaN(regularPrice) || regularPrice <= 0) {
+//             return res.status(400).json({ success: false, message: "Regular price must be a positive number" });
+//         }
+//         const productOffer = parseFloat(data.productOffer) || 0;
+//         if (productOffer < 0 || productOffer > 100) {
+//             return res.status(400).json({ success: false, message: "Product offer must be between 0 and 100" });
+//         }
+//         const quantity = parseInt(data.quantity);
+//         if (isNaN(quantity) || quantity < 0) {
+//             return res.status(400).json({ success: false, message: "Quantity must be a non-negative integer" });
+//         }
+//         if (!data.color || data.color.trim() === "") {
+//             return res.status(400).json({ success: false, message: "Color is required" });
+//         }
+
+//         // Check for duplicate product
+//         const existingProduct = await Product.findOne({
+//             productName: { $regex: new RegExp(`^${data.productName.trim()}$`, "i") },
+//             _id: { $ne: id },
+//         });
+//         if (existingProduct) {
+//             return res.status(400).json({ success: false, message: "Product name already exists" });
+//         }
+
+//         // Find category
+//         const category = await Category.findById(data.category);
+//         if (!category) {
+//             return res.status(400).json({ success: false, message: "Invalid category" });
+//         }
+
+//         // Process images
+//         const images = [];
+//         if (req.files && req.files.length > 0) {
+//             for (let i = 0; i < req.files.length; i++) {
+//                 images.push(req.files[i].filename);
+//             }
+//         }
+
+//         if (data.images) {
+//             let imagesArray = Array.isArray(data.images)
+//                 ? data.images
+//                 : typeof data.images === "object"
+//                 ? Object.values(data.images)
+//                 : typeof data.images === "string"
+//                 ? [data.images]
+//                 : [];
+//             for (let i = 0; i < imagesArray.length; i++) {
+//                 if (typeof imagesArray[i] === "string" && imagesArray[i].startsWith("data:image")) {
+//                     const base64Data = imagesArray[i].split(",")[1];
+//                     const filename = `cropped_${Date.now()}_${i}.jpg`;
+//                     const filePath = path.join("public", "uploads", filename);
+//                     await fs.writeFile(filePath, base64Data, "base64");
+//                     images.push(filename);
+//                 }
+//             }
+//         }
+
+//         // Calculate sale price based on offers
+//         const categoryOffer = parseFloat(category.categoryOffer) || 0;
+//         const effectiveOffer = Math.max(productOffer, categoryOffer);
+//         // const salePrice = regularPrice * (1 - effectiveOffer / 100);
+//         const salePrice = Math.round(regularPrice * (1 - effectiveOffer / 100));
+
+
+//         // Update product fields
+//         const updateFields = {
+//             productName: data.productName,
+//             description: data.description,
+//             regularPrice: regularPrice,
+//             salePrice: salePrice,
+//             productOffer: productOffer,
+//             quantity: quantity,
+//             size: data.size || "",
+//             color: data.color,
+//             category: category._id,
+//         };
+
+//         if (images.length > 0) {
+//             updateFields.$push = { productImage: { $each: images } };
+//         }
+
+//         await Product.findByIdAndUpdate(id, updateFields, { new: true });
+
+//         res.status(200).json({
+//             success: true,
+//             message: "Product updated successfully",
+//         });
+//     } catch (error) {
+//         console.error("Error updating product:", error);
+//         res.status(500).json({
+//             success: false,
+//             message: "Server error while updating product",
+//         });
+//     }
+// };
 const editProduct = async (req, res) => {
     try {
         const id = req.params.id;
@@ -262,7 +373,7 @@ const editProduct = async (req, res) => {
             return res.status(400).json({ success: false, message: "Color is required" });
         }
 
-        // Check for duplicate product
+        // Check for duplicate product name
         const existingProduct = await Product.findOne({
             productName: { $regex: new RegExp(`^${data.productName.trim()}$`, "i") },
             _id: { $ne: id },
@@ -277,14 +388,24 @@ const editProduct = async (req, res) => {
             return res.status(400).json({ success: false, message: "Invalid category" });
         }
 
-        // Process images
+        // Process new images
         const images = [];
+
+        // If new files uploaded (via multer)
         if (req.files && req.files.length > 0) {
             for (let i = 0; i < req.files.length; i++) {
-                images.push(req.files[i].filename);
+                const originalImagePath = req.files[i].path;
+                const resizedImagePath = path.join("public", "uploads", "resized-" + req.files[i].filename);
+
+                await sharp(originalImagePath)
+                    .resize({ width: 440, height: 440 })
+                    .toFile(resizedImagePath);
+
+                images.push("resized-" + req.files[i].filename);
             }
         }
 
+        // If base64 images are sent (cropped images)
         if (data.images) {
             let imagesArray = Array.isArray(data.images)
                 ? data.images
@@ -293,25 +414,30 @@ const editProduct = async (req, res) => {
                 : typeof data.images === "string"
                 ? [data.images]
                 : [];
+
             for (let i = 0; i < imagesArray.length; i++) {
                 if (typeof imagesArray[i] === "string" && imagesArray[i].startsWith("data:image")) {
                     const base64Data = imagesArray[i].split(",")[1];
+                    const buffer = Buffer.from(base64Data, "base64");
                     const filename = `cropped_${Date.now()}_${i}.jpg`;
                     const filePath = path.join("public", "uploads", filename);
-                    await fs.writeFile(filePath, base64Data, "base64");
+
+                    // Save image using sharp
+                    await sharp(buffer)
+                        .resize({ width: 440, height: 440 })
+                        .toFile(filePath);
+
                     images.push(filename);
                 }
             }
         }
 
-        // Calculate sale price based on offers
+        // Calculate effective sale price
         const categoryOffer = parseFloat(category.categoryOffer) || 0;
         const effectiveOffer = Math.max(productOffer, categoryOffer);
-        // const salePrice = regularPrice * (1 - effectiveOffer / 100);
         const salePrice = Math.round(regularPrice * (1 - effectiveOffer / 100));
 
-
-        // Update product fields
+        // Prepare update data
         const updateFields = {
             productName: data.productName,
             description: data.description,
@@ -342,7 +468,6 @@ const editProduct = async (req, res) => {
         });
     }
 };
-
 const deleteSingleImage = async (req, res) => {
     try {
         const { imageNameToServer, ProductIdToServer } = req.body;
