@@ -24,7 +24,7 @@ const securePassword = async (password) => {
     try {
         return await bcrypt.hash(password, 10);
     } catch (error) {
-        console.error("Error hashing password:", error);
+       
         throw error;
     }
 };
@@ -58,7 +58,7 @@ const getForgotPassPage = async (req, res) => {
     try {
         res.render("forgot-password");
     } catch (error) {
-        console.log(error);
+       
         res.redirect("/pageNotFound");
     }
 };
@@ -143,14 +143,14 @@ const resendOtp = async (req, res) => {
         const otp = generateOtp();
         req.session.userOtp = otp;
         const email = req.session.email;
-        console.log('resending otp');
+        
         const emailSent = await sendVerificationEmail(email, otp);
         if (emailSent) {
             console.log("resend otp", otp);
             res.status(200).json({ success: true, message: 'resend otp successful' });
         }
     } catch (error) {
-        console.error('error in resend otp', error);
+        
         res.status(500).json({ success: false, message: 'server error' });
     }
 };
@@ -171,7 +171,7 @@ const postNewPassword = async (req, res) => {
         }
     } catch (error) {
         res.redirect('/pageNotFound');
-        console.log('error occurred', error);
+        
     }
 };
 
@@ -249,7 +249,7 @@ const userProfile = async (req, res) => {
             profilePhoto: userData.profilePhoto // Pass profile photo to view
         });
     } catch (error) {
-        console.error('Error rendering profile page:', error);
+        
         res.redirect('/page404');
     }
 };
@@ -264,7 +264,7 @@ const getOrderDetails = async (req, res) => {
         }
         res.render('orderDetails', { order, user: await User.findById(userId) });
     } catch (error) {
-        console.error('Error fetching order details:', error);
+       
         res.redirect('/page404');
     }
 };
@@ -273,7 +273,7 @@ const changeEmail = async (req, res) => {
     try {
         res.render("change-email");
     } catch (error) {
-        console.error("error rendering change email page");
+      
         res.redirect('page404');
     }
 };
@@ -301,7 +301,7 @@ const changeEmailValid = async (req, res) => {
             });
         }
     } catch (error) {
-        console.log('error in change valid email');
+       
         res.redirect('page404');
     }
 };
@@ -321,7 +321,7 @@ const veriyfyEmailOtp = async (req, res) => {
             });
         }
     } catch (error) {
-        console.log("error verify email otp");
+       
         res.redirect('page404');
     }
 };
@@ -333,7 +333,7 @@ const updateEmail = async (req, res) => {
         await User.findByIdAndUpdate(userId, { email: newEmail });
         res.redirect("/userProfile");
     } catch (error) {
-        console.log("error in update email", error);
+        
         res.redirect('page404');
     }
 };
@@ -359,7 +359,7 @@ const changePasswordValid = async (req, res) => {
                 req.session.userData = req.body;
                 req.session.email = email;
                 res.render("change-password-otp");
-                console.log("email sent", email);
+              
                 console.log("otp", otp);
             } else {
                 res.json({
@@ -373,7 +373,7 @@ const changePasswordValid = async (req, res) => {
             });
         }
     } catch (error) {
-        console.log('error in change valid email');
+       
         res.redirect('page404');
     }
 };
@@ -397,30 +397,36 @@ const verrifyChangePassOtp = async (req, res) => {
             success: false,
             message: "something went wrong"
         });
-        console.log(error);
+        
     }
 };
 
 const addAddress = async (req, res) => {
     try {
         const user = req.session.user;
+        const redirectPage = req.query.redirect || 'profile'; // default to profile if not sent
         res.render("add-address", {
             user: user,
-            csrfToken: req.csrfToken()
+            csrfToken: req.csrfToken(),
+            redirectPage: redirectPage // pass it to EJS
         });
     } catch (error) {
-        console.error("error in add address render");
+       
         res.redirect('page404');
     }
 };
+
 
 const postAddAddress = async (req, res) => {
     try {
         const userId = req.session.user;
         const userData = await User.findOne({ _id: userId });
-        const { addressType, name, city, landMark, state, pincode, phone, altPhone } = req.body;
+
+        const { addressType, name, city, landMark, state, pincode, phone, altPhone, redirect } = req.body;
+        const redirectPage = redirect; // ✅ define redirectPage
+
         const userAddress = await Address.findOne({ userId: userData._id });
-        
+
         if (!userAddress) {
             const newAddress = new Address({
                 userId: userData._id,
@@ -431,9 +437,11 @@ const postAddAddress = async (req, res) => {
             userAddress.address.push({ addressType, name, city, landMark, state, pincode, phone, altPhone });
             await userAddress.save();
         }
-        res.redirect("/userProfile");
+
+        // ✅ Use defined redirectPage
+        res.redirect(redirectPage === 'checkout' ? '/checkout' : '/userProfile');
     } catch (error) {
-        console.error("error in add address post", error);
+        
         res.redirect('page404');
     }
 };
@@ -443,6 +451,7 @@ const editAddress = async (req, res) => {
         const addressId = req.query.id;
         const user = req.session.user;
         const currentAddress = await Address.findOne({"address._id": addressId}); 
+        const redirectPage = req.query.redirect || 'profile';
 
         if (!currentAddress) {
             return res.redirect('/page404');
@@ -458,7 +467,8 @@ const editAddress = async (req, res) => {
         res.render("edit-address", {
             user: user,
             address: addressData,
-            csrfToken: req.csrfToken()
+            csrfToken: req.csrfToken(),
+             redirectPage
         });
     } catch (error) {
         console.error("error in edit address render", error);
@@ -472,6 +482,7 @@ const postEditAddress = async (req, res) => {
         const addressId = req.query.id;
         const user = req.session.user;
         const findAddress = await Address.findOne({ "address._id": addressId });
+        const redirectPage = req.body.redirect;
         if (!findAddress) {
             return res.redirect('/page404');
         }
@@ -493,54 +504,13 @@ const postEditAddress = async (req, res) => {
             }}
         );
 
-        return res.redirect("/userProfile");
+         return res.redirect(redirectPage === 'checkout' ? '/checkout' : '/userProfile');
     } catch (error) {
-        console.error("error in edit address post", error);
+        
         res.redirect('page404');
     }
 };
 
-// const deleteAddress = async (req, res) => {
-//     try {
-//         const addressId = req.query.id;
-//         const findAddress = await Address.findOne({ "address._id": addressId });
-//         if (!findAddress) {
-//             return res.status(404).send("address not found");
-//         }
-       
-//         await Address.updateOne(
-//             { "address._id": addressId },
-//             { $pull: { address: { _id: addressId } } }
-//         );
-
-//         res.redirect("/userProfile");
-//     } catch (error) {
-//         console.error("error in delete address", error);
-//         res.redirect('page404');
-//     }
-// };
-
-// New function to handle profile photo upload
-// const uploadProfilePhoto = async (req, res) => {
-//     try {
-//         const userId = req.session.user;
-//         if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-//             return res.redirect('/login');
-//         }
-
-//         if (!req.file) {
-//             return res.redirect('/userProfile?tab=dashboard&error=No file uploaded');
-//         }
-
-//         const profilePhotoPath = `/uploads/profiles/${req.file.filename}`;
-//         await User.findByIdAndUpdate(userId, { profilePhoto: profilePhotoPath });
-
-//         res.redirect('/userProfile?tab=dashboard');
-//     } catch (error) {
-//         console.error('Error uploading profile photo:', error);
-//         res.redirect('/userProfile?tab=dashboard&error=Failed to upload photo');
-//     }
-// };
 
 const deleteAddress = async (req, res) => {
     try {
@@ -557,7 +527,7 @@ const deleteAddress = async (req, res) => {
 
         res.redirect("/userProfile");
     } catch (error) {
-        console.error("error in delete address", error);
+        
         res.redirect('page404');
     }
 };
@@ -602,7 +572,7 @@ const uploadProfilePhoto = async (req, res) => {
 
         res.redirect('/userProfile?tab=dashboard');
     } catch (error) {
-        console.error('Error uploading profile photo:', error);
+        
         res.redirect('/userProfile?tab=dashboard&error=Failed to upload photo');
     }
 };
@@ -614,7 +584,7 @@ const removeProfilePhoto = async (req, res) => {
         await User.findByIdAndUpdate(userId, { profilePhoto: null });
         res.redirect('/userProfile?tab=dashboard');
     } catch (error) {
-        console.error('Error removing profile photo:', error);
+       
         res.redirect('/userProfile?tab=dashboard&error=Failed to remove photo');
     }
 };

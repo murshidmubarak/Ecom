@@ -1,7 +1,7 @@
 const User = require("../../models/userSchema");
 const mongoose = require("mongoose");
 const bcrypt  = require ("bcrypt");
-const { loadsignup } = require("../user/userController");
+// const { loadsignup } = require("../user/userController");
 
 
 const pageerror = (req,res)=>{
@@ -11,36 +11,8 @@ const pageerror = (req,res)=>{
     })
 }  
 
-/* const loadLogin = (req,res)=>{
-    if(req.session.admin){
-        return res.redirect("/admin/dashboard");
-    }
-    res.render("admin-login", { errorMessage: null }); 
 
-   
-}
- */
-/* const login = async(req,res)=>{
-    try {
-        const {email,password} = req.body;
-        const admin = await User.findOne({email,isAdmin:true});
-        console.log(admin);
-        
-        if(admin){
-            const passwordMatch = bcrypt.compare(password,admin.password);
-            if(passwordMatch){
-                req.session.admin = true;
-                return res.redirect("/admin")
-            }else{
-               return res.redirect("/login");
-            }
-        }
-    } catch (error) {
-        console.log("login error");
-        return res.redirect("/pageerror");
-        
-    }
-} */
+
 
 
  const loadLogin = (req, res) => {
@@ -49,24 +21,22 @@ const pageerror = (req,res)=>{
     }
     res.render("admin-login", { 
         errorMessage: null,
-        csrfToken: req.csrfToken() // Added: Pass CSRF token to admin-login.ejs
+        csrfToken: req.csrfToken() 
     });
 };
 
 const login = async (req, res) => {
     try {
-        const { email, password, _csrf } = req.body; // Changed: Added _csrf to destructured body
-        console.log("Admin login - Received:", { email, _csrf });
+        const { email, password, _csrf } = req.body; 
 
-        if (!email || !password || !_csrf) { // Changed: Added _csrf check
+        if (!email || !password || !_csrf) { 
             return res.render("admin-login", { 
                 errorMessage: "Missing required fields ",
-                csrfToken: req.csrfToken() // Added: Pass CSRF token on error
+                csrfToken: req.csrfToken() 
             });
         }
 
         const admin = await User.findOne({ email, isAdmin: true });
-        console.log("Admin login - Found admin:", admin);
 
         if (admin) {
             const passwordMatch = await bcrypt.compare(password, admin.password);
@@ -76,17 +46,16 @@ const login = async (req, res) => {
             } else {
                 return res.render("admin-login", { 
                     errorMessage: "Incorrect password",
-                    csrfToken: req.csrfToken() // Added: Pass CSRF token on error
+                    csrfToken: req.csrfToken() 
                 });
             }
         } else {
             return res.render("admin-login", { 
                 errorMessage: "Admin not found",
-                csrfToken: req.csrfToken() // Added: Pass CSRF token on error
+                csrfToken: req.csrfToken() 
             });
         }
     } catch (error) {
-        console.error("Admin login error:", error);
         // Added: Handle CSRF-specific errors
         if (error.code === 'EBADCSRFTOKEN') {
             return res.render("admin-login", { 
@@ -117,7 +86,6 @@ const logout =async (req,res)=>{
         res.redirect('/admin/login')
      } catch (error) {
 
-        console.log("unexpected error");
         res.redirect("/pageerror")
         
         

@@ -11,7 +11,7 @@ const whishlist = require("../../models/wishlistSchema");
 
 const loadsignup = async (req, res) => {
     try {
-        console.log('signup renderd');
+        
         return res.render('signup', { csrfToken: req.csrfToken() });
     } catch (error) {
         res.status(500).send("server error");
@@ -38,7 +38,7 @@ const loadHomepage = async (req, res) => {
 
         productData = productData.slice(0, 4);
 
-        console.log("productData", productData);
+       
 
         if (user) {
             const userData = await User.findOne({ _id: user });
@@ -47,7 +47,7 @@ const loadHomepage = async (req, res) => {
             return res.render('home', { products: productData });
         }
     } catch (error) {
-        console.error("Load login error:", error);
+       
         res.redirect("/pageNotFound");
     }
 };
@@ -96,7 +96,7 @@ async function sendVerificationEmail(email, otp) {
         console.log(`Email sent, OTP: ${otp}`);
         return info.accepted.length > 0;
     } catch (error) {
-        console.error("Error sending email:", error.message);
+        
         return false;
     }
 }
@@ -104,7 +104,7 @@ async function sendVerificationEmail(email, otp) {
 const signup = async (req, res) => {
     try {
         const { name, email, password, cPassword, code } = req.body;
-        console.log(req.body);
+       
 
         if (!name || !email || !password || !cPassword) {
             return res.json({ success: false, message: "All fields are required" });
@@ -139,15 +139,15 @@ const signup = async (req, res) => {
         setTimeout(() => {
             console.log('Clearing OTP from session');
             delete req.session.userOtp;
-            console.log("Session OTP after clear:", req.session.userOtp);
+           
         }, 10000);
 
         req.session.userData = { name, email, password, referralCode: code };
-        console.log("Stored user data in session:", req.session.userData);
+       
 
         return res.json({ success: true, message: "OTP sent successfully!" });
     } catch (error) {
-        console.error("Signup Error:", error);
+       
         return res.json({ success: false, message: "Internal server error" });
     }
 };
@@ -155,10 +155,10 @@ const signup = async (req, res) => {
 const getotp = async (req, res) => {
     try {
         const otp = req.session.userOtp;
-        console.log("Rendering verify-otp, OTP:", otp);
+       
         res.render("verify-otp", { csrfToken: req.csrfToken(), otp });
     } catch (error) {
-        console.error("Error rendering OTP page:", error);
+       
         return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
@@ -178,27 +178,26 @@ const verifyOtp = async (req, res) => {
         const sessionOtp = req.session.userOtp;
         const userData = req.session.userData;
         console.log("User-submitted OTP:", userOtp);
-        console.log("Session OTP:", sessionOtp);
-        console.log("Session User Data:", userData);
+        
 
         if (!sessionOtp) {
-            console.log("No OTP found in session");
+            
             return res.status(400).json({ success: false, message: "OTP expired. Please request a new one." });
         }
 
         if (String(userOtp) !== String(sessionOtp)) {
-            console.log("Invalid OTP");
+           
             return res.status(400).json({ success: false, message: "Invalid OTP" });
         }
 
         if (!userData) {
-            console.log("No user data in session");
+            
             return res.status(400).json({ success: false, message: "Session expired. Please try again." });
         }
 
         const existingUser = await User.findOne({ email: userData.email });
         if (existingUser) {
-            console.log("Email already registered:", userData.email);
+            
             return res.status(400).json({ success: false, message: "Email already registered. Please log in." });
         }
 
@@ -213,17 +212,17 @@ const verifyOtp = async (req, res) => {
         });
 
         await savedUser.save();
-        console.log("Saved user with referral code:", savedUser);
+       
 
         if (userData.referralCode) {
             const referrer = await User.findOne({ referalCode: userData.referralCode });
             if (referrer && !referrer.redeemedUsers.includes(savedUser._id)) {
-                console.log(`Processing referral for referrer: ${referrer.email}`);
+               
                 let referrerWallet = await Wallet.findOne({ userId: referrer._id });
                 if (!referrerWallet) {
                     referrerWallet = new Wallet({ userId: referrer._id, transactions: [] });
                     await referrerWallet.save();
-                    console.log("Created new wallet for referrer:", referrerWallet);
+                   
                 }
                 const referrerBalance = referrerWallet.transactions.length > 0
                     ? referrerWallet.transactions.sort(
@@ -243,13 +242,13 @@ const verifyOtp = async (req, res) => {
                 };
                 referrerWallet.transactions.push(referrerTransaction);
                 await referrerWallet.save();
-                console.log("Referrer wallet transaction added:", referrerTransaction);
+                
 
                 // Update referrer's user.wallet
                 referrer.wallet = newReferrerBalance;
                 referrer.redeemedUsers.push(savedUser._id);
                 await referrer.save();
-                console.log("Referrer updated - wallet:", referrer.wallet, "redeemedUsers:", referrer.redeemedUsers);
+                
 
                 let referredWallet = await Wallet.findOne({ userId: savedUser._id });
                 if (!referredWallet) {
@@ -266,24 +265,24 @@ const verifyOtp = async (req, res) => {
                         }]
                     });
                     await referredWallet.save();
-                    console.log("Referred user wallet transaction added:", referredWallet.transactions[0]);
+                    
                 }
 
                 // Update referred user's user.wallet
                 savedUser.wallet = referralBonus;
                 await savedUser.save();
-                console.log("Referred user wallet updated:", savedUser.wallet);
+                
             } else {
                 console.log("No valid referrer or user already referred");
             }
         }
 
         req.session.user = savedUser._id;
-        console.log("User session set, ID:", savedUser._id);
+       
 
         return res.status(200).json({ success: true, message: "OTP verified successfully" });
     } catch (error) {
-        console.error("Error verifying OTP:", error);
+      
         res.status(500).json({ success: false, message: "An error occurred. Please try again." });
     }
 };
@@ -305,24 +304,24 @@ const resendOtp = async (req, res) => {
             res.status(500).json({ success: false, message: "Failed to resend OTP, try again" });
         }
     } catch (error) {
-        console.error("Error resending OTP:", error);
+       
         res.status(500).json({ success: false, message: "Server error" });
     }
 };
 
 const loadLogin = async (req, res) => {
     try {
-        console.log('load');
+       
         res.render('login', { csrfToken: req.csrfToken() });
     } catch (error) {
-        console.error("Load login error:", error);
+        
         res.redirect("/pageNotFound");
     }
 };
 
 const login = async (req, res) => {
     const { email, password } = req.body;
-    console.log('Login attempt:', email);
+   
 
     try {
         if (!email || !password) {
@@ -343,166 +342,27 @@ const login = async (req, res) => {
         }
 
         req.session.user = existingUser._id;
-        console.log("Login successful, user ID:", existingUser._id);
+        
 
         return res.status(200).json({ success: true, message: "Login successful" });
     } catch (err) {
-        console.error("Login Error:", err);
+       
         return res.status(500).json({ success: false, message: "Failed to Login. Please try again." });
     }
 };
 
 const logout = (req, res) => {
     try {
-        console.log("Logging out user");
+        
         delete req.session.user;
         res.redirect('/');
     } catch (error) {
-        console.error("Unexpected Logout Error:", error);
+        
         res.redirect("/pageNotFound");
     }
 };
 
-// const loadShop = async (req, res) => {
-//     try {
-//         const user = req.session.user;
-//         const userData = user ? await User.findOne({ _id: user }) : null;
-//         const categories = await Category.find({ isListed: true });
-//         const listedCategoryIds = categories.map(category => category._id);
 
-//         const categoryId = req.query.category;
-//         const priceRange = req.query.price;
-//         const sortOption = req.query.sort || 'newest';
-//         const searchQuery = req.query.search;
-//         const page = parseInt(req.query.page) || 1;
-//         const limit = 9;
-//         const skip = (page - 1) * limit;
-
-//         const query = {
-//             isBlocked: false,
-//             category: { $in: listedCategoryIds } // Only products from listed categories
-//         };
-
-//         // Validate categoryId
-//         if (categoryId && categoryId !== 'all') {
-//             const categoryExists = categories.find(cat => cat._id.toString() === categoryId);
-//             if (categoryExists) {
-//                 query.category = categoryId;
-//                 console.log(`Filtering by listed category: ${categoryExists.name} (${categoryId})`);
-//             } else {
-//                 console.log(`Category ${categoryId} is unlisted or invalid; using all listed categories`);
-//             }
-//         } else {
-//             console.log(`No specific category selected; using all listed categories: ${listedCategoryIds}`);
-//         }
-
-//         if (priceRange) {
-//             switch (priceRange) {
-//                 case 'under500':
-//                     query.salePrice = { $lt: 500 };
-//                     break;
-//                 case '500to1000':
-//                     query.salePrice = { $gte: 500, $lte: 1000 };
-//                     break;
-//                 case '1000to1500':
-//                     query.salePrice = { $gte: 1000, $lte: 1500 };
-//                     break;
-//                 case 'above1500':
-//                     query.salePrice = { $gt: 1500 };
-//                     break;
-//             }
-//         }
-
-//         if (searchQuery) {
-//             query.productName = { $regex: searchQuery, $options: 'i' };
-//         }
-
-//         let sortCriteria = {};
-//         switch (sortOption) {
-//             case 'newest':
-//                 sortCriteria = { createdAt: -1 };
-//                 break;
-//             case 'price-low-high':
-//                 sortCriteria = { salePrice: 1 };
-//                 break;
-//             case 'price-high-low':
-//                 sortCriteria = { salePrice: -1 };
-//                 break;
-//             default:
-//                 sortCriteria = { createdOn: -1 };
-//         }
-
-//         const products = await Product.find(query)
-//             .populate('category') // Ensure category data is available
-//             .sort(sortCriteria)
-//             .limit(limit)
-//             .skip(skip);
-
-//         const totalProducts = await Product.countDocuments(query);
-//         const totalPages = Math.ceil(totalProducts / limit);
-
-//         console.log(`Found ${totalProducts} products for query: ${JSON.stringify(query, null, 2)}`);
-
-//         if (user && userData && categoryId && query.category !== listedCategoryIds) {
-//             const searchEntry = {
-//                 category: categoryId,
-//                 searchedOn: new Date()
-//             };
-//             userData.searchHistory.push(searchEntry);
-//             await userData.save();
-//         }
-
-//         const categoriesWithLinks = categories.map(category => ({
-//             _id: category._id,
-//             name: category.name,
-//             link: `/shop?category=${category._id}`
-//         }));
-
-//         const priceFilters = [
-//             { id: 'under500', name: 'Under ₹500', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}price=under500${sortOption !== 'newest' ? '&sort=' + sortOption : ''}` },
-//             { id: '500to1000', name: '₹500 - ₹1000', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}price=500to1000${sortOption !== 'newest' ? '&sort=' + sortOption : ''}` },
-//             { id: '1000to1500', name: '₹1000 - ₹1500', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}price=1000to1500${sortOption !== 'newest' ? '&sort=' + sortOption : ''}` },
-//             { id: 'above1500', name: 'Above ₹1500', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}price=above1500${sortOption !== 'newest' ? '&sort=' + sortOption : ''}` },
-//             { id: 'all', name: 'All Prices', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId : ''}${sortOption !== 'newest' ? '&sort=' + sortOption : ''}` }
-//         ];
-
-//         const sortLinks = [
-//             { id: 'newest', name: 'Newest', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}sort=newest` },
-//             { id: 'price-low-high', name: 'Price: Low to High', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}sort=price-low-high` },
-//             { id: 'price-high-low', name: 'Price: High to Low', link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}sort=price-high-low` }
-//         ];
-
-//         const paginationLinks = [];
-//         for (let i = 1; i <= totalPages; i++) {
-//             paginationLinks.push({
-//                 pageNumber: i,
-//                 link: `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}${sortOption !== 'newest' ? 'sort=' + sortOption + '&' : ''}page=${i}`,
-//                 active: i === page
-//             });
-//         }
-
-//         res.render('shop', {
-//             user: userData,
-//             products: products,
-//             categories: categories,
-//             categoriesWithLinks: categoriesWithLinks,
-//             priceFilters: priceFilters,
-//             sortLinks: sortLinks,
-//             paginationLinks: paginationLinks,
-//             totalProducts: totalProducts,
-//             currentPage: page,
-//             totalPages: totalPages,
-//             selectedCategory: categoryId || 'all',
-//             selectedPrice: priceRange || 'all',
-//             selectedSort: sortOption || 'newest',
-//             prevPageLink: page > 1 ? `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}${sortOption !== 'newest' ? 'sort=' + sortOption + '&' : ''}page=${page - 1}` : null,
-//             nextPageLink: page < totalPages ? `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}${sortOption !== 'newest' ? 'sort=' + sortOption + '&' : ''}page=${page + 1}` : null
-//         });
-//     } catch (error) {
-//         console.error('Error loading shop page:', error);
-//         res.redirect("/pageNotFound");
-//     }
-// };
 const loadShop = async (req, res) => {
     try {
         const user = req.session.user;
@@ -528,14 +388,9 @@ const loadShop = async (req, res) => {
             const categoryExists = categories.find(cat => cat._id.toString() === categoryId);
             if (categoryExists) {
                 query.category = categoryId;
-                console.log(`Filtering by listed category: ${categoryExists.name} (${categoryId})`);
-            } else {
-                console.log(`Category ${categoryId} is unlisted or invalid; using all listed categories`);
-            }
-        } else {
-            console.log(`No specific category selected; using all listed categories: ${listedCategoryIds}`);
-        }
-
+                
+            } 
+        } 
         if (priceRange) {
             switch (priceRange) {
                 case 'under500':
@@ -598,7 +453,7 @@ const loadShop = async (req, res) => {
         const totalProducts = await Product.countDocuments(query);
         const totalPages = Math.ceil(totalProducts / limit);
 
-        console.log(`Found ${totalProducts} products for query: ${JSON.stringify(query, null, 2)}`);
+        
 
         if (user && userData && categoryId && query.category !== listedCategoryIds) {
             const searchEntry = {
@@ -656,7 +511,7 @@ const loadShop = async (req, res) => {
             nextPageLink: page < totalPages ? `/shop?${categoryId && categoryId !== 'all' && categories.find(cat => cat._id.toString() === categoryId) ? 'category=' + categoryId + '&' : ''}${priceRange ? 'price=' + priceRange + '&' : ''}${sortOption !== 'newest' ? 'sort=' + sortOption + '&' : ''}page=${page + 1}` : null
         });
     } catch (error) {
-        console.error('Error loading shop page:', error);
+        
         res.redirect("/pageNotFound");
     }
 };
@@ -698,7 +553,7 @@ const loadProfile = async (req, res) => {
     try {
         const userId = req.session.user;
         if (!userId) {
-            console.log("No user session, redirecting to login");
+           
             return res.redirect("/login");
         }
 
@@ -710,7 +565,7 @@ const loadProfile = async (req, res) => {
         ]);
 
         if (!user) {
-            console.log("User not found for ID:", userId);
+            
             return res.redirect("/login");
         }
 
@@ -732,12 +587,12 @@ const loadProfile = async (req, res) => {
                 console.warn(`Invalid latestTransaction.balanceAfter: ${latestTransaction.balanceAfter}`);
             }
         } else {
-            console.log(`No wallet transactions found, using user.wallet: ${user.wallet}`);
+           
             if (!wallet && user.wallet !== 0) {
                 // Create empty wallet to align with user.wallet
                 const newWallet = new Wallet({ userId: user._id, transactions: [] });
                 await newWallet.save();
-                console.log(`Created empty wallet for user: ${user._id}`);
+              
             }
         }
 
@@ -759,7 +614,7 @@ const loadProfile = async (req, res) => {
             moment: require("moment")
         });
     } catch (error) {
-        console.error("Error loading profile:", error);
+        
         res.redirect("/pageNotFound");
     }
 };

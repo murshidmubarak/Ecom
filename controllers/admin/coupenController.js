@@ -6,7 +6,7 @@ const loadCoupen = async (req, res) => {
     const csrfToken = req.csrfToken ? req.csrfToken() : null; // Get CSRF token if available
     return res.render("coupen", { coupons, csrfToken });
   } catch (error) {
-    console.error("Error loading coupons:", error);
+
     return res.redirect("/pageerror");
   }
 };
@@ -36,12 +36,8 @@ const createCoupon = async (req, res) => {
      await newCoupon.save();
     return res.status(200).json({ success: true, message: "Coupon created successfully" });
 
-   
-
-    
-    return res.redirect("/admin/coupen");
   } catch (error) {
-    console.error("Error creating coupon:", error);
+   
     if (error.code === 11000) {
       return res.status(400).json({ success: false, message: "Coupon name already exists" });
     }
@@ -58,11 +54,6 @@ const editCoupon = async (req, res) => {
     const eDateObj = new Date(endDate);
     const todayDateObj = new Date();
     todayDateObj.setHours(0, 0, 0, 0);
-
-  //  const existingCoupon = await Coupon.findOne({ couponName });
-  //   if (existingCoupon) {
-  //     return res.status(400).json({ success: false, message: "Coupon name already existssssss" });
-  //   }
 
     const updatedCoupon = await Coupon.findByIdAndUpdate(
       id,
@@ -81,13 +72,8 @@ const editCoupon = async (req, res) => {
      await updatedCoupon.save();
     return res.status(200).json({ success: true, message: "Coupon updated successfully" });
 
-    // if (!updatedCoupon) {
-    //   return res.status(404).json({ error: "Coupon not found" });
-    // }
-
-    // return res.redirect("/admin/coupen");
   } catch (error) {
-    console.error("Error editing coupon:", error);
+    
     if (error.code === 11000) {
       return res.status(400).json({ error: "Coupon name already exists" });
     }
@@ -110,7 +96,7 @@ const deleteCoupon = async (req, res) => {
 
     return res.json({ success: true, message: "Coupon deleted successfully" });
   } catch (error) {
-    console.error("Error deleting coupon:", error);
+   
     return res.status(500).json({ error: "Failed to delete coupon" });
   }
 };

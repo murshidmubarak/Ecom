@@ -203,7 +203,7 @@ const getSalesReportPage = async (req, res) => {
       deliveredOrders,
     });
   } catch (err) {
-    console.error('Error in getSalesReportPage:', err.message);
+    
     res.redirect('/admin/pageerror');
   }
 };

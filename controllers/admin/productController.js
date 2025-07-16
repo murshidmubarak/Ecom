@@ -12,7 +12,7 @@ const getProductAddPage = async (req, res) => {
             csrfToken: req.csrfToken() ? req.csrfToken() : null, // Pass CSRF token to the view
         });
     } catch (error) {
-        console.error("Error loading add product page:", error);
+       
         res.redirect("/pageerror");
     }
 };
@@ -119,7 +119,7 @@ const addProducts = async (req, res) => {
             message: "Product added successfully",
         });
     } catch (error) {
-        console.error("Error saving product:", error);
+ 
         res.status(500).json({
             success: false,
             message: "Server error occurred while adding product",
@@ -155,7 +155,7 @@ const getAllProducts = async (req, res) => {
             totalPages: Math.ceil(count / limit),
         });
     } catch (error) {
-        console.error("Error fetching products:", error);
+        
         res.status(500).render("pageerror");
     }
 };
@@ -181,7 +181,7 @@ const blockProduct = async (req, res) => {
 
         res.status(200).json({ success: true, message: "Product blocked successfully" });
     } catch (error) {
-        console.error("Error blocking product:", error);
+        
         res.status(500).json({ success: false, message: "Server error while blocking product" });
     }
 };
@@ -207,7 +207,7 @@ const unblockProduct = async (req, res) => {
 
         res.status(200).json({ success: true, message: "Product unblocked successfully" });
     } catch (error) {
-        console.error("Error unblocking product:", error);
+        
         res.status(500).json({ success: false, message: "Server error while unblocking product" });
     }
 };
@@ -226,7 +226,7 @@ const getEditProduct = async (req, res) => {
             csrfToken: req.csrfToken() ? req.csrfToken() : null, // Pass CSRF token to the view
         });
     } catch (error) {
-        console.error("Error loading edit product page:", error);
+        
         res.redirect("/pageerror");
     }
 };
@@ -461,7 +461,7 @@ const editProduct = async (req, res) => {
             message: "Product updated successfully",
         });
     } catch (error) {
-        console.error("Error updating product:", error);
+       
         res.status(500).json({
             success: false,
             message: "Server error while updating product",
@@ -492,7 +492,7 @@ const deleteSingleImage = async (req, res) => {
 
         res.status(200).json({ success: true, message: "Image deleted successfully" });
     } catch (error) {
-        console.error("Error deleting image:", error);
+        
         res.status(500).json({ success: false, message: "Server error while deleting image" });
     }
 };

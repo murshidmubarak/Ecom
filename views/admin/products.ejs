@@ -160,8 +160,6 @@
                         <th scope="col"><b>Product name</b></th>
                         <th scope="col"><b>Category</b></th>
                         <th scope="col"><b>Sale Price</b></th>
-                        <th scope="col"><b>Offer Price</b></th>
-                        <th scope="col"><b>Offer</b></th>
                         <th scope="col"><b>Quantity</b></th>
                         <th scope="col"><b>Action</b></th>
                         <th scope="col"><b>Edit</b></th>
@@ -173,15 +171,6 @@
                             <td><%= data[i].productName %></td>
                             <td><%= data[i].category ? data[i].category.name : "No Category" %></td>
                             <td><%= data[i].salePrice %></td>
-                            <td></td>
-                            <td>
-                                <button class="btn btn-info" style="width: 100px;">
-                                    <a href="" class="text-white">Add Offer</a>
-                                </button>
-                                <button class="btn btn-info" style="width: 100px;">
-                                    <a href="" class="text-white">Remove</a>
-                                </button>
-                            </td>
                             <td><%= data[i].quantity %></td>
                             <td>
                                 <% if (data[i].isBlocked === false) { %>

@@ -293,12 +293,9 @@
                                                 <p>Alt: <%= address.altPhone %></p>
                                             <% } %>
                                             <div class="d-flex gap-2">
-                                                <a href="/editAddress?id=<%= address._id %>" class="btn btn-sm btn-outline-primary">Edit</a>
-                                                <button class="btn btn-sm btn-outline-danger" 
-                                                        onclick="confirmDeleteAddress('<%= address._id %>')">
-                                                    Delete
-                                                </button>
-                                            </div>
+                                              <a href="/editAddress?id=<%= address._id %>&redirect=checkout" class="btn btn-sm btn-outline-primary">Edit</a>
+                                             </div>
+
                                         </div>
                                     </div>
                                 <% }) %>
@@ -307,9 +304,10 @@
                                     <p>No addresses found</p>
                                 </div>
                             <% } %>
-                            <div class="col-md-6">
-                                <a href="/addAddress" class="btn btn-primary w-100">Add New Address</a>
-                            </div>
+                           <div class="col-md-6">
+    <a href="/addAddress?redirect=checkout" class="btn btn-primary w-100">Add New Address</a>
+</div>
+
                         </div>
                     </div>
                 </div>
@@ -451,27 +449,18 @@
             }
         });
 
-        // Debug: Log script loading status
-        console.log('Script section loaded at:', new Date().toISOString());
-        console.log('jQuery status:', typeof jQuery !== 'undefined' ? `Loaded, version ${jQuery().jquery}` : 'Not loaded');
-        console.log('SweetAlert2 status:', typeof Swal !== 'undefined' ? 'Loaded' : 'Not loaded');
-        console.log('Available coupons:', <%- JSON.stringify(coupons || []) %>);
-        console.log('Cart data:', <%- JSON.stringify(product || []) %>);
-        console.log('Grand Total:', <%= grandTotal %>);
+        
 
         let appliedCoupon = null;
 
         // Ensure DOM is fully loaded before binding events
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM fully loaded at:', new Date().toISOString());
 
             // Verify button exists
             const applyButton = document.getElementById('applyCouponBtn');
             if (!applyButton) {
-                console.error('Apply button (#applyCouponBtn) not found in DOM');
                 return;
             }
-            console.log('Apply button found:', applyButton);
 
             // Handle coupon form submission
             const couponForm = document.getElementById('couponForm');
@@ -487,11 +476,7 @@
 
             // Verify input element exists
             const couponInput = document.getElementById('couponCode');
-            if (!couponInput) {
-                console.error('Coupon input (#couponCode) not found in DOM');
-            } else {
-                console.log('Coupon input found:', couponInput);
-            }
+            
 
             // Handle error message on page load
             <% if (errorMessage) { %>
@@ -516,7 +501,6 @@
         });
 
         function confirmRemove(productId) {
-            console.log('confirmRemove called for productId:', productId);
             Swal.fire({
                 title: 'Remove Item?',
                 text: "Are you sure you want to remove this item from your cart?",
@@ -552,7 +536,6 @@
         }
 
         function confirmDeleteAddress(addressId) {
-            console.log('confirmDeleteAddress called for addressId:', addressId);
             Swal.fire({
                 title: 'Delete Address?',
                 text: "Are you sure you want to delete this address?",
@@ -591,7 +574,6 @@
             console.log('applyCoupon: Function called');
 
             if (!csrfToken) {
-                console.error('applyCoupon: CSRF token is missing');
                 Swal.fire({
                     title: "Error",
                     text: "CSRF token is missing. Please refresh the page and try again.",
@@ -609,20 +591,17 @@
 
             // Verify jQuery availability
             if (typeof jQuery === 'undefined') {
-                console.error('applyCoupon: jQuery is not available');
                 alert('jQuery is not loaded. Please check the console for errors.');
                 return;
             }
 
             // Verify SweetAlert2 availability
             if (typeof Swal === 'undefined') {
-                console.error('applyCoupon: SweetAlert2 is not available');
                 alert('SweetAlert2 is not loaded. Please check the console for errors.');
                 return;
             }
 
             const couponCode = $("#couponCode").val()?.trim();
-            console.log('applyCoupon: Entered coupon:', couponCode);
 
             if (!couponCode) {
                 console.log('applyCoupon: No coupon entered');
@@ -643,7 +622,6 @@
 
             try {
                 const totalPrice = <%= typeof grandTotal === 'number' ? grandTotal : 0 %>;
-                console.log('applyCoupon: Preparing AJAX request', { couponCode, totalPrice });
 
                 const response = await $.ajax({
                     url: "/applyCoupon",
@@ -656,7 +634,6 @@
                     })
                 });
 
-                console.log('applyCoupon: Response received', response);
 
                 if (response.success) {
                     appliedCoupon = {
@@ -696,7 +673,6 @@
                         }
                     });
                 } else {
-                    console.log('applyCoupon: Response error', response.error);
                     Swal.fire({
                         title: "Error",
                         text: response.error || "Invalid coupon code",
@@ -711,7 +687,6 @@
                     });
                 }
             } catch (error) {
-                console.error('applyCoupon: AJAX error', error);
                 const errorMessage = error.responseJSON?.error || "Failed to apply coupon. Please try again.";
                 Swal.fire({
                     title: "Error",
@@ -730,12 +705,10 @@
 
         async function clearCart() {
             if (!csrfToken) {
-                console.error('clearCart: CSRF token is missing');
                 return;
             }
 
             try {
-                console.log('clearCart: Attempting to clear cart for user:', '<%= user._id %>');
                 await $.ajax({
                     url: "/clearCart",
                     method: "POST",
@@ -745,17 +718,14 @@
                         _csrf: csrfToken
                     })
                 });
-                console.log('clearCart: Cart cleared successfully');
             } catch (error) {
                 console.error('clearCart: Error clearing cart:', error);
             }
         }
 
         async function placeOrder(userId) {
-            console.log('placeOrder: Started', { userId });
 
             if (!csrfToken) {
-                console.error('placeOrder: CSRF token is missing');
                 Swal.fire({
                     title: "Error",
                     text: "CSRF token is missing. Please refresh the page and try again.",
@@ -824,10 +794,8 @@
                         _csrf: csrfToken,
                     })
                 });
-                console.log('placeOrder: Order response', response);
 
                 if (response.error) {
-                    console.log('placeOrder: Error response', response.error);
                     Swal.fire({
                         title: "Error",
                         text: response.error || "Failed to place order.",
@@ -841,7 +809,6 @@
                         }
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            console.log('placeOrder: Reloading page due to error', response.error);
                             window.location.reload();
                         }
                     });
@@ -849,7 +816,6 @@
                 }
 
                 if (response.method === "cod" || response.method === "wallet") {
-                    console.log('placeOrder: COD/Wallet order placed, orderId:', response.orderId);
                     await clearCart();
                     Swal.fire({
                         title: "Order Success",
@@ -873,7 +839,6 @@
                         }
                     });
                 } else if (response.method === "razorpay") {
-                    console.log('placeOrder: Razorpay order initiated, orderId:', response.orderId, 'razorpayOrderId:', response.razorpayOrderId);
                     const options = {
                         key: response.key,
                         amount: response.amount,
@@ -883,7 +848,6 @@
                         order_id: response.razorpayOrderId,
                         handler: async function (razorpayResponse) {
                             try {
-                                console.log('placeOrder: Razorpay payment response', razorpayResponse);
                                 const verifyResponse = await $.ajax({
                                     url: "/verifyPayment",
                                     method: "POST",
@@ -898,7 +862,6 @@
                                 });
 
                                 if (verifyResponse.success) {
-                                    console.log('placeOrder: Payment verified, orderId:', verifyResponse.orderId);
                                     await clearCart();
                                     Swal.fire({
                                         title: "Payment Success",
@@ -922,13 +885,11 @@
                                         }
                                     });
                                 } else {
-                                    console.log('placeOrder: Payment verification failed', verifyResponse);
                                     await clearCart();
                                     await changeStatus({ orderId: response.orderId, status: 'online', _csrf: csrfToken });
                                     location.href = `/paymentFailed?orderId=${response.orderId}`;
                                 }
                             } catch (error) {
-                                console.error("Payment verification error:", error);
                                 await clearCart();
                                 await changeStatus({ orderId: response.orderId, status: 'online', _csrf: csrfToken });
                                 location.href = `/paymentFailed?orderId=${response.orderId}`;
@@ -944,7 +905,6 @@
                         },
                         modal: {
                             ondismiss: async function () {
-                                console.log("Razorpay modal closed by user, orderId:", response.orderId);
                                 await clearCart();
                                 await changeStatus({ orderId: response.orderId, status: 'online', _csrf: csrfToken });
                                 location.href = `/paymentFailed?orderId=${response.orderId}`;
@@ -954,7 +914,6 @@
 
                     const rzp = new Razorpay(options);
                     rzp.on('payment.failed', async function (razorpayResponse) {
-                        console.error("Razorpay payment failed:", razorpayResponse.error, "orderId:", response.orderId);
                         await changeStatus({ orderId: response.orderId, status: 'online', _csrf: csrfToken });
                         await clearCart();
                         location.href = `/paymentFailed?orderId=${response.orderId}`;
@@ -962,7 +921,6 @@
                     rzp.open();
                 }
             } catch (error) {
-                console.error("Place order error:", error);
                 Swal.fire({
                     title: "Error",
                     text: error.responseJSON?.error || "Failed to place order.",
@@ -989,14 +947,12 @@
             }
 
             try {
-                console.log('changeStatus: Sending request with params:', params);
                 await $.ajax({
                     url: "/changeOrderStatus",
                     method: "POST",
                     contentType: "application/json",
                     data: JSON.stringify(params)
                 });
-                console.log('changeStatus: Status updated successfully');
             } catch (error) {
                 console.error('changeStatus: Error updating status:', error);
             }
