@@ -404,14 +404,14 @@ const verrifyChangePassOtp = async (req, res) => {
 const addAddress = async (req, res) => {
     try {
         const user = req.session.user;
-        const redirectPage = req.query.redirect || 'profile'; // default to profile if not sent
+        const redirectPage = req.query.redirect || 'profile'; // Default fallback
         res.render("add-address", {
             user: user,
             csrfToken: req.csrfToken(),
-            redirectPage: redirectPage // pass it to EJS
+            redirectPage: redirectPage // Always send
         });
     } catch (error) {
-       
+        console.error("Error in GET /addAddress:", error);
         res.redirect('page404');
     }
 };
