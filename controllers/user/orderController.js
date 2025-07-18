@@ -679,47 +679,56 @@ const cancelOrder = async (req, res) => {
   try {
     const userId = req.session.user;
     const { orderId } = req.body;
-   
 
     const findOrder = await Order.findOne({ _id: orderId });
     if (!findOrder) {
-      
       return res.status(404).json({ message: "Order not found" });
     }
-    
 
     if (findOrder.status === "cancelled") {
-      
       return res.status(400).json({ message: "Order is already cancelled" });
     }
 
     await Order.updateOne({ _id: orderId }, { status: "cancelled" });
-    
 
+    // ✅ UPDATED: Only restock non-cancelled items
     for (const item of findOrder.orderedItems) {
-      const product = await Product.findById(item.product);
-      if (product) {
-        product.quantity = parseInt(product.quantity) + item.quantity;
-        await product.save();
-       
+      if (item.productStatus !== "cancelled") {
+        const product = await Product.findById(item.product);
+        if (product) {
+          product.quantity = parseInt(product.quantity) + item.quantity;
+          await product.save();
+        }
       }
     }
 
     if (findOrder.payment === "online" || findOrder.payment === "wallet") {
       const user = await User.findById(userId);
       if (!user) {
-       
         return res.status(404).json({ message: "User not found" });
       }
-      
 
-      const refundAmount = findOrder.finalAmount;
+      // ✅ UPDATED: Calculate refund excluding already cancelled items
+      let totalCancelledProductRefund = 0;
+      for (const item of findOrder.orderedItems) {
+        if (item.productStatus === "cancelled") {
+          const productPrice = item.price;
+          const totalOrderAmount = findOrder.totalPrice + findOrder.discount;
+          const discountPercentage = (productPrice / totalOrderAmount) * 100;
+          const discountAmount = (discountPercentage / 100) * findOrder.discount;
+          const itemRefund = (productPrice * item.quantity) - (discountAmount * item.quantity);
+          totalCancelledProductRefund += itemRefund;
+        }
+      }
+
+      const refundAmount = findOrder.finalAmount - totalCancelledProductRefund;
+      // ✅ END UPDATED
+
       user.wallet = (user.wallet || 0) + refundAmount;
       const userSaveResult = await user.save();
-     
+
       let userWallet = await Wallet.findOne({ userId });
       if (!userWallet) {
-     
         userWallet = new Wallet({ userId, transactions: [] });
       }
 
@@ -736,15 +745,14 @@ const cancelOrder = async (req, res) => {
       userWallet.transactions.push(transaction);
       userWallet.updatedAt = Date.now();
       const walletSaveResult = await userWallet.save();
-      
     }
 
     res.status(200).json({ message: "Order cancelled successfully" });
   } catch (error) {
-   
     res.status(500).json({ message: "Internal server error", error: error.message });
   }
 };
+
 
 const cancelSingleProduct = async (req, res) => {
   const { orderId, singleProductId } = req.body;

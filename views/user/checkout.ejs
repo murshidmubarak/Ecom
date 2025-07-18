@@ -305,8 +305,8 @@
                                 </div>
                             <% } %>
                            <div class="col-md-6">
-    <a href="/addAddress?redirect=checkout" class="btn btn-primary w-100">Add New Address</a>
-</div>
+                            <a href="/addAddress?redirect=checkout" class="btn btn-primary w-100">Add New Address</a>
+                          </div>
 
                         </div>
                     </div>
@@ -501,40 +501,20 @@
         });
 
         function confirmRemove(productId) {
-            Swal.fire({
-                title: 'Remove Item?',
-                text: "Are you sure you want to remove this item from your cart?",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, remove it!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Create a form to send CSRF token with the request
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = `/deleteItem`;
-                    form.style.display = 'none';
-
-                    const csrfInput = document.createElement('input');
-                    csrfInput.type = 'hidden';
-                    csrfInput.name = '_csrf';
-                    csrfInput.value = csrfToken;
-
-                    const productIdInput = document.createElement('input');
-                    productIdInput.type = 'hidden';
-                    productIdInput.name = 'id';
-                    productIdInput.value = productId;
-
-                    form.appendChild(csrfInput);
-                    form.appendChild(productIdInput);
-                    document.body.appendChild(form);
-                    form.submit();
-                }
-            });
-        }
-
+        Swal.fire({
+            title: 'Remove Item?',
+            text: "Are you sure you want to remove this item from your cart?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, remove it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = `/deleteProduct?id=${productId}`;
+            }
+        });
+    }
         function confirmDeleteAddress(addressId) {
             Swal.fire({
                 title: 'Delete Address?',

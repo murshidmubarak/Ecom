@@ -40,13 +40,21 @@
                                 <p class="mb-0" style="color: #6c757d; font-size: 0.95rem;">
                                     Pay Method: <strong><%= orders.payment.charAt(0).toUpperCase() + orders.payment.slice(1) %></strong><br>
                                     Order Status: <strong><%= orders.status.charAt(0).toUpperCase() + orders.status.slice(1) %></strong><br>
-                                    <% if (orders.payment === 'cod') { %>
+                                    <!-- <% if (orders.payment === 'cod') { %>
                                         Payment Status: <strong><%= orders.status === 'delivered' ? 'Successful' : 'Pending' %></strong><br>
                                     <% } else if (orders.payment === 'wallet') { %>
                                         Payment Status: <strong>Successful</strong><br>
                                     <% } else if (orders.payment === 'online' || orders.payment === 'failed') { %>
                                         Payment Status: <strong><%= (orders.status === 'confirmed' || orders.status === 'delivered') ? 'Successful' : 'Pending' %></strong><br>
-                                    <% } %>
+                                    <% } %> -->
+                                    <% if (orders.payment === 'cod') { %>
+                                       Payment Status: <strong><%= (orders.status === 'delivered' || orders.status === 'returned') ? 'Successful' : 'Pending' %></strong><br>
+                                        <% } else if (orders.payment === 'wallet') { %>
+                                                Payment Status: <strong>Successful</strong><br>
+                                                <% } else if (orders.payment === 'online' || orders.payment === 'failed') { %>
+                                                 Payment Status: <strong><%= (orders.status === 'confirmed' || orders.status === 'delivered' || orders.status === 'returned') ? 'Successful' : 'Pending' %></strong><br>
+                                        <% } %>
+
                                     Grand Total: <strong>₹<%= totalGrant.toLocaleString() %></strong><br>
                                     Paid Amount: <strong>₹<%= (totalPrice).toLocaleString() %></strong><br>
                                     Discount: <strong>₹<%= (totalGrant - totalPrice).toLocaleString() %></strong><br>

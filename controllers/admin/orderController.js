@@ -187,38 +187,19 @@ const approveReturnRequest = async (req, res) => {
         return res.status(400).json({ message: "No return request pending for this product" });
       }
 
-      
+      const orderedItem = order.orderedItems[productIndex];
+      const quantity = orderedItem.quantity;
+      const totalOrderAmount = order.totalPrice + order.discount;
+      const productPrice = orderedItem.price;
+      const discountPercentage = (productPrice / totalOrderAmount) * 100;
+      const discountAmountForSingleProduct = (discountPercentage / 100) * order.discount;
+      const refundAmount = productPrice * quantity - discountAmountForSingleProduct * quantity;
 
-    const orderedItem = order.orderedItems[productIndex];
-     const quantity = orderedItem.quantity;
-    
-     const totalOrderAmount = order.totalPrice + order.discount;
-     
-     const productPrice = orderedItem.price;
-        
-     const discountPercentage =(productPrice / totalOrderAmount) * 100;
-        
-     const discountAmountForSingleProduct = (discountPercentage / 100) * order.discount;
-      
-     const refundAmount = productPrice * quantity - discountAmountForSingleProduct * quantity;
-
-       if (action === "approve") {
-
-        const newTotalPrice = order.totalPrice - productPrice;
-      
-        const newFinalAmount = order.finalAmount - refundAmount;
-        
-        const newDiscount = order.discount - discountAmountForSingleProduct;
-        
-
-       
+      if (action === "approve") {
         const filter = { _id: orderId };
         const update = {
           $set: {
             "orderedItems.$[elem].productStatus": "returned",
-            totalPrice: newTotalPrice,
-            finalAmount: newFinalAmount,
-            discount: newDiscount,
           },
         };
         const options = { arrayFilters: [{ "elem.product": oid }] };
@@ -228,42 +209,31 @@ const approveReturnRequest = async (req, res) => {
           return res.status(500).json({ message: "Failed to update order status" });
         }
 
-        // Restock product
         const product = await Product.findById(singleProductId);
         if (product) {
           product.quantity = parseInt(product.quantity) + quantity;
           await product.save();
         }
 
-        // Check if all products are returned/cancelled
         const updatedOrder = await Order.findOne({ _id: orderId });
         const allReturnedOrCancelled = updatedOrder.orderedItems.every(
           (item) => item.productStatus === "returned" || item.productStatus === "cancelled"
         );
+
         if (allReturnedOrCancelled) {
           await Order.updateOne(
             { _id: orderId },
             {
-              status: "returned",
-              totalPrice: 0,
-              finalAmount: 0,
-              discount: 0,
-              couponApplied: ["false"],
+              status: "returned" // ✅ ONLY STATUS UPDATED
             }
           );
         }
 
-        // Update user wallet
         const user = await User.findById(order.userId);
         if (!user) return res.status(404).json({ message: "User not found" });
 
         user.wallet = (user.wallet || 0) + refundAmount;
-        console.log("User wallet before save:", user.wallet);
-        const userSaveResult = await user.save();
-
-        if (!userSaveResult) {
-          console.error("Failed to save user wallet");
-        }
+        await user.save();
 
         let userWallet = await Wallet.findOne({ userId: order.userId });
         if (!userWallet) {
@@ -306,16 +276,11 @@ const approveReturnRequest = async (req, res) => {
         await Order.updateOne(
           { _id: orderId },
           {
-            status: "returned",
-            totalPrice: 0,
-            finalAmount: 0,
-            discount: 0,
-            couponApplied: ["false"],
+            status: "returned", // ✅ ONLY STATUS UPDATED
             "orderedItems.$[].productStatus": "returned",
           }
         );
 
-        // Restock all products
         for (const item of order.orderedItems) {
           const product = await Product.findById(item.product);
           if (product) {
@@ -362,7 +327,6 @@ const approveReturnRequest = async (req, res) => {
       }
     }
   } catch (error) {
-   
     res.status(500).json({ message: "Internal server error", error: error.message });
   }
 };

@@ -205,5 +205,6 @@ router.post("/cancelSingleProduct", userAuth, orderController.cancelSingleProduc
 router.post("/returnSingleProduct", userAuth, orderController.returnSingleProduct);
 router.post("/returnrequestOrder", userAuth, orderController.returnorder);
 router.get("/downloadInvoice/:orderId", userAuth, orderController.downloadInvoice);
+router.get("/deleteProduct",userAuth,orderController.deleteProduct)
 
 module.exports = router;
