@@ -201,10 +201,7 @@ const applyCoupon = async (req, res) => {
       return res.status(400).json({ error: "Coupon already used" });
     }
 
-    await User.updateOne(
-      { _id: userId },
-      { $push: { couponApplied: sanitizedCouponCode } }
-    );
+   
 
     
     res.json({
@@ -370,6 +367,11 @@ const orderPlaced = async (req, res) => {
           
         }
       }
+
+       await User.updateOne(
+      { _id: userId },
+      { $push: { couponApplied: sanitizedCouponCode } }
+    );
 
       return res.json({
         payment: true,

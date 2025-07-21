@@ -32,7 +32,8 @@ const login = async (req, res) => {
         if (!email || !password || !_csrf) { 
             return res.render("admin-login", { 
                 errorMessage: "Missing required fields ",
-                csrfToken: req.csrfToken() 
+                csrfToken: req.csrfToken() ,
+                 oldEmail: email || "" 
             });
         }
 
@@ -46,13 +47,15 @@ const login = async (req, res) => {
             } else {
                 return res.render("admin-login", { 
                     errorMessage: "Incorrect password",
-                    csrfToken: req.csrfToken() 
+                    csrfToken: req.csrfToken() ,
+                    oldEmail: email
                 });
             }
         } else {
             return res.render("admin-login", { 
                 errorMessage: "Admin not found",
-                csrfToken: req.csrfToken() 
+                csrfToken: req.csrfToken() ,
+                oldEmail: email 
             });
         }
     } catch (error) {

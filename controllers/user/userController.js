@@ -68,7 +68,7 @@ async function generateUniqueReferralCode() {
         }
         const existingUser = await User.findOne({ referalCode: code });
         if (!existingUser) {
-            console.log(`Generated referral code: ${code}`);
+           
             return code;
         }
         attempts++;
@@ -134,10 +134,8 @@ const signup = async (req, res) => {
         }
 
         req.session.userOtp = otp;
-        console.log("Generated OTP:", req.session.userOtp);
 
         setTimeout(() => {
-            console.log('Clearing OTP from session');
             delete req.session.userOtp;
            
         }, 10000);

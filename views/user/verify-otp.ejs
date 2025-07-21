@@ -56,6 +56,9 @@
             resendBtn.disabled = true;
             timerElement.textContent = timer;
 
+            // Ensure the "Verify Email" button is enabled when starting
+             document.querySelector('button[type="submit"]').disabled = false;  
+
             countdown = setInterval(() => {
                 if (timer > 0) {
                     timer--;
@@ -63,6 +66,8 @@
                 } else {
                     clearInterval(countdown);
                     resendBtn.disabled = false; // Enable resend button after timer ends
+                      // 🔒 Disable "Verify Email" button
+                      document.querySelector('button[type="submit"]').disabled = true;
                 }
             }, 1000);
         }
