@@ -4,6 +4,27 @@ const bcrypt = require('bcrypt');
 const User = require('../models/userSchema'); // Ensure path is correct
 require('dotenv').config();
 
+
+async function generateUniqueReferralCode() {
+    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const maxAttempts = 10;
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+        let code = "";
+        for (let i = 0; i < 6; i++) {
+            code += characters.charAt(Math.floor(Math.random() * characters.length));
+        }
+        const existingUser = await User.findOne({ referalCode: code });
+        if (!existingUser) {
+           
+            return code;
+        }
+        attempts++;
+    }
+    throw new Error("Unable to generate unique referral code after multiple attempts");
+}
+
 passport.use(
     new GoogleStrategy(
         {
@@ -18,6 +39,7 @@ passport.use(
                 if (!profile.emails || profile.emails.length === 0) {
                     return done(new Error("No email found in Google profile"), null);
                 }
+                
 
                 const email = profile.emails[0].value;
                 let user = await User.findOne({ email });
@@ -25,12 +47,14 @@ passport.use(
                 
                 if (!user) {
                     const hashPassword = await bcrypt.hash(profile.displayName, 10);
+                    const referralCode = await generateUniqueReferralCode();
 
                     // Create new user and assign to the same 'user' variable
                     user = new User({
                         name: profile.displayName,
                         email: email, 
                         password: hashPassword,
+                        referalCode: referralCode,
                     });
 
                     await user.save();
