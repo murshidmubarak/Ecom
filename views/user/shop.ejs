@@ -565,29 +565,30 @@
   const isUserLoggedIn = <%- locals.user ? 'true' : 'false' %>;
 
 async function addToCart(productId) {
-  const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-  if (!isUserLoggedIn) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Not Logged In',
-      text: 'Please log in to add items to your cart.',
-      showCancelButton: true,
-      confirmButtonText: 'Log In',
-      cancelButtonText: 'Cancel'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        window.location.href = '/login';
-      }
-    });
-    return;
-  }
-  
-  try {
-      const response = await fetch('/addToCart', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-              'CSRF-Token': csrfToken
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    if (!isUserLoggedIn) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Not Logged In',
+            text: 'Please log in to add items to your cart.',
+            showCancelButton: true,
+            confirmButtonText: 'Log In',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '/login';
+            }
+        });
+        return;
+    }
+
+    try {
+        const response = await fetch('/addToCart', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'CSRF-Token': csrfToken
             },
             body: JSON.stringify({ productId })
         });
@@ -599,11 +600,14 @@ async function addToCart(productId) {
                 icon: 'success',
                 title: 'Added to Cart',
                 text: result.message,
-                showConfirmButton: false,
-                timer: 1500
-            }).then(() => {
-                // Redirect to cart page after success
-                window.location.href = '/cart';
+                showCancelButton: true,
+                confirmButtonText: 'View Cart',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/cart';
+                }
+                // If Cancel is clicked, stay on the page
             });
         } else {
             Swal.fire({

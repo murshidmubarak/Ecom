@@ -246,14 +246,16 @@
 
             if (result.success) {
                 Swal.fire({
-                    icon: 'success',
-                    title: 'Added to Cart',
-                    text: result.message,
-                    showConfirmButton: false,
-                    timer: 1500
-                }).then(() => {
-                    // Redirect to cart page after success
+                     icon: 'success',
+                title: 'Added to Cart',
+                text: result.message,
+                showCancelButton: true,
+                confirmButtonText: 'View Cart',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
                     window.location.href = '/cart';
+                }
                 });
             } else {
                 Swal.fire({
