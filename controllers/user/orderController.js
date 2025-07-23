@@ -780,6 +780,7 @@ const cancelSingleProduct = async (req, res) => {
       return res.status(404).json({ message: "Product not found in order" });
     }
     const orderedItem = order.orderedItems[productIndex];
+    
 
     const totalOrderAmount = order.totalPrice + order.discount;
 
