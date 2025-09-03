@@ -2,11 +2,34 @@ const Coupon = require("../../models/coupenSchema");
 
 const loadCoupen = async (req, res) => {
   try {
-    const coupons = await Coupon.find().sort({ createdAt: -1 });
-    const csrfToken = req.csrfToken ? req.csrfToken() : null; // Get CSRF token if available
-    return res.render("coupen", { coupons, csrfToken });
-  } catch (error) {
+    // Get pagination parameters from query (default: page=1, limit=10)
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 4;
+    const skip = (page - 1) * limit;
 
+    // Fetch total number of coupons for pagination metadata
+    const totalCoupons = await Coupon.countDocuments();
+
+    // Fetch paginated coupons, sorted by createdAt (newest first)
+    const coupons = await Coupon.find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalCoupons / limit);
+    const pagination = {
+      currentPage: page,
+      totalPages,
+      totalCoupons,
+      limit,
+      hasPrev: page > 1,
+      hasNext: page < totalPages,
+    };
+
+    const csrfToken = req.csrfToken ? req.csrfToken() : null; // Get CSRF token if available
+    return res.render("coupen", { coupons, csrfToken, pagination });
+  } catch (error) {
     return res.redirect("/pageerror");
   }
 };

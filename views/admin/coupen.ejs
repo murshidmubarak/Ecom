@@ -232,6 +232,42 @@
   .modal .d-grid {
     margin-top: 15px;
   }
+
+  /* Pagination Styles */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+  }
+
+  .pagination a {
+    color: var(--text-color);
+    padding: 8px 12px;
+    margin: 0 5px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    text-decoration: none;
+    background-color: #333;
+    transition: all 0.3s ease;
+  }
+
+  .pagination a:hover {
+    background-color: var(--fluorescent-green);
+    color: #fff;
+  }
+
+  .pagination a.active {
+    background: var(--gradient-green);
+    color: #fff;
+    border-color: var(--fluorescent-green);
+  }
+
+  .pagination a.disabled {
+    color: #666;
+    cursor: not-allowed;
+    border-color: rgba(255, 255, 255, 0.1);
+    background-color: #2a2a2a;
+  }
 </style>
 
 <section class="content-main">
@@ -310,7 +346,6 @@
               <label for="status" class="form-label">Status</label>
               <select name="status" id="status" class="form-control" required>
                 <option value="Active">Active</option>
-                <!-- <option value="Expired">Expired</option> -->
                 <option value="Inactive">Inactive</option>
               </select>
               <div id="error-status" class="error-message"></div>
@@ -373,6 +408,28 @@
               </tbody>
             </table>
           </div>
+          <!-- Pagination Controls -->
+          <% if (pagination && pagination.totalPages > 1) { %>
+            <div class="pagination">
+              <% if (pagination.hasPrev) { %>
+                <a href="?page=<%= pagination.currentPage - 1 %>&limit=<%= pagination.limit %>">Previous</a>
+              <% } else { %>
+                <a class="disabled">Previous</a>
+              <% } %>
+
+              <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+                <a href="?page=<%= i %>&limit=<%= pagination.limit %>" class="<%= i === pagination.currentPage ? 'active' : '' %>">
+                  <%= i %>
+                </a>
+              <% } %>
+
+              <% if (pagination.hasNext) { %>
+                <a href="?page=<%= pagination.currentPage + 1 %>&limit=<%= pagination.limit %>">Next</a>
+              <% } else { %>
+                <a class="disabled">Next</a>
+              <% } %>
+            </div>
+          <% } %>
         </div>
       </div>
     </div>
@@ -447,7 +504,6 @@
         <label for="edit-status" class="form-label">Status</label>
         <select name="status" id="edit-status" class="form-control" required>
           <option value="Active">Active</option>
-          <!-- <option value="Expired">Expired</option> -->
           <option value="Inactive">Inactive</option>
         </select>
         <div id="edit-error-status" class="error-message"></div>
@@ -500,7 +556,7 @@
           text: result.message || 'Coupon created successfully',
           confirmButtonText: 'OK',
         }).then(() => {
-          window.location.reload();
+          window.location.href = '/admin/coupen?page=1&limit=10';
         });
       } else {
         Swal.fire({
@@ -510,8 +566,6 @@
         });
       }
     } catch (error) {
-      console.error('Error creating coupon:', error);
-      console.log('Error response:', error.response);
       Swal.fire({
         icon: 'error',
         title: 'Error!',
@@ -588,7 +642,7 @@
       return false;
     }
 
-    if (sDateObj <= todayDateObj) {
+    if (sDateObj < todayDateObj) {
       document.getElementById("error-start-date").innerHTML =
         "Starting date should be greater than or equal to today's date";
       return false;
@@ -621,7 +675,7 @@
     }
 
     const status = document.getElementsByName("status")[0].value;
-    if (!["Active", "Expired", "Inactive"].includes(status)) {
+    if (!["Active", "Inactive"].includes(status)) {
       document.getElementById("error-status").innerHTML = "Please select a valid status";
       return false;
     }
@@ -647,7 +701,7 @@
       return false;
     }
 
-    if (sDateObj <= todayDateObj) {
+    if (sDateObj < todayDateObj) {
       document.getElementById("edit-error-start-date").innerHTML =
         "Starting date should be greater than or equal to today's date";
       return false;
@@ -680,7 +734,7 @@
 
     // Status validation
     const status = document.getElementById("edit-status").value;
-    if (!["Active", "Expired", "Inactive"].includes(status)) {
+    if (!["Active", "Inactive"].includes(status)) {
       document.getElementById("edit-error-status").innerHTML = "Please select a valid status";
       return false;
     }
