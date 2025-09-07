@@ -578,15 +578,21 @@
                                                     </div>
                                                 <% } else { %>
                                                     <select class="status-badge status-<%= order.status.toLowerCase() %>"
-                                                            data-order-id="<%= order._id %>"
-                                                            onchange="updateStatus(this)">
-                                                        <option value="confirmed" <%= order.status === 'confirmed' ? 'selected' : '' %>>Confirmed</option>
-                                                        <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Pending</option>
-                                                        <option value="shipped" <%= order.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
-                                                        <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
-                                                        <option value="returned" <%= order.status === 'returned' ? 'selected' : '' %>>Returned</option>
-                                                        <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
-                                                    </select>
+                                                     data-order-id="<%= order._id %>"
+                                                       onchange="updateStatus(this)">
+                                                       <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %> 
+                                                             <%= ['shipped', 'delivered', 'returned', 'cancelled'].includes(order.status) ? 'disabled' : '' %>>Pending</option>
+                                                       <option value="confirmed" <%= order.status === 'confirmed' ? 'selected' : '' %> 
+                                                             <%= ['shipped', 'delivered', 'returned', 'cancelled'].includes(order.status) ? 'disabled' : '' %>>Confirmed</option>
+                                                    <option value="shipped" <%= order.status === 'shipped' ? 'selected' : '' %> 
+                                                             <%= ['delivered', 'returned', 'cancelled'].includes(order.status) ? 'disabled' : '' %>>Shipped</option>
+                                                    <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %> 
+                                                             <%= ['returned', 'cancelled'].includes(order.status) ? 'disabled' : '' %>>Delivered</option>
+                                                     <option value="returned" <%= order.status === 'returned' ? 'selected' : '' %> 
+                                                              <%= order.status === 'delivered' ? '' : 'disabled' %>>Returned</option>
+                                                      <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %> 
+                                                              <%= ['delivered', 'returned'].includes(order.status) ? 'disabled' : '' %>>Cancelled</option>
+                                                      </select>
                                                 <% } %>
                                             </td>
                                             <td>

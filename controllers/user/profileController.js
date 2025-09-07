@@ -175,84 +175,167 @@ const postNewPassword = async (req, res) => {
     }
 };
 
-const userProfile = async (req, res) => {
-    try {
-        const userId = req.session.user;
+// const userProfile = async (req, res) => {
+//     try {
+//         const userId = req.session.user;
 
-        if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-            return res.redirect('/login');
-        }
+//         if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+//             return res.redirect('/login');
+//         }
 
-        // Pagination parameters
-        const ordersPage = parseInt(req.query.ordersPage) || 1;
-        const walletPage = parseInt(req.query.walletPage) || 1;
-        const limit = 3;
-        const activeTab = req.query.tab || 'dashboard';
+//         // Pagination parameters
+//         const ordersPage = parseInt(req.query.ordersPage) || 1;
+//         const walletPage = parseInt(req.query.walletPage) || 1;
+//         const limit = 3;
+//         const activeTab = req.query.tab || 'dashboard';
 
-        // Fetch user data
-        const userData = await User.findById(userId);
-        if (!userData) {
-            return res.redirect('/login');
-        }
+//         // Fetch user data
+//         const userData = await User.findById(userId);
+//         if (!userData) {
+//             return res.redirect('/login');
+//         }
 
-        // Fetch paginated orders
-        const ordersCount = await Order.countDocuments({ userId });
-        const orders = await Order.find({ userId })
-            .populate('orderedItems.product')
-            .sort({ createdOn: -1 })
-            .skip((ordersPage - 1) * limit)
-            .limit(limit);
+//         // Fetch paginated orders
+//         const ordersCount = await Order.countDocuments({ userId });
+//         const orders = await Order.find({ userId })
+//             .populate('orderedItems.product')
+//             .sort({ createdOn: -1 })
+//             .skip((ordersPage - 1) * limit)
+//             .limit(limit);
 
-        // Fetch paginated wallet transactions
-        const wallet = await Wallet.findOne({ userId });
-        let walletTransactions = [];
-        let walletCount = 0;
-        if (wallet && wallet.transactions) {
-            walletCount = wallet.transactions.length;
-            walletTransactions = wallet.transactions
-                .slice((walletPage - 1) * limit, walletPage * limit)
-                .map(transaction => ({
-                    ...transaction._doc,
-                    transactionId: transaction.transactionId || 'N/A',
-                    transactionDate: transaction.transactionDate || new Date(),
-                    type: transaction.type || 'Unknown',
-                    description: transaction.description || 'No description',
-                    amount: transaction.amount || 0,
-                    balanceAfter: transaction.balanceAfter || 0,
-                    status: transaction.status || 'Unknown'
-                }));
-        }
+//         // Fetch paginated wallet transactions
+//         const wallet = await Wallet.findOne({ userId });
+//         let walletTransactions = [];
+//         let walletCount = 0;
+//         if (wallet && wallet.transactions) {
+//             walletCount = wallet.transactions.length;
+//             walletTransactions = wallet.transactions
+//                 .slice((walletPage - 1) * limit, walletPage * limit)
+//                 .map(transaction => ({
+//                     ...transaction._doc,
+//                     transactionId: transaction.transactionId || 'N/A',
+//                     transactionDate: transaction.transactionDate || new Date(),
+//                     type: transaction.type || 'Unknown',
+//                     description: transaction.description || 'No description',
+//                     amount: transaction.amount || 0,
+//                     balanceAfter: transaction.balanceAfter || 0,
+//                     status: transaction.status || 'Unknown'
+//                 }));
+//         }
 
-        const walletBalance = userData.wallet || 0;
+//         const walletBalance = userData.wallet || 0;
 
-        // Calculate pagination metadata
-        const ordersTotalPages = Math.ceil(ordersCount / limit);
-        const walletTotalPages = Math.ceil(walletCount / limit);
+//         // Calculate pagination metadata
+//         const ordersTotalPages = Math.ceil(ordersCount / limit);
+//         const walletTotalPages = Math.ceil(walletCount / limit);
 
-        const csrfToken = req.csrfToken();
+//         const csrfToken = req.csrfToken();
 
-        res.render('profile', {
-            csrfToken,
-            user: userData,
-            userAddress: (await Address.findOne({ userId })) || { address: [] },
-            orders: orders || [],
-            wallet,
-            walletBalance,
-            walletTransactions: walletTransactions || [],
-            moment,
-            ordersPage,
-            walletPage,
-            ordersTotalPages,
-            walletTotalPages,
-            limit,
-            activeTab,
-            profilePhoto: userData.profilePhoto // Pass profile photo to view
-        });
-    } catch (error) {
+//         res.render('profile', {
+//             csrfToken,
+//             user: userData,
+//             userAddress: (await Address.findOne({ userId })) || { address: [] },
+//             orders: orders || [],
+//             wallet,
+//             walletBalance,
+//             walletTransactions: walletTransactions || [],
+//             moment,
+//             ordersPage,
+//             walletPage,
+//             ordersTotalPages,
+//             walletTotalPages,
+//             limit,
+//             activeTab,
+//             profilePhoto: userData.profilePhoto // Pass profile photo to view
+//         });
+//     } catch (error) {
         
-        res.redirect('/page404');
+//         res.redirect('/page404');
+//     }
+// };
+
+
+const userProfile = async (req, res) => {
+  try {
+    const userId = req.session.user;
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.redirect('/login');
     }
+
+    // Pagination parameters
+    const ordersPage = parseInt(req.query.ordersPage) || 1;
+    const walletPage = parseInt(req.query.walletPage) || 1;
+    const limit = 3;
+    const activeTab = req.query.tab || 'dashboard';
+
+    // Fetch user data
+    const userData = await User.findById(userId);
+    if (!userData) {
+      return res.redirect('/login');
+    }
+
+    // Fetch paginated orders
+    const ordersCount = await Order.countDocuments({ userId });
+    const orders = await Order.find({ userId })
+      .populate('orderedItems.product')
+      .sort({ createdOn: -1 })
+      .skip((ordersPage - 1) * limit)
+      .limit(limit);
+
+    // Fetch paginated wallet transactions
+    const wallet = await Wallet.findOne({ userId });
+    let walletTransactions = [];
+    let walletCount = 0;
+    if (wallet && wallet.transactions) {
+      // Sort transactions by transactionDate in descending order
+      walletTransactions = wallet.transactions
+        .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate)) // Newest first
+        .slice((walletPage - 1) * limit, walletPage * limit)
+        .map(transaction => ({
+          ...transaction._doc,
+          transactionId: transaction.transactionId || 'N/A',
+          transactionDate: transaction.transactionDate || new Date(),
+          type: transaction.type || 'Unknown',
+          description: transaction.description || 'No description',
+          amount: transaction.amount || 0,
+          balanceAfter: transaction.balanceAfter || 0,
+          status: transaction.status || 'Unknown',
+        }));
+      walletCount = wallet.transactions.length;
+    }
+
+    const walletBalance = userData.wallet || 0;
+
+    // Calculate pagination metadata
+    const ordersTotalPages = Math.ceil(ordersCount / limit);
+    const walletTotalPages = Math.ceil(walletCount / limit);
+
+    const csrfToken = req.csrfToken();
+
+    res.render('profile', {
+      csrfToken,
+      user: userData,
+      userAddress: (await Address.findOne({ userId })) || { address: [] },
+      orders: orders || [],
+      wallet,
+      walletBalance,
+      walletTransactions: walletTransactions || [],
+      moment,
+      ordersPage,
+      walletPage,
+      ordersTotalPages,
+      walletTotalPages,
+      limit,
+      activeTab,
+      profilePhoto: userData.profilePhoto, // Pass profile photo to view
+    });
+  } catch (error) {
+    console.error("Error in userProfile:", error);
+    res.redirect('/page404');
+  }
 };
+
 
 const getOrderDetails = async (req, res) => {
     try {

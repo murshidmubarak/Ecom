@@ -368,10 +368,15 @@ const orderPlaced = async (req, res) => {
         }
       }
 
-       await User.updateOne(
-      { _id: userId },
-      { $push: { couponApplied: sanitizedCouponCode } }
-    );
+     if (couponApplied) {
+  const sanitizedCouponCode = couponApplied.trim().toUpperCase();
+
+  
+  await User.updateOne(
+    { _id: userId },
+    { $push: { couponApplied: sanitizedCouponCode } }
+  );
+}
 
       return res.json({
         payment: true,
@@ -409,8 +414,14 @@ const orderPlaced = async (req, res) => {
   } catch (error) {
    
     res.status(500).json({ error: "Server error", details: error.message });
+    console.log(error)
   }
 };
+
+
+
+
+
 const verifyPayment = async (req, res) => {
   try {
     const {
@@ -780,6 +791,7 @@ const cancelSingleProduct = async (req, res) => {
       return res.status(404).json({ message: "Product not found in order" });
     }
     const orderedItem = order.orderedItems[productIndex];
+    
 
     const totalOrderAmount = order.totalPrice + order.discount;
 
