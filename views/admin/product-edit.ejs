@@ -292,7 +292,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- <div class="card mb-4">
+                            <div class="card mb-4">
                                 <div class="card-body">
                                     <div class="row gx-2">
                                         <div class="col-sm-6 mb-3">
@@ -308,29 +308,9 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div> -->
+                            </div> 
 
-                            <div class="card mb-4">
-    <div class="card-body">
-        <div class="row gx-2">
-            <div class="col-sm-6 mb-3">
-                <label class="form-label">Category</label>
-                <select class="form-select border" style="width: 150px;" name="category" id="categorySelect">
-                    <!-- Default option -->
-                    <option value="" selected disabled>Select Category</option>
-                    
-                    <% for(let i = 0; i < cat.length; i++) { %>
-                        <option value="<%= cat[i].name %>" data-offer="<%= cat[i].categoryOffer || 0 %>">
-                            <%= cat[i].name %>
-                        </option>
-                    <% } %>
-                </select>
-                <div id="category-error" class="error-message"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
+                           
                             <div class="card mb-2">
                                 <div class="card-header">
                                     <h4>Current Images</h4>
