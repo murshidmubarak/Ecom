@@ -223,7 +223,7 @@
                                         <th>Product</th>
                                         <th>Quantity</th>
                                         <th>Total</th>
-                                        <th>Action</th>
+                                        <!-- <th>Action</th> -->
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -237,19 +237,18 @@
                                                     </td>
                                                     <td>
                                                         <h6>
-                                                            <a href="/product/<%= item.productDetails._id %>">
                                                                 <%= item.productDetails.productName || 'Unknown Product' %>
                                                             </a>
                                                         </h6>
                                                     </td>
                                                     <td><%= item.cart.quantity || 0 %></td>
                                                     <td>₹<%= ((item.productDetails.salePrice || 0) * (item.cart.quantity || 0)).toFixed(2) %></td>
-                                                    <td>
+                                                    <!-- <td>
                                                         <button class="btn btn-sm btn-danger" 
                                                                 onclick="confirmRemove('<%= item.productDetails._id %>')">
                                                             <i class="fa fa-trash"></i> Remove
                                                         </button>
-                                                    </td>
+                                                    </td> -->
                                                 </tr>
                                             <% } %>
                                         <% }) %>

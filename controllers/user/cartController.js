@@ -254,26 +254,67 @@ const changeQuantity = async (req, res) => {
     }
 };
 
+// const deleteProduct = async (req, res) => {
+//     try {
+//         const productId = req.query.id;
+//         const userId = req.session.user;
+
+//         if (!productId || !userId) {
+//             return res.redirect("/cart");
+//         }
+
+//         await Cart.findOneAndUpdate(
+//             { userId },
+//             { $pull: { items: { productId: productId } } }
+//         );
+
+//         return res.redirect("/cart");
+//     } catch (error) {
+//         console.error("Delete product error:", error);
+//         return res.redirect("/pageNotFound");
+//     }
+// };
+
+
 const deleteProduct = async (req, res) => {
     try {
-        const productId = req.query.id;
+        const { productId } = req.body;
         const userId = req.session.user;
 
         if (!productId || !userId) {
-            return res.redirect("/cart");
+            return res.status(400).json({
+                status: false,
+                error: "Invalid request"
+            });
         }
 
-        await Cart.findOneAndUpdate(
+        const cart = await Cart.findOneAndUpdate(
             { userId },
-            { $pull: { items: { productId: productId } } }
-        );
+            { $pull: { items: { productId } } },
+            { new: true }
+        ).populate("items.productId");
 
-        return res.redirect("/cart");
+        let grandTotal = 0;
+        cart.items.forEach(item => {
+            grandTotal += item.productId.salePrice * item.quantity;
+        });
+
+        return res.json({
+            status: true,
+            grandTotal,
+            itemsCount: cart.items.length
+        });
+
     } catch (error) {
         console.error("Delete product error:", error);
-        return res.redirect("/pageNotFound");
+        return res.status(500).json({
+            status: false,
+            error: "Something went wrong"
+        });
     }
 };
+
+
 
 const loadWishList = async (req, res) => {
     try {

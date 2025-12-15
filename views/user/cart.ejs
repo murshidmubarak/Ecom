@@ -47,12 +47,10 @@
                                                              style="max-width: 80px; height: auto; border: 1px solid #e9ecef;" />
                                                     </td>
                                                     <td class="product-name" style="padding: 20px;">
-                                                        <h6 class="mb-1" style="font-weight: 500;">
-                                                            <a href="/product/<%= data[i].productDetails[0]._id %>"
-                                                               class="text-dark text-decoration-none hover-text-primary">
-                                                                <%= data[i].productDetails[0].productName %>
-                                                            </a>
+                                                        <h6 class="mb-1 text-dark" style="font-weight: 500;">
+                                                           <%= data[i].productDetails[0].productName %>
                                                         </h6>
+
                                                     </td>
                                                     <td class="price" style="padding: 20px; color: #28a745; font-weight: 500;">
                                                         ₹<span id="subTotal<%= data[i].productDetails[0]._id %>">
@@ -247,21 +245,73 @@
         }
     }
 
-    function confirmRemove(productId) {
-        Swal.fire({
-            title: 'Remove Item?',
-            text: "Are you sure you want to remove this item from your cart?",
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, remove it!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = `/deleteItem?id=${productId}`;
+function confirmRemove(productId) {
+    Swal.fire({
+        title: 'Remove Item?',
+        text: "Are you sure you want to remove this item from your cart?",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, remove it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            removeItemAjax(productId);
+        }
+    });
+}
+
+
+function removeItemAjax(productId) {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    Swal.fire({
+        title: 'Removing item...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    $.ajax({
+        url: "/deleteItem",
+        method: "POST",
+        data: {
+            productId,
+            _csrf: csrfToken
+        },
+        success: function (response) {
+            Swal.close();
+
+            if (response.status) {
+                // Remove row from DOM
+                const row = document.querySelector(`tr[data-product-id="${productId}"]`);
+                row.remove();
+
+                // Update totals
+                document.getElementById("total").textContent = response.grandTotal;
+                document.getElementById("items-total").textContent = response.grandTotal;
+
+                // Update cart count
+                document.querySelector(".card-header h4").innerText =
+                    `Shopping Cart (${response.itemsCount} Items)`;
+
+                showSuccess("Item removed from cart");
+
+                // If cart empty → reload or show empty state
+                if (response.itemsCount === 0) {
+                    setTimeout(() => location.reload(), 800);
+                }
+
+            } else {
+                showError(response.error);
             }
-        });
-    }
+        },
+        error: function () {
+            Swal.close();
+            showError("Failed to remove item");
+        }
+    });
+}
+
 
     function showError(message) {
         Swal.fire({
