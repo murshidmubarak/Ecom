@@ -121,7 +121,9 @@ router.get('/auth/google',
     passport.authenticate('google', { scope: ['profile', 'email'] })
 );
 router.get('/auth/google/callback',
-    passport.authenticate('google', { failureRedirection: '/' }),
+    // passport.authenticate('google', { failureRedirection: '/' }),
+    passport.authenticate('google', { failureRedirect: '/' }),
+
     (req, res) => {
         console.log('=== Google Callback Debug ===');
         console.log('User from passport:', req.user);

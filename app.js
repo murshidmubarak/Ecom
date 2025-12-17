@@ -17,6 +17,7 @@ db();
 
 
 app.use(express.json())
+app.set('trust proxy', 1);
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
@@ -25,32 +26,14 @@ app.use(session({
     resave:false,
     saveUninitialized : true,
     cookie:{
-        secure:false,
+        secure:true,
         httpOnly:true,
-        maxAge:72*60*66*1000
+        sameSite: 'none',
+        maxAge:72*60*66*1000,
     }
 }))
 
-// const csrfProtection = csurf({ cookie: true });
-// app.use((req, res, next) => {
-//   csrfProtection(req, res, (err) => {
-//     if (err && err.code === "EBADCSRFTOKEN") {
-//       return res.status(403).json({ message: "Invalid CSRF token" });
-//     }
-//     res.locals.csrfToken = req.csrfToken ? req.csrfToken() : null;
-//     next(err);
-//   });
-// });
-// const csrfProtection = csurf({ cookie: true });
 
-// // Apply csrf middleware globally
-// app.use(csrfProtection);
-
-// // Make token available in EJS views
-// app.use((req, res, next) => {
-//   res.locals.csrfToken = req.csrfToken();
-//   next();
-// });
 
 const csrfProtection = csurf({ cookie: true });
 
