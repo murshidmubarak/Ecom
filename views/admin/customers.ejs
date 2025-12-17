@@ -2,6 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta name="csrf-token" content="<%= csrfToken %>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Users</title>
@@ -215,6 +216,7 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
                         },
                         body: JSON.stringify({ block: blockStatus })
                     });
