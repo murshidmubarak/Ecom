@@ -232,132 +232,6 @@ const getEditProduct = async (req, res) => {
 };
 
 
-// const editProduct = async (req, res) => {
-//     try {
-//         const id = req.params.id;
-//         const data = req.body;
-
-//         // Backend validation
-//         if (!data.productName || data.productName.trim() === "") {
-//             return res.status(400).json({ success: false, message: "Product name is required" });
-//         }
-//         if (!data.description || data.description.trim() === "") {
-//             return res.status(400).json({ success: false, message: "Description is required" });
-//         }
-//         if (!data.category) {
-//             return res.status(400).json({ success: false, message: "Category is required" });
-//         }
-//         const regularPrice = parseFloat(data.regularPrice);
-//         if (isNaN(regularPrice) || regularPrice <= 0) {
-//             return res.status(400).json({ success: false, message: "Regular price must be a positive number" });
-//         }
-//         const productOffer = parseFloat(data.productOffer) || 0;
-//         if (productOffer < 0 || productOffer > 100) {
-//             return res.status(400).json({ success: false, message: "Product offer must be between 0 and 100" });
-//         }
-//         const quantity = parseInt(data.quantity);
-//         if (isNaN(quantity) || quantity < 0) {
-//             return res.status(400).json({ success: false, message: "Quantity must be a non-negative integer" });
-//         }
-//         if (!data.color || data.color.trim() === "") {
-//             return res.status(400).json({ success: false, message: "Color is required" });
-//         }
-
-//         // Check for duplicate product name
-//         const existingProduct = await Product.findOne({
-//             productName: { $regex: new RegExp(`^${data.productName.trim()}$`, "i") },
-//             _id: { $ne: id },
-//         });
-//         if (existingProduct) {
-//             return res.status(400).json({ success: false, message: "Product name already exists" });
-//         }
-
-//         // Find category
-//         const category = await Category.findById(data.category);
-//         if (!category) {
-//             return res.status(400).json({ success: false, message: "Invalid category" });
-//         }
-
-//         // Process new images
-//         const images = [];
-
-//         // If new files uploaded (via multer)
-//         if (req.files && req.files.length > 0) {
-//             for (let i = 0; i < req.files.length; i++) {
-//                 const originalImagePath = req.files[i].path;
-//                 const resizedImagePath = path.join("public", "uploads", "resized-" + req.files[i].filename);
-
-//                 await sharp(originalImagePath)
-//                     .resize({ width: 440, height: 440 })
-//                     .toFile(resizedImagePath);
-
-//                 images.push("resized-" + req.files[i].filename);
-//             }
-//         }
-
-//         // If base64 images are sent (cropped images)
-//         if (data.images) {
-//             let imagesArray = Array.isArray(data.images)
-//                 ? data.images
-//                 : typeof data.images === "object"
-//                 ? Object.values(data.images)
-//                 : typeof data.images === "string"
-//                 ? [data.images]
-//                 : [];
-
-//             for (let i = 0; i < imagesArray.length; i++) {
-//                 if (typeof imagesArray[i] === "string" && imagesArray[i].startsWith("data:image")) {
-//                     const base64Data = imagesArray[i].split(",")[1];
-//                     const buffer = Buffer.from(base64Data, "base64");
-//                     const filename = `cropped_${Date.now()}_${i}.jpg`;
-//                     const filePath = path.join("public", "uploads", filename);
-
-//                     // Save image using sharp
-//                     await sharp(buffer)
-//                         .resize({ width: 440, height: 440 })
-//                         .toFile(filePath);
-
-//                     images.push(filename);
-//                 }
-//             }
-//         }
-
-//         // Calculate effective sale price
-//         const categoryOffer = parseFloat(category.categoryOffer) || 0;
-//         const effectiveOffer = Math.max(productOffer, categoryOffer);
-//         const salePrice = Math.round(regularPrice * (1 - effectiveOffer / 100));
-
-//         // Prepare update data
-//         const updateFields = {
-//             productName: data.productName,
-//             description: data.description,
-//             regularPrice: regularPrice,
-//             salePrice: salePrice,
-//             productOffer: productOffer,
-//             quantity: quantity,
-//             size: data.size || "",
-//             color: data.color,
-//             category: category._id,
-//         };
-
-//         if (images.length > 0) {
-//             updateFields.$push = { productImage: { $each: images } };
-//         }
-
-//         await Product.findByIdAndUpdate(id, updateFields, { new: true });
-
-//         res.status(200).json({
-//             success: true,
-//             message: "Product updated successfully",
-//         });
-//     } catch (error) {
-       
-//         res.status(500).json({
-//             success: false,
-//             message: "Server error while updating product",
-//         });
-//     }
-// };
 
 const editProduct = async (req, res) => {
     try {
@@ -413,7 +287,7 @@ const editProduct = async (req, res) => {
         const images = [];
         if (req.files && req.files.length > 0) {
             for (const file of req.files) {
-                const resizedImagePath = path.join("public", "Uploads", "resized-" + file.filename);
+                const resizedImagePath = path.join("public", "uploads", "resized-" + file.filename);
 
                 await sharp(file.path)
                     .resize({ width: 440, height: 440 })
@@ -437,7 +311,7 @@ const editProduct = async (req, res) => {
                     const base64Data = imagesArray[i].split(",")[1];
                     const buffer = Buffer.from(base64Data, "base64");
                     const filename = `cropped_${Date.now()}_${i}.jpg`;
-                    const filePath = path.join("public", "Uploads", filename);
+                    const filePath = path.join("public", "uploads", filename);
 
                     await sharp(buffer)
                         .resize({ width: 440, height: 440 })
@@ -510,7 +384,7 @@ const editProduct = async (req, res) => {
             // Step 3: Delete images from filesystem
             if (deletedImages.length > 0) {
                 for (const image of deletedImages) {
-                    const imagePath = path.join("public", "Uploads", image);
+                    const imagePath = path.join("public", "uploads", image);
                     try {
                         await fs.unlink(imagePath);
                         console.log(`Deleted permanently: ${image}`);
@@ -548,35 +422,6 @@ const editProduct = async (req, res) => {
     }
 };
 
-
-// const deleteSingleImage = async (req, res) => {
-//     try {
-//         const { imageNameToServer, ProductIdToServer } = req.body;
-
-//         const product = await Product.findByIdAndUpdate(
-//             ProductIdToServer,
-//             { $pull: { productImage: imageNameToServer } },
-//             { new: true }
-//         );
-
-//         if (!product) {
-//             return res.status(404).json({ success: false, message: "Product not found" });
-//         }
-
-//         const imagePath = path.join("public", "Uploads", imageNameToServer);
-//         if (await fs.access(imagePath).then(() => true).catch(() => false)) {
-//             await fs.unlink(imagePath);
-//             console.log("Image deleted:", imageNameToServer);
-//         } else {
-//             console.log("Image not found:", imageNameToServer);
-//         }
-
-//         res.status(200).json({ success: true, message: "Image deleted successfully" });
-//     } catch (error) {
-        
-//         res.status(500).json({ success: false, message: "Server error while deleting image" });
-//     }
-// };
 
 const deleteSingleImage = async (req, res) => {
     try {
