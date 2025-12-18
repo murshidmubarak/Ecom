@@ -602,23 +602,37 @@
             const color = document.getElementsByName('color')[0].value;
             let isValid = true;
 
-            if (name.trim() === "") {
-                displayErrorMessage('productName-error', 'Please enter a product name.');
-                isValid = false;
-            } else if (!/^[a-zA-Z0-9\s]+$/.test(name.trim())) {
+          if (name.trim() === "") {
+           displayErrorMessage("productName-error", "Please enter a product name.");
+           isValid = false;
+          } else if (name.trim().length > 20) {
+             displayErrorMessage("productName-error", "Product name must be less than 50 characters.");
+             isValid = false;
+          }else if (!/^[a-zA-Z0-9\s]+$/.test(name.trim())) {
                 displayErrorMessage('productName-error', 'Product name should contain only alphanumeric characters.');
                 isValid = false;
             }
 
-            if (description.trim() === "") {
-                displayErrorMessage('description-error', 'Please enter a product description.');
-                isValid = false;
-            }
+if (description.trim() === "") {
+    displayErrorMessage("description-error", "Please enter a product description.");
+    isValid = false;
+} else if (description.trim().length > 300) {
+    displayErrorMessage("description-error", "Product description must be less than 500 characters.");
+    isValid = false;
+}
 
-            if (!/^\d+(\.\d{1,2})?$/.test(regularPrice) || parseFloat(regularPrice) <= 0) {
-                displayErrorMessage('regularPrice-error', 'Please enter a valid positive price.');
-                isValid = false;
-            }
+if (
+    !/^\d+(\.\d{1,2})?$/.test(regularPrice) ||
+    parseFloat(regularPrice) <= 0 ||
+    parseFloat(regularPrice) >= 1000000
+) {
+    displayErrorMessage(
+        "regularPrice-error",
+        "Please enter a valid price greater than 0 and less than 10,00,000 (e.g., 99.99)."
+    );
+    isValid = false;
+}
+
 
             if (productOffer && (!/^\d+(\.\d{1,2})?$/.test(productOffer) || parseFloat(productOffer) < 0 || parseFloat(productOffer) > 100)) {
                 displayErrorMessage('productOffer-error', 'Offer must be a number between 0 and 100.');
