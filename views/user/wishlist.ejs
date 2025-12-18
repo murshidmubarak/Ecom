@@ -1,7 +1,7 @@
 <%- include("../../views/partials/user/header") %>
 <main class="main">
     <!-- Breadcrumb -->
-       <meta name="csrf-token" content="<%= csrfToken %>">
+    <meta name="csrf-token" content="<%= csrfToken %>">
     <div class="page-header breadcrumb-wrap" style="background-color: #f8f9fa; padding: 20px 0;">
         <div class="container">
             <div class="breadcrumb" style="font-size: 14px; color: #666;">
@@ -15,66 +15,67 @@
     <!-- Wishlist Section -->
     <section class="wishlist-section" style="padding: 50px 0;">
         <div class="container">
-            <h2 class="section-title" style="font-size: 28px; font-weight: 700; color: #333; margin-bottom: 30px; text-align: center;">My Wishlist</h2>
+            <h2 class="section-title text-center" style="font-size: 28px; font-weight: 700; color: #333; margin-bottom: 30px;">My Wishlist</h2>
             <div class="row">
                 <div class="col-12">
-                    <div class="table-responsive wishlist-table" style="background-color: #fff; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); overflow: hidden;">
-                        <table class="table shopping-summery text-center" style="margin-bottom: 0;">
+                    <div class="table-responsive wishlist-table">
+                        <table class="table shopping-summery text-center mb-0">
                             <thead>
-                                <tr class="main-heading" style="background-color: #f8f9fa; color: #333; font-weight: 600; text-transform: uppercase; font-size: 14px;">
-                                    <th scope="col" style="padding: 15px;">Image</th>
-                                    <th scope="col" style="padding: 15px;">Name</th>
-                                    <th scope="col" style="padding: 15px;">Price</th>
-                                    <th scope="col" style="padding: 15px;">Add to Cart</th>
-                                    <th scope="col" style="padding: 15px;">Remove</th>
+                                <tr class="main-heading d-none d-md-table-row" style="background-color: #f8f9fa; color: #333; font-weight: 600; text-transform: uppercase; font-size: 14px;">
+                                    <th scope="col" class="py-3">Image</th>
+                                    <th scope="col" class="py-3">Name</th>
+                                    <th scope="col" class="py-3">Price</th>
+                                    <th scope="col" class="py-3">Add to Cart</th>
+                                    <th scope="col" class="py-3">Remove</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <% if (products && products.length > 0) { %>
                                     <% products.forEach(product => { %>
-                                        <!-- <tr style="border-bottom: 1px solid #e9ecef; transition: background-color 0.3s;"> -->
-                                            <tr id="wishlist-row-<%= product._id %>" 
-                                                 style="border-bottom: 1px solid #e9ecef; transition: background-color 0.3s;">
-
-                                            <td class="image product-thumbnail" style="padding: 20px;">
+                                        <tr id="wishlist-row-<%= product._id %>" class="border-bottom">
+                                            <!-- Mobile-friendly stacked layout on small screens -->
+                                            <td class="p-3 p-md-4 text-md-center">
                                                 <img src="/uploads/<%= product.productImage && product.productImage[0] ? product.productImage[0] : 'default.jpg' %>" 
                                                      alt="<%= product.productName || 'Product' %>" 
-                                                     style="width: 100px; height: 100px; object-fit: contain; border-radius: 5px; border: 1px solid #e9ecef;" />
+                                                     class="img-fluid rounded" 
+                                                     style="width: 80px; height: 80px; object-fit: contain; border: 1px solid #e9ecef;" />
                                             </td>
-                                            <td class="product-des product-name" style="padding: 20px;">
-                                                <h5 class="product-name" style="margin: 0; font-size: 16px; font-weight: 600;">
-                                                    <a href="/productDetails?id=<%= product._id %>" style="color: #333; text-decoration: none; transition: color 0.3s;">
+                                            <td class="p-3 p-md-4 text-md-center align-middle">
+                                                <h5 class="product-name mb-1">
+                                                    <a href="/productDetails?id=<%= product._id %>" class="text-decoration-none text-dark">
                                                         <%= product.productName || 'Unnamed Product' %>
                                                     </a>
                                                 </h5>
-                                                <p class="font-xs" style="margin: 5px 0 0; font-size: 13px; color: #666;">
-                                                    <!-- <%= product.category && product.category.name ? product.category.name : 'N/A' %> -->
-                                                </p>
+                                                <div class="d-md-none text-muted small mt-2">
+                                                    <strong>Price:</strong> ₹<%= product.salePrice ? product.salePrice.toFixed(2) : 'N/A' %><br/>
+                                                    <a href="#" onclick="addToCart('<%= product._id %>'); event.preventDefault();" 
+                                                       class="btn btn-sm btn-primary mt-2 d-block">Add to Cart</a>
+                                                    <button onclick="removeFromWishlist('<%= product._id %>')" 
+                                                            class="btn btn-sm btn-outline-danger mt-2 d-block">
+                                                        <i class="fa fa-trash"></i> Remove
+                                                    </button>
+                                                </div>
                                             </td>
-                                            <td class="price" data-title="Price" style="padding: 20px; font-size: 16px; color: #007bff; font-weight: 500;">
-                                                ₹<%= product.salePrice ? product.salePrice.toFixed(2) : 'N/A' %>
+                                            <td class="price p-3 p-md-4 align-middle d-none d-md-table-cell">
+                                                <span class="fw-medium text-primary">₹<%= product.salePrice ? product.salePrice.toFixed(2) : 'N/A' %></span>
                                             </td>
-                                            <td class="text-center" data-title="Add to Cart" style="padding: 20px;">
+                                            <td class="p-3 p-md-4 align-middle text-center d-none d-md-table-cell">
                                                 <a href="#" onclick="addToCart('<%= product._id %>')" 
-                                                   class="btn btn-sm" 
-                                                   style="background-color: #007bff; color: #fff; padding: 8px 20px; border-radius: 25px; text-decoration: none; font-size: 14px; transition: background-color 0.3s;">
-                                                    Add to Cart
-                                                </a>
+                                                   class="btn btn-sm btn-primary px-4">Add to Cart</a>
                                             </td>
-                                            <td class="action" data-title="Remove" style="padding: 20px;">
+                                            <td class="p-3 p-md-4 align-middle text-center d-none d-md-table-cell">
                                                 <button onclick="removeFromWishlist('<%= product._id %>')" 
-                                                        class="btn btn-sm btn-outline-danger"
-                                                        style="padding: 8px 12px; border-radius: 50%; transition: background-color 0.3s, color 0.3s;">
-                                                    <i class="fa fa-trash" style="font-size: 14px;"></i>
+                                                        class="btn btn-sm btn-outline-danger rounded-circle">
+                                                    <i class="fa fa-trash"></i>
                                                 </button>
                                             </td>
                                         </tr>
                                     <% }) %>
                                 <% } else { %>
                                     <tr>
-                                        <td colspan="5" class="text-center" style="padding: 50px 0; color: #666; font-size: 18px;">
-                                            <p class="lead mb-0" style="font-weight: 500;">No items found in Wishlist</p>
-                                            <a href="/shop" style="color: #007bff; text-decoration: none; font-size: 14px; display: block; margin-top: 10px;">Start Shopping Now</a>
+                                        <td colspan="5" class="text-center py-5">
+                                            <p class="lead mb-3 fw-medium">No items found in Wishlist</p>
+                                            <a href="/shop" class="text-primary">Start Shopping Now</a>
                                         </td>
                                     </tr>
                                 <% } %>
@@ -91,8 +92,6 @@
 <!-- SweetAlert2 CDN -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-  
-
     async function addToCart(productId) {
         try {
             const response = await fetch(`/addToCart`, {
@@ -104,12 +103,9 @@
                 body: JSON.stringify({ productId })
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
             const data = await response.json();
-            console.log('addToCart Response:', data);
 
             if (data.outOfStock) {
                 await Swal.fire({
@@ -128,9 +124,7 @@
                     showCancelButton: true,
                     cancelButtonText: 'Continue Shopping'
                 }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = '/cart';
-                    }
+                    if (result.isConfirmed) window.location.href = '/cart';
                 });
             } else if (data.success) {
                 await Swal.fire({
@@ -145,7 +139,7 @@
                     if (result.isDenied) {
                         window.location.href = '/cart';
                     } else {
-                        window.location.reload(); // Reload to update wishlist
+                        window.location.reload();
                     }
                 });
             } else {
@@ -167,130 +161,68 @@
         }
     }
 
-    // async function removeFromWishlist(productId) {
-    //     try {
-    //         const response = await fetch('/removeFromWishlist', {
-    //             method: 'POST',
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //                 'CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-    //             },
-    //             body: JSON.stringify({ productId })
-    //         });
-
-    //         const result = await response.json();
-
-    //         if (result.status) {
-    //             await Swal.fire({
-    //                 icon: 'success',
-    //                 title: 'Removed from Wishlist',
-    //                 text: result.message,
-    //                 showConfirmButton: false,
-    //                 timer: 1500,
-    //                 customClass: {
-    //                     popup: 'swal-custom'
-    //                 }
-    //             });
-    //             window.location.reload();
-    //         } else {
-    //             await Swal.fire({
-    //                 icon: 'error',
-    //                 title: 'Error',
-    //                 text: result.message,
-    //                 customClass: {
-    //                     popup: 'swal-custom'
-    //                 }
-    //             });
-    //         }
-    //     } catch (error) {
-    //         console.error('Remove wishlist error:', error);
-    //         await Swal.fire({
-    //             icon: 'error',
-    //             title: 'Error',
-    //             text: 'Something went wrong. Please try again.',
-    //             customClass: {
-    //                 popup: 'swal-custom'
-    //             }
-    //         });
-    //     }
-    // }
-
     async function removeFromWishlist(productId) {
-    try {
-        const response = await fetch('/removeFromWishlist', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'CSRF-Token': document
-                    .querySelector('meta[name="csrf-token"]')
-                    .getAttribute('content')
-            },
-            body: JSON.stringify({ productId })
-        });
-
-        const result = await response.json();
-
-        if (result.status) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Removed from Wishlist',
-                text: result.message,
-                timer: 1200,
-                showConfirmButton: false
+        try {
+            const response = await fetch('/removeFromWishlist', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({ productId })
             });
 
-            // ✅ REMOVE ROW WITHOUT RELOAD
-            const row = document.getElementById(`wishlist-row-${productId}`);
-            if (row) row.remove();
+            const result = await response.json();
 
-            // ✅ OPTIONAL: show empty message if no rows left
-            if (document.querySelectorAll("tbody tr").length === 0) {
-                document.querySelector("tbody").innerHTML = `
-                    <tr>
-                        <td colspan="5" class="text-center" style="padding: 50px;">
-                            <p class="lead">No items found in Wishlist</p>
-                            <a href="/shop">Start Shopping Now</a>
-                        </td>
-                    </tr>`;
+            if (result.status) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Removed from Wishlist',
+                    text: result.message,
+                    timer: 1200,
+                    showConfirmButton: false
+                });
+
+                const row = document.getElementById(`wishlist-row-${productId}`);
+                if (row) row.remove();
+
+                if (document.querySelectorAll("tbody tr:not([style*='display: none'])").length === 0) {
+                    document.querySelector("tbody").innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center py-5">
+                                <p class="lead mb-3">No items found in Wishlist</p>
+                                <a href="/shop">Start Shopping Now</a>
+                            </td>
+                        </tr>`;
+                }
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: result.message
+                });
             }
-        } else {
+        } catch (error) {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: result.message
+                text: 'Something went wrong'
             });
         }
-    } catch (error) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Something went wrong'
-        });
     }
-}
-
-
-
 </script>
 
 <style>
-    /* Wishlist Section Styling */
     .wishlist-section {
-        min-height: calc(100vh - 300px); /* Ensures it fits between header and footer */
+        min-height: calc(100vh - 300px);
         background-color: #f5f6f8;
-    }
-
-    .container {
-        max-width: 1200px;
-    }
-
-    .section-title {
-        font-family: 'Nunito Sans', sans-serif;
-        letter-spacing: 1px;
     }
 
     .wishlist-table {
         border: 1px solid #e9ecef;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
 
     .table tbody tr:hover {
@@ -303,25 +235,35 @@
         border-color: #dc3545 !important;
     }
 
-    /* Empty Wishlist Styling */
-    .text-center .lead {
-        font-family: 'Nunito Sans', sans-serif;
-    }
+    /* Responsive adjustments */
+    @media (max-width: 767px) {
+        .section-title {
+            font-size: 24px;
+        }
+        
+        .img-fluid {
+            max-width: 70px;
+            height: 70px;
+        }
 
-    /* SweetAlert Custom Styling */
-    .swal-custom {
-        font-family: 'Nunito Sans', sans-serif;
-        border-radius: 10px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    }
+        .product-name {
+            font-size: 15px;
+        }
 
-    .swal-custom .swal2-title {
-        font-size: 20px;
-        color: #333;
-    }
+        /* Make table rows behave like cards on mobile */
+        .table tr {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            overflow: hidden;
+        }
 
-    .swal-custom .swal2-content {
-        font-size: 14px;
-        color: #666;
+        .table td {
+            border: none;
+            text-align: center;
+        }
     }
 </style>
