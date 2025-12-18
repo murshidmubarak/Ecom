@@ -369,7 +369,7 @@
                   <th>Expire On</th>
                   <th>Offer Price</th>
                   <th>Minimum Price</th>
-                  <th>Status</th>
+                  <!-- <th>Status</th> -->
                   <th>Edit/Delete</th>
                 </tr>
               </thead>
@@ -382,7 +382,7 @@
                       <td><%= coupon.endDate.toISOString().split('T')[0] %></td>
                       <td>$<%= coupon.offerPrice.toFixed(2) %></td>
                       <td>$<%= coupon.minimumPrice.toFixed(2) %></td>
-                      <td><%= coupon.status %></td>
+                      <!-- <td><%= coupon.status %></td> -->
                       <td>
                         <button
                           class="btn btn-primary btn-sm"
@@ -508,13 +508,13 @@
         </select>
         <div id="edit-error-status" class="error-message"></div>
       </div>
-      <div>
+      <!-- <div>
         <label for="edit-isActive" class="form-label">Active</label>
         <select name="isActive" id="edit-isActive" class="form-control" required>
           <option value="true">Yes</option>
           <option value="false">No</option>
         </select>
-      </div>
+      </div> -->
       <div class="d-grid">
         <button class="btn btn-primary" type="submit">
           Save Changes
@@ -750,7 +750,7 @@
     document.getElementById("edit-offer-price").value = offerPrice;
     document.getElementById("edit-minimum-price").value = minimumPrice;
     document.getElementById("edit-status").value = status;
-    document.getElementById("edit-isActive").value = isActive.toString();
+    // document.getElementById("edit-isActive").value = isActive.toString();
     document.getElementById("editCouponForm").action = `/admin/editcoupon/${id}`;
     document.getElementById("editModal").classList.add("show");
   }

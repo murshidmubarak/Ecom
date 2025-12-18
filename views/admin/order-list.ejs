@@ -78,6 +78,7 @@
             margin-bottom: 30px;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(43, 8, 238, 0.2);
+            margin-top: -40px;
         }
 
         .search-container {
@@ -474,9 +475,9 @@
     <div class="wrapper">
         <div class="main-content">
             <div class="container">
-                <div class="page-header">
+                <!-- <div class="page-header">
                     <h1><i class="fas fa-undo-alt me-3"></i>Returns & Refunds Management</h1>
-                </div>
+                </div> -->
 
                 <div class="search-section">
                     <div class="search-container">
@@ -577,7 +578,7 @@
                                                         </button>
                                                     </div>
                                                 <% } else { %>
-                                                    <select class="status-badge status-<%= order.status.toLowerCase() %>"
+                                                    <!-- <select class="status-badge status-<%= order.status.toLowerCase() %>"
                                                      data-order-id="<%= order._id %>"
                                                        onchange="updateStatus(this)">
                                                        <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %> 
@@ -592,7 +593,56 @@
                                                               <%= order.status === 'delivered' ? '' : 'disabled' %>>Returned</option>
                                                       <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %> 
                                                               <%= ['delivered', 'returned'].includes(order.status) ? 'disabled' : '' %>>Cancelled</option>
-                                                      </select>
+                                                      </select> -->
+<%
+  const lockAll = ['pending', 'cancelled'].includes(order.status);
+%>
+
+<select class="status-badge status-<%= order.status.toLowerCase() %>"
+        data-order-id="<%= order._id %>"
+        onchange="updateStatus(this)">
+
+    <!-- Pending (always disabled) -->
+    <option value="pending"
+            disabled
+            <%= order.status === 'pending' ? 'selected' : '' %>>
+        Pending
+    </option>
+
+    <option value="confirmed"
+            <%= order.status === 'confirmed' ? 'selected' : '' %>
+            <%= lockAll ? 'disabled' : '' %>>
+        Confirmed
+    </option>
+
+    <option value="shipped"
+            <%= order.status === 'shipped' ? 'selected' : '' %>
+            <%= lockAll ? 'disabled' : '' %>>
+        Shipped
+    </option>
+
+    <option value="delivered"
+            <%= order.status === 'delivered' ? 'selected' : '' %>
+            <%= lockAll ? 'disabled' : '' %>>
+        Delivered
+    </option>
+
+    <option value="returned"
+            <%= order.status === 'returned' ? 'selected' : '' %>
+            <%= lockAll || order.status !== 'delivered' ? 'disabled' : '' %>>
+        Returned
+    </option>
+
+    <!-- Cancelled (always disabled) -->
+    <option value="cancelled"
+            disabled
+            <%= order.status === 'cancelled' ? 'selected' : '' %>>
+        Cancelled
+    </option>
+
+</select>
+
+
                                                 <% } %>
                                             </td>
                                             <td>
