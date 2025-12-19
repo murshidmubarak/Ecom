@@ -595,7 +595,7 @@
                                                               <%= ['delivered', 'returned'].includes(order.status) ? 'disabled' : '' %>>Cancelled</option>
                                                       </select> -->
 <%
-  const lockAll = ['pending', 'cancelled'].includes(order.status);
+  const lockAll = ['pending', 'cancelled', 'returned'].includes(order.status);
 %>
 
 <select class="status-badge status-<%= order.status.toLowerCase() %>"

@@ -7,6 +7,8 @@
     <title>maleFashion</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
 
         <meta name="csrf-token" content="<%= csrfToken %>">
 
@@ -524,6 +526,12 @@
         .others-bought .add-to-cart-btn:hover {
             background-color: #066661;
         }
+        .product-description p {
+    word-break: break-all;      /* force break long continuous text */
+    overflow-wrap: anywhere;    /* modern browsers */
+    white-space: normal;
+}
+
 
         @media (max-width: 768px) {
             .others-bought {
@@ -653,7 +661,7 @@
                             <p><%=product.description%></p>
                         </div>
 
-                        <div class="product-info">
+                        <!-- <div class="product-info">
                             <ul>
                                 <li><i class="fas fa-check-circle"></i> 100% Cotton</li>
                                 <li><i class="fas fa-check-circle"></i> Made in India</li>
@@ -661,7 +669,7 @@
                                 <li><i class="fas fa-truck"></i> Free Shipping</li>
                                 <li><i class="fas fa-undo"></i> 30-Day Returns</li>
                             </ul>
-                        </div>
+                        </div> -->
 
                         <!-- Add to Cart and Wishlist Section -->
                         <div class="detail-extralink">

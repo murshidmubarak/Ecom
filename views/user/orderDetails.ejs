@@ -193,6 +193,8 @@
 <script src="/js/jquery-3.3.1.min.js"></script>
 <script src="/js/bootstrap.min.js"></script>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 
 <script>
 console.log('orderDetails.ejs loaded at:', new Date().toISOString());
@@ -200,11 +202,28 @@ console.log('Order ID:', '<%= orders.orderId %>');
 console.log('Order Status:', '<%= orders.status %>');
 console.log('Payment Status:', '<%= orders.payment %>');
 
+// function confirmCancelOrder(orderId) {
+//     if (confirm('Are you sure you want to cancel this entire order?')) {
+//         cancelOrder(orderId);
+//     }
+// }
+
 function confirmCancelOrder(orderId) {
-    if (confirm('Are you sure you want to cancel this entire order?')) {
-        cancelOrder(orderId);
-    }
+    Swal.fire({
+        title: 'Cancel entire order?',
+        text: 'This action cannot be undone.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, cancel order'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            cancelOrder(orderId);
+        }
+    });
 }
+
 
 function cancelOrder(orderId) {
     $.ajax({
@@ -219,7 +238,16 @@ function cancelOrder(orderId) {
         success: (response) => {
             if (response.message === "Order cancelled successfully") {
                 // alert('The entire order has was cancelled successfully.');
-                window.location.reload();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Cancelled',
+                     text: response.message,
+                   timer: 1500,
+                   showConfirmButton: false
+                 }).then(() => {
+                 window.location.reload();
+                  });
+
             }
         },
         error: (error) => {
@@ -361,11 +389,28 @@ function returnSingleProduct(orderId, singleProductId, returnReason) {
     });
 }
 
+// function confirmCancelSingleProduct(orderId, singleProductId) {
+//     if (confirm('Are you sure you want to cancel this product?')) {
+//         cancelSingleProduct(orderId, singleProductId);
+//     }
+// }
+
 function confirmCancelSingleProduct(orderId, singleProductId) {
-    if (confirm('Are you sure you want to cancel this product?')) {
-        cancelSingleProduct(orderId, singleProductId);
-    }
+    Swal.fire({
+        title: 'Cancel this product?',
+        text: 'This product will be cancelled from your order.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#f59e0b',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, cancel product'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            cancelSingleProduct(orderId, singleProductId);
+        }
+    });
 }
+
 
 function cancelSingleProduct(orderId, singleProductId) {
     $.ajax({
@@ -385,8 +430,13 @@ function cancelSingleProduct(orderId, singleProductId) {
             }
         },
         error: (error) => {
-            alert("Error cancelling product: " + (error.responseJSON?.message || error.responseText));
-        }
+         Swal.fire({
+        icon: 'error',
+        title: 'Cancellation Failed',
+        text: error.responseJSON?.message || error.responseText
+         });
+}
+
     });
 }
 
