@@ -897,7 +897,7 @@ const returnSingleProduct = async (req, res) => {
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
-    if (order.status !== "shipped" && order.status !== "delivered") {
+    if ( order.status !== "delivered") {
       return res.status(400).json({
         message: "Order must be shipped or delivered to request a return",
       });

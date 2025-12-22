@@ -145,11 +145,32 @@
                                             <% } else if (item.productStatus === "return-rejected") { %>
                                                 <span style="color: #991b1b; font-style: italic;">Return Rejected</span>
                                             <% } else { %>
-                                                <% if (orders.status === "confirmed") { %>
+                                                <!-- <% if (orders.status === "confirmed") { %>
                                                     <button class="btn btn-sm btn-warning" onclick="confirmCancelSingleProduct('<%= orders._id %>', '<%= item.product._id %>')" style="border-radius: 5px; padding: 6px 12px; transition: background-color 0.2s;">Cancel Product</button>
-                                                <% } else if (orders.status === "shipped" || orders.status === "delivered") { %>
+                                                <% } else if ( orders.status === "delivered") { %>
                                                     <button class="btn btn-sm btn-warning" onclick="showReturnModal('<%= orders._id %>', '<%= item.product._id %>')" style="border-radius: 5px; padding: 6px 12px; transition: background-color 0.2s;">Request Return</button>
-                                                <% } %>
+                                                <% } %> -->
+                                                <% if (orders.status === "confirmed") { %>
+    <button class="btn btn-sm btn-warning"
+        onclick="confirmCancelSingleProduct('<%= orders._id %>', '<%= item.product._id %>')"
+        style="border-radius: 5px; padding: 6px 12px; transition: background-color 0.2s;">
+        Cancel Product
+    </button>
+
+<% } else if (orders.status === "shipped") { %>
+    <button class="btn btn-sm btn-secondary" disabled
+        style="border-radius: 5px; padding: 6px 12px; opacity: 0.7; cursor: not-allowed;">
+        Already Shipped
+    </button>
+
+<% } else if (orders.status === "delivered") { %>
+    <button class="btn btn-sm btn-warning"
+        onclick="showReturnModal('<%= orders._id %>', '<%= item.product._id %>')"
+        style="border-radius: 5px; padding: 6px 12px; transition: background-color 0.2s;">
+        Request Return
+    </button>
+<% } %>
+
                                             <% } %>
                                         </td>
                                     </tr>
