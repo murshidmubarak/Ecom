@@ -207,6 +207,110 @@
             font-size: 14px;
             line-height: 20px;
         }
+
+        
+
+.custom-select-wrapper {
+        position: relative;
+        width: 100%;
+    }
+
+    .custom-category-select {
+        width: 100%;
+        padding: 14px 45px 14px 18px;
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--text-color);
+        background-color: var(--dark-bg);
+        border: 1px solid var(--secondary-color);
+        border-radius: 0.25rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+    }
+
+    .custom-category-select:hover {
+        border-color: var(--secondary-color);
+        background-color: var(--dark-bg);
+    }
+
+    .custom-category-select:focus {
+        outline: none;
+        border-color: var(--secondary-color);
+        background-color: var(--dark-bg);
+    }
+
+    .custom-category-select option {
+        padding: 12px;
+        background-color: var(--card-bg);
+        color: var(--text-color);
+        font-weight: 500;
+    }
+
+    .custom-category-select option:hover {
+        background: var(--gradient-green);
+        color: white;
+    }
+
+    .select-arrow {
+        position: absolute;
+        right: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-color);
+        pointer-events: none;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .custom-category-select:focus ~ .select-arrow {
+        transform: translateY(-50%) rotate(180deg);
+    }
+
+    .form-label {
+        font-size: 1.05rem;
+        letter-spacing: 0.3px;
+    }
+
+    .form-label i {
+        font-size: 1.1rem;
+        color: var(--text-color);
+    }
+
+    /* Improved error message styling */
+    .error-message {
+        margin-top: 8px;
+        padding: 10px 14px;
+        background: rgba(239, 68, 68, 0.15);
+        border-left: 4px solid #ef4444;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 0.9rem;
+        color: #fca5a5;
+        display: none; /* Hidden by default */
+    }
+
+    .error-message::before {
+        content: "⚠ ";
+        font-weight: bold;
+        margin-right: 4px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .custom-category-select {
+            padding: 12px 40px 12px 15px;
+            font-size: 0.95rem;
+        }
+
+        .form-label {
+            font-size: 1rem;
+        }
+    }
+
+
     </style>
 </head>
 <body>
@@ -292,7 +396,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="card mb-4">
+                            <!-- <div class="card mb-4">
                                 <div class="card-body">
                                     <div class="row gx-2">
                                         <div class="col-sm-6 mb-3">
@@ -308,7 +412,37 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div> 
+                            </div>  -->
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row gx-2">
+            <div class="col-sm-12 mb-3">
+                <label class="form-label" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--primary-color); margin-bottom: 12px;">
+                    <i class="fas fa-tags"></i>
+                    Product Category
+                </label>
+                <div class="custom-select-wrapper">
+                    <select class="form-select custom-category-select" name="category" id="categorySelect">
+                        <% for(let i = 0; i < cat.length; i++) { %>
+                            <option value="<%= cat[i]._id %>" 
+                                    data-offer="<%= cat[i].categoryOffer || 0 %>" 
+                                    <%= (product.category && product.category._id.toString() === cat[i]._id.toString()) ? 'selected' : '' %>>
+                                <%= cat[i].name %>
+                                <% if(cat[i].categoryOffer > 0) { %>
+                                    (Offer: <%= cat[i].categoryOffer %>%)
+                                <% } %>
+                            </option>
+                        <% } %>
+                    </select>
+                    <i class="fas fa-chevron-down select-arrow"></i>
+                </div>
+                <div id="category-error" class="error-message" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 
                            
                             <div class="card mb-2">

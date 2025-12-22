@@ -33,7 +33,58 @@
             color: var(--text-color);
             min-height: 100vh;
         }
+/* Remove all scrolling */
+html, body {
+    overflow: visible;
+    height: auto;
+}
 
+/* Make table fit content */
+.table-responsive {
+    overflow: visible !important;
+    overflow-x: visible !important;
+}
+
+/* Adjust table for better readability */
+.table {
+    width: 100%;
+    table-layout: auto;
+}
+
+/* Make columns more compact */
+.table td, .table th {
+    padding: 8px;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+/* Reduce image sizes */
+.table img {
+    width: 40px !important;
+    height: 40px !important;
+}
+
+/* Make action buttons compact */
+.btn-sm {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+/* Compact select dropdowns */
+select.form-select {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+/* Hide scrollbar everywhere */
+::-webkit-scrollbar {
+    display: none;
+}
+
+html {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
         .wrapper {
             display: flex;
             min-height: 100vh;
