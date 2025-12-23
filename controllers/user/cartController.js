@@ -15,6 +15,9 @@ const getCartPage = async (req, res) => {
             return res.redirect("/login");
         }
 
+        const errorMessage = req.session.errorMessage|| null;
+        req.session.errorMessage = null;
+
         const cart = await Cart.findOne({ userId }).populate("items.productId");
         const productIds = cart?.items.map(item => item.productId) || [];
         const products = await Product.find({
@@ -53,6 +56,7 @@ const getCartPage = async (req, res) => {
             data,
             grandTotal,
             _csrf: req.csrfToken(),
+            errorMessage
         });
     } catch (error) {
        
@@ -100,6 +104,10 @@ const addToCart = async (req, res) => {
         const existingItemIndex = cart.items.findIndex(
             (item) => item.productId.toString() === productId.toString()
         );
+
+        if(product.isBlocked){
+            return  res.json({status:false,message:"ths product is currently unavailable" });
+        }
         
        
 

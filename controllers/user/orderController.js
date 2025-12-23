@@ -71,6 +71,29 @@ const getCheckoutPage = async (req, res) => {
       return res.redirect("/shop");
     }
 
+        /* ============================
+       VALIDATIONS (ERROR + REDIRECT)
+       ============================ */
+    for (const item of cart.items) {
+      const product = item.productId;
+
+      if (product.isBlocked) {
+        req.session.errorMessage = `"${product.productName}" is currently unavailable`;
+        return res.redirect("/cart");
+      }
+
+      if (!product.category || product.category.isListed === false) {
+        req.session.errorMessage = `Category for "${product.productName}" is currently unavailable`;
+        return res.redirect("/cart");
+      }
+
+      if (parseInt(product.quantity, 10) < item.quantity) {
+        req.session.errorMessage = `Insufficient stock for "${product.productName}"`;
+        return res.redirect("/cart");
+      }
+    }
+
+
   
 
     const grandTotal = cart.items.reduce((total, item) => {
@@ -559,53 +582,161 @@ const paymentFailed = async (req, res) => {
   }
 };
 
-const retryPayment = async (req, res) => {
-      const { orderId } = req.query;
-      const userId = req.session.user;
-  try {
+// const retryPayment = async (req, res) => {
+//       const { orderId } = req.query;
+//       const userId = req.session.user;
+//   try {
     
-   
+//    const product = await Product.findOne(orderId);
 
-    if (!orderId || !userId) {
+//    if (product && product.isBlocked) {
+//       return res.status(400).json({ error: "Cannot proceed to payment. The product is currently unavailable." });
+//     }
+
+//     if(product.quantity<orderId){
+//       return res.status(400).json({ error: "Cannot proceed to payment. Insufficient stock for the product." });
+//     }
+
+//     if (!orderId || !userId) {
     
+//       return res.status(400).json({ error: "Missing orderId or userId" });
+//     }
+
+//     const order = await Order.findOne({ orderId });
+//     if (!order) {
+    
+//       return res.status(404).json({ error: "Order not found" });
+//     }
+
+//     if (order.status !== "pending") {
+      
+//       return res.status(400).json({ error: "Order is not eligible for retry" });
+//     }
+
+//     const razorpayOrder = await razorpayInstance.orders.create({
+//       amount: Math.round(order.finalAmount * 100),
+//       currency: "INR",
+//       receipt: order._id.toString(),
+//     });
+    
+
+//         order.payment = "online";
+//         order.status = "confirmed"; // Reset status to success for retry
+//         await order.save();
+       
+//      for (const item of order.orderedItems) {
+//       const product = await Product.findById(item.product);
+//       if (product) {
+//         const currentQuantity = parseInt(product.quantity, 10);
+//         const newQuantity = currentQuantity - item.quantity;
+//         product.quantity = newQuantity.toString();
+//         await product.save();
+        
+//       }
+//     }
+
+
+//     res.json({
+//       payment: true,
+//       method: "razorpay",
+//       order,
+//       orderId: order.orderId,
+//       razorpayOrderId: razorpayOrder.id,
+//       amount: razorpayOrder.amount,
+//       key: process.env.RAZORPAY_KEY_ID,
+//     });
+
+
+
+
+//   } catch (error) {
+ 
+//     await Order.findOneAndUpdate({ orderId }, { payment: "failed" });
+//     res.redirect(`/paymentFailed?orderId=${orderId}`);
+//   }
+// };
+
+
+const retryPayment = async (req, res) => {
+  const { orderId } = req.query;
+  const userId = req.session.user;
+
+  try {
+    if (!orderId || !userId) {
       return res.status(400).json({ error: "Missing orderId or userId" });
     }
 
-    const order = await Order.findOne({ orderId });
+    const order = await Order.findOne({ orderId })
+      .populate({
+        path: "orderedItems.product",
+        populate: { path: "category" }
+      });
+
     if (!order) {
-    
       return res.status(404).json({ error: "Order not found" });
     }
 
     if (order.status !== "pending") {
-      
       return res.status(400).json({ error: "Order is not eligible for retry" });
     }
 
+    /* ============================
+       PRODUCT + CATEGORY VALIDATION
+       ============================ */
+    for (const item of order.orderedItems) {
+      const product = item.product;
+
+      if (!product) {
+        return res.status(400).json({ error: "Product not found" });
+      }
+
+      // ❌ Blocked product
+      if (product.isBlocked) {
+        return res.status(400).json({
+          error: `Payment failed. "${product.productName}" is currently unavailable.`
+        });
+      }
+
+      // ❌ Unlisted category
+      if (!product.category || product.category.isListed === false) {
+        return res.status(400).json({
+          error: `Payment failed. Category for "${product.productName}" is currently unavailable.`
+        });
+      }
+
+      // ❌ Insufficient stock
+      if (parseInt(product.quantity, 10) < item.quantity) {
+        return res.status(400).json({
+          error: `Insufficient stock for "${product.productName}".`
+        });
+      }
+    }
+
+    /* ============================
+       CREATE RAZORPAY ORDER
+       ============================ */
     const razorpayOrder = await razorpayInstance.orders.create({
       amount: Math.round(order.finalAmount * 100),
       currency: "INR",
       receipt: order._id.toString(),
     });
-    
 
-        order.payment = "online";
-        order.status = "confirmed"; // Reset status to success for retry
-        await order.save();
-       
-     for (const item of order.orderedItems) {
-      const product = await Product.findById(item.product);
-      if (product) {
-        const currentQuantity = parseInt(product.quantity, 10);
-        const newQuantity = currentQuantity - item.quantity;
-        product.quantity = newQuantity.toString();
-        await product.save();
-        
-      }
+    order.payment = "online";
+    order.status = "confirmed";
+    await order.save();
+
+    /* ============================
+       DEDUCT STOCK
+       ============================ */
+    for (const item of order.orderedItems) {
+      const product = await Product.findById(item.product._id);
+      product.quantity = (
+        parseInt(product.quantity, 10) - item.quantity
+      ).toString();
+      await product.save();
     }
 
-
-    res.json({
+    return res.json({
       payment: true,
       method: "razorpay",
       order,
@@ -615,13 +746,17 @@ const retryPayment = async (req, res) => {
       key: process.env.RAZORPAY_KEY_ID,
     });
 
-
-
-
   } catch (error) {
- 
-    await Order.findOneAndUpdate({ orderId }, { payment: "failed" });
-    res.redirect(`/paymentFailed?orderId=${orderId}`);
+    console.error("Retry payment error:", error);
+
+    await Order.findOneAndUpdate(
+      { orderId },
+      { payment: "failed" }
+    );
+
+    return res.status(500).json({
+      error: "Something went wrong while retrying payment"
+    });
   }
 };
 

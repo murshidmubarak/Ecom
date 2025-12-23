@@ -277,6 +277,97 @@ function cancelOrder(orderId) {
     });
 }
 
+// async function retryPayment(orderId) {
+//     console.log('retryPayment: Initiated for orderId:', orderId);
+//     try {
+//         const response = await $.ajax({
+//             url: `/retryPayment?orderId=${orderId}`,
+//             method: "GET",
+//             contentType: "application/json",
+//             csrfToken: $('meta[name="csrf-token"]').attr('content'),
+//             headers: {
+//                 'X-CSRF-Token': $('meta[name="csrf-token"]').attr('content')
+//             }
+//         });
+//         console.log('retryPayment: Response received', response);
+
+//         if (response.payment && response.method === "razorpay") {
+//             const options = {
+//                 key: response.key,
+//                 amount: response.amount,
+//                 currency: "INR",
+//                 name: "Male Fashion",
+//                 description: "Retry Order Payment",
+//                 order_id: response.razorpayOrderId,
+//                 handler: async function (razorpayResponse) {
+//                     try {
+//                         console.log('retryPayment: Razorpay payment response', razorpayResponse);
+//                         const verifyResponse = await $.ajax({
+//                             url: "/verifyPayment",
+//                             method: "POST",
+//                             contentType: "application/json",
+//                             data: JSON.stringify({
+//                                 orderId: response.orderId,
+//                                 razorpay_payment_id: razorpayResponse.razorpay_payment_id,
+//                                 razorpay_order_id: razorpayResponse.razorpay_order_id,
+//                                 razorpay_signature: razorpayResponse.razorpay_signature,
+//                                 csrfToken: $('meta[name="csrf-token"]').attr('content')
+//                             }),
+//                             headers: {
+//                                 'X-CSRF-Token': $('meta[name="csrf-token"]').attr('content')
+//                             }
+//                         });
+
+//                         if (verifyResponse.success) {
+//                             console.log('retryPayment: Payment verified, orderId:', verifyResponse.orderId);
+//                             await clearCart();
+                            
+//                             location.href = `/orderDetails?id=${verifyResponse.orderId}`;
+//                         } else {
+//                             console.log('retryPayment: Payment verification failed', verifyResponse);
+//                             await changeStatus({ orderId: response.orderId, status: 'failed' });
+//                             location.href = `/paymentFailed?orderId=${response.orderId}`;
+//                         }
+//                     } catch (error) {
+//                         console.error("retryPayment: Payment verification error:", error);
+//                         await changeStatus({ orderId: response.orderId, status: 'failed' });
+//                         location.href = `/paymentFailed?orderId=${response.orderId}`;
+//                     }
+//                 },
+//                 prefill: {
+//                     name: "<%= orders.address.name %>",
+//                     email: "<%= user.email %>",
+//                     contact: "<%= orders.address.phone %>"
+//                 },
+//                 theme: {
+//                     color: "#111111",
+//                 },
+//                 modal: {
+//                     ondismiss: async function () {
+//                         console.log("retryPayment: Razorpay modal closed by user, orderId:", response.orderId);
+//                         await changeStatus({ orderId: response.orderId, status: 'failed' });
+//                         location.href = `/paymentFailed?orderId=${response.orderId}`;
+//                     }
+//                 }
+//             };
+
+//             const rzp = new Razorpay(options);
+//             rzp.on('payment.failed', async function (razorpayResponse) {
+//                 console.error("retryPayment: Razorpay payment failed:", razorpayResponse.error, "orderId:", response.orderId);
+//                 await changeStatus({ orderId: response.orderId, status: 'failed' });
+//                 location.href = `/paymentFailed?orderId=${response.orderId}`;
+//             });
+//             rzp.open();
+//         } else {
+//             console.log('retryPayment: Invalid response', response);
+//             alert("Unable to initiate payment retry.");
+//         }
+//     } catch (error) {
+//         console.error('retryPayment: Error', error);
+//         alert(error.responseJSON?.error || "Failed to retry payment.");
+//     }
+// }
+
 async function retryPayment(orderId) {
     console.log('retryPayment: Initiated for orderId:', orderId);
     try {
@@ -289,6 +380,7 @@ async function retryPayment(orderId) {
                 'X-CSRF-Token': $('meta[name="csrf-token"]').attr('content')
             }
         });
+
         console.log('retryPayment: Response received', response);
 
         if (response.payment && response.method === "razorpay") {
@@ -299,9 +391,11 @@ async function retryPayment(orderId) {
                 name: "Male Fashion",
                 description: "Retry Order Payment",
                 order_id: response.razorpayOrderId,
+
                 handler: async function (razorpayResponse) {
                     try {
                         console.log('retryPayment: Razorpay payment response', razorpayResponse);
+
                         const verifyResponse = await $.ajax({
                             url: "/verifyPayment",
                             method: "POST",
@@ -321,52 +415,104 @@ async function retryPayment(orderId) {
                         if (verifyResponse.success) {
                             console.log('retryPayment: Payment verified, orderId:', verifyResponse.orderId);
                             await clearCart();
-                            
                             location.href = `/orderDetails?id=${verifyResponse.orderId}`;
                         } else {
                             console.log('retryPayment: Payment verification failed', verifyResponse);
-                            await changeStatus({ orderId: response.orderId, status: 'failed' });
-                            location.href = `/paymentFailed?orderId=${response.orderId}`;
+
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Payment Failed',
+                                text: 'Payment verification failed. Please try again.',
+                                confirmButtonColor: '#111'
+                            }).then(async () => {
+                                await changeStatus({ orderId: response.orderId, status: 'failed' });
+                                location.href = `/paymentFailed?orderId=${response.orderId}`;
+                            });
                         }
+
                     } catch (error) {
                         console.error("retryPayment: Payment verification error:", error);
-                        await changeStatus({ orderId: response.orderId, status: 'failed' });
-                        location.href = `/paymentFailed?orderId=${response.orderId}`;
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Payment Error',
+                            text: 'Error verifying payment. Please try again.',
+                            confirmButtonColor: '#111'
+                        }).then(async () => {
+                            await changeStatus({ orderId: response.orderId, status: 'failed' });
+                            location.href = `/paymentFailed?orderId=${response.orderId}`;
+                        });
                     }
                 },
+
                 prefill: {
                     name: "<%= orders.address.name %>",
                     email: "<%= user.email %>",
                     contact: "<%= orders.address.phone %>"
                 },
+
                 theme: {
                     color: "#111111",
                 },
+
                 modal: {
                     ondismiss: async function () {
                         console.log("retryPayment: Razorpay modal closed by user, orderId:", response.orderId);
-                        await changeStatus({ orderId: response.orderId, status: 'failed' });
-                        location.href = `/paymentFailed?orderId=${response.orderId}`;
+
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Payment Cancelled',
+                            text: 'You closed the payment window.',
+                            confirmButtonColor: '#111'
+                        }).then(async () => {
+                            await changeStatus({ orderId: response.orderId, status: 'failed' });
+                            location.href = `/paymentFailed?orderId=${response.orderId}`;
+                        });
                     }
                 }
             };
 
             const rzp = new Razorpay(options);
-            rzp.on('payment.failed', async function (razorpayResponse) {
-                console.error("retryPayment: Razorpay payment failed:", razorpayResponse.error, "orderId:", response.orderId);
-                await changeStatus({ orderId: response.orderId, status: 'failed' });
-                location.href = `/paymentFailed?orderId=${response.orderId}`;
+
+            rzp.on('payment.failed', async function () {
+                console.error("retryPayment: Razorpay payment failed");
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Payment Failed',
+                    text: 'Payment failed. Please try again.',
+                    confirmButtonColor: '#111'
+                }).then(async () => {
+                    await changeStatus({ orderId: response.orderId, status: 'failed' });
+                    location.href = `/paymentFailed?orderId=${response.orderId}`;
+                });
             });
+
             rzp.open();
+
         } else {
             console.log('retryPayment: Invalid response', response);
-            alert("Unable to initiate payment retry.");
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Payment Error',
+                text: 'Unable to initiate payment retry. Please try again later.',
+                confirmButtonColor: '#111'
+            });
         }
+
     } catch (error) {
         console.error('retryPayment: Error', error);
-        alert(error.responseJSON?.error || "Failed to retry payment.");
+
+        Swal.fire({
+            icon: 'error',
+            title: 'Retry Failed',
+            text: error.responseJSON?.error || 'Something went wrong while retrying payment.',
+            confirmButtonColor: '#111'
+        });
     }
 }
+
 
 function showReturnModal(orderId, singleProductId) {
     $('#modalOrderId').val(orderId);
