@@ -17,7 +17,7 @@ const pageerror = (req,res)=>{
 
  const loadLogin = (req, res) => {
     if (req.session.admin) {
-        return res.redirect("/admin/dashboard");
+        return res.redirect("/admin/salesReport");
     }
     res.render("admin-login", { 
         errorMessage: null,
