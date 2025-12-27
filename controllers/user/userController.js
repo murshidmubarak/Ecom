@@ -133,12 +133,17 @@ const signup = async (req, res) => {
             return res.json({ success: false, message: "Error sending email. Try again later." });
         }
 
-        req.session.userOtp = otp;
+        // req.session.userOtp = otp;
 
-        setTimeout(() => {
-            delete req.session.userOtp;
+        // setTimeout(() => {
+        //     delete req.session.userOtp;
            
-        }, 10000);
+        // }, 10000);
+
+        req.session.userOtp ={
+            code: otp,
+            expiresAt: Date.now() + 1 * 60 * 1000 // 1 minute from now
+        }
 
         req.session.userData = { name, email, password, referralCode: code };
        
@@ -183,7 +188,13 @@ const verifyOtp = async (req, res) => {
             return res.status(400).json({ success: false, message: "OTP expired. Please request a new one." });
         }
 
-        if (String(userOtp) !== String(sessionOtp)) {
+        if (Date.now() > sessionOtp.expiresAt) {
+            delete req.session.userOtp;
+            
+            return res.status(400).json({ success: false, message: "OTP has expired. Please request a new one." });
+        }
+
+        if (String(userOtp) !== String(sessionOtp.code)) {
            
             return res.status(400).json({ success: false, message: "Invalid OTP" });
         }
@@ -275,10 +286,12 @@ const verifyOtp = async (req, res) => {
             }
         }
 
+        delete req.session.userOtp;
         req.session.user = savedUser._id;
        
 
         return res.status(200).json({ success: true, message: "OTP verified successfully" });
+        
     } catch (error) {
       
         res.status(500).json({ success: false, message: "An error occurred. Please try again." });
@@ -292,7 +305,12 @@ const resendOtp = async (req, res) => {
             return res.status(400).json({ success: false, message: "Email not found" });
         }
         const otp = generateOtp();
-        req.session.userOtp = otp;
+        // req.session.userOtp = otp;
+
+        req.session.userOtp ={
+            code: otp,
+            expiresAt: Date.now() + 1 * 60 * 1000 // 1 minute from now
+        }
 
         const emailSent = await sendVerificationEmail(email, otp);
         if (emailSent) {
