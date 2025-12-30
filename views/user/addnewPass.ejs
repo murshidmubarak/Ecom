@@ -1,0 +1,180 @@
+<%- include("../../views/partials/user/header") %>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<meta name="csrf-token" content="<%= csrfToken %>">
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Set New Password</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #ffffff;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    }
+
+    .password-container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .card {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      background: #ffffff;
+    }
+
+    .card-header {
+      background-color: #ffffff;
+      border-bottom: 1px solid #e0e0e0;
+      padding: 24px;
+    }
+
+    .card-header h4 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .card-body {
+      padding: 24px;
+    }
+
+    .form-label {
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .form-control {
+      border-radius: 6px;
+      padding: 12px 16px;
+    }
+
+    .btn-primary {
+      background-color: #0066cc;
+      border: none;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 6px;
+    }
+
+    .btn-primary:hover {
+      background-color: #0052a3;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="password-container">
+      <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+        <div class="card w-100">
+
+          <div class="card-header">
+            <h4>Set New Password</h4>
+          </div>
+
+          <div class="card-body">
+            <form id="setPasswordForm">
+
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+              <div class="mb-3">
+                <label class="form-label">New Password</label>
+                <input
+                  type="password"
+                  class="form-control"
+                  id="newPassword"
+                  placeholder="Enter new password"
+                  required
+                />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Confirm Password</label>
+                <input
+                  type="password"
+                  class="form-control"
+                  id="confirmPassword"
+                  placeholder="Confirm new password"
+                  required
+                />
+              </div>
+
+              <button type="submit" class="btn btn-primary w-100">
+                Update Password
+              </button>
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("setPasswordForm");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const newPassword = document.getElementById("newPassword").value;
+      const confirmPassword = document.getElementById("confirmPassword").value;
+      const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
+
+      if (newPassword !== confirmPassword) {
+        return Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Passwords do not match"
+        });
+      }
+
+      try {
+        const response = await fetch("/addnewPass", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "CSRF-Token": csrfToken
+          },
+          body: JSON.stringify({ newPassword, confirmNewPassword: confirmPassword })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          Swal.fire({
+            icon: "success",
+            title: "Password Updated",
+            text: result.message
+          }).then(() => {
+            window.location.href = "/userProfile";
+          });
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: result.message
+          });
+        }
+      } catch (err) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Something went wrong"
+        });
+      }
+    });
+  </script>
+</body>
+</html>
+
+<%- include("../../views/partials/user/footer") %>

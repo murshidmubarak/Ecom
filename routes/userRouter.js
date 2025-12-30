@@ -70,13 +70,13 @@ router.post("/reset-password", profileController.postNewPassword);
 
 // User Profile Routes
 router.get("/userProfile", userAuth, profileController.userProfile);
-router.get("/change-email", userAuth, profileController.changeEmail);
-router.post("/change-email", userAuth, profileController.changeEmailValid);
-router.post("/verify-email-otp", userAuth, profileController.veriyfyEmailOtp);
-router.post("/update-email", userAuth, profileController.updateEmail);
+router.post("/verifyEmailPassOtp", userAuth, profileController.verifyEmailPassOtp);
+router.get("/passChangeOtp", userAuth, profileController.passChangeOtp);
 router.get("/change-password", userAuth, profileController.changePassword);
 router.post("/change-password", userAuth, profileController.changePasswordValid);
-router.post("/verify-changepassword-otp", userAuth, profileController.verrifyChangePassOtp);
+router.get("/addnewPass", userAuth, profileController.changepassGet);
+router.post("/addnewPass", userAuth, profileController.changepassPost);
+router.post("/send-reset-otp", userAuth, profileController.sendOtpforReset);
 router.post("/uploadProfilePhoto", userAuth, upload.single('profilePhoto'), profileController.uploadProfilePhoto);
 router.post("/removeProfilePhoto", userAuth, profileController.removeProfilePhoto);
 
