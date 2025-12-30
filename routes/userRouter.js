@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { checkUserBlocked, userAuth, isLogin } = require("../middlewares/auth");
+const { ownsOrder, ownsAddress } = require("../middlewares/ownership");
 const userController = require("../controllers/user/userController");
 const passport = require('passport');
 const profileController = require("../controllers/user/profileController");
@@ -69,23 +70,23 @@ router.post('/resend-forgot-otp', profileController.resendOtp);
 router.post("/reset-password", profileController.postNewPassword);
 
 // User Profile Routes
-router.get("/userProfile", userAuth, profileController.userProfile);
-router.post("/verifyEmailPassOtp", userAuth, profileController.verifyEmailPassOtp);
-router.get("/passChangeOtp", userAuth, profileController.passChangeOtp);
-router.get("/change-password", userAuth, profileController.changePassword);
-router.post("/change-password", userAuth, profileController.changePasswordValid);
-router.get("/addnewPass", userAuth, profileController.changepassGet);
-router.post("/addnewPass", userAuth, profileController.changepassPost);
-router.post("/send-reset-otp", userAuth, profileController.sendOtpforReset);
-router.post("/uploadProfilePhoto", userAuth, upload.single('profilePhoto'), profileController.uploadProfilePhoto);
-router.post("/removeProfilePhoto", userAuth, profileController.removeProfilePhoto);
+router.get("/userProfile", userAuth,  profileController.userProfile);
+router.post("/verifyEmailPassOtp", userAuth,  profileController.verifyEmailPassOtp);
+router.get("/passChangeOtp", userAuth,  profileController.passChangeOtp);
+router.get("/change-password", userAuth,  profileController.changePassword);
+router.post("/change-password", userAuth,  profileController.changePasswordValid);
+router.get("/addnewPass", userAuth,  profileController.changepassGet);
+router.post("/addnewPass", userAuth,  profileController.changepassPost);
+router.post("/send-reset-otp", userAuth,  profileController.sendOtpforReset);
+router.post("/uploadProfilePhoto", userAuth,  upload.single('profilePhoto'), profileController.uploadProfilePhoto);
+router.post("/removeProfilePhoto", userAuth,  profileController.removeProfilePhoto);
 
 // Address Management Routes
 router.get("/addAddress", userAuth, profileController.addAddress);
 router.post("/addAddress", userAuth, profileController.postAddAddress);
-router.get("/editAddress", userAuth, profileController.editAddress);
-router.post("/editAddress", userAuth, profileController.postEditAddress);
-router.get("/deleteAddress", userAuth, profileController.deleteAddress);
+router.get("/editAddress", userAuth, ownsAddress, profileController.editAddress);
+router.post("/editAddress", userAuth, ownsAddress, profileController.postEditAddress);
+router.get("/deleteAddress", userAuth, ownsAddress, profileController.deleteAddress);
 
 // Cart Routes
 router.get("/cart", checkUserBlocked, cartController.getCartPage);
@@ -107,13 +108,12 @@ router.get("/retryPayment", userAuth, orderController.retryPayment);
 router.post("/applyCoupon", userAuth, orderController.applyCoupon);
 router.post("/clearCart", userAuth, orderController.clearCart);
 router.post("/changeOrderStatus", userAuth, orderController.changeOrderStatus); 
-router.get("/orderDetails", userAuth, orderController.getOrderDetailsPage);
-router.post("/cancelOrder", userAuth, orderController.cancelOrder);
-router.post("/cancelSingleProduct", userAuth, orderController.cancelSingleProduct);
-router.post("/returnSingleProduct", userAuth, orderController.returnSingleProduct);
-router.post("/returnrequestOrder", userAuth, orderController.returnorder);
-router.get("/downloadInvoice/:orderId", userAuth, orderController.downloadInvoice);
-// router.get("/deleteProduct",userAuth,orderController.deleteProduct)
+router.get("/orderDetails", userAuth, ownsOrder, orderController.getOrderDetailsPage);
+router.post("/cancelOrder", userAuth, ownsOrder, orderController.cancelOrder);
+router.post("/cancelSingleProduct", userAuth,ownsOrder, orderController.cancelSingleProduct);
+router.post("/returnSingleProduct", userAuth,ownsOrder, orderController.returnSingleProduct);
+router.post("/returnrequestOrder", userAuth,ownsOrder, orderController.returnorder);
+router.get("/downloadInvoice/:orderId", userAuth,ownsOrder, orderController.downloadInvoice);
 router.post("/deleteItem", userAuth, cartController.deleteProduct);
 
 module.exports = router;
