@@ -71,13 +71,23 @@ router.post("/reset-password", profileController.postNewPassword);
 
 // User Profile Routes
 router.get("/userProfile", userAuth,  profileController.userProfile);
-router.post("/verifyEmailPassOtp", userAuth,  profileController.verifyEmailPassOtp);
-router.get("/passChangeOtp", userAuth,  profileController.passChangeOtp);
-router.get("/change-password", userAuth,  profileController.changePassword);
-router.post("/change-password", userAuth,  profileController.changePasswordValid);
-router.get("/addnewPass", userAuth,  profileController.changepassGet);
-router.post("/addnewPass", userAuth,  profileController.changepassPost);
-router.post("/send-reset-otp", userAuth,  profileController.sendOtpforReset);
+
+router.get('/change-email',userAuth,profileController.changeEmailGet)//display change email page
+router.post('/change-email',userAuth,profileController.changeEmail);//after submitting new email and sending otp
+router.get('/verifyEmailOtp',userAuth,profileController.verifyEmailOtpGet)//display verify email otp page
+router.post('/verifyEmailOtp',userAuth,profileController.verifyEmailOtp);//verify email otp and change email
+
+router.post("/resend-pass-otp", userAuth,  profileController.resendPassOtp);//resend pass otp
+router.post("/changeEmailOtp", userAuth,  profileController.changeEmailOtp);//resend email otp
+
+router.post("/verifyEmailPassOtp", userAuth,  profileController.verifyEmailPassOtp);//verify password otp
+router.get("/passChangeOtp", userAuth,  profileController.passChangeOtp);//display password otp page
+router.get("/change-password", userAuth,  profileController.changePassword);//display change password page
+router.post("/change-password", userAuth,  profileController.changePasswordValid);//checking old password
+router.get("/addnewPass", userAuth,  profileController.changepassGet);//display add new password page
+router.post("/addnewPass", userAuth,  profileController.changepassPost);//adding new password
+router.post("/send-reset-otp", userAuth,  profileController.sendOtpforReset);//sending otp for password reset
+
 router.post("/uploadProfilePhoto", userAuth,  upload.single('profilePhoto'), profileController.uploadProfilePhoto);
 router.post("/removeProfilePhoto", userAuth,  profileController.removeProfilePhoto);
 

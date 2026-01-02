@@ -79,8 +79,21 @@ const forgotEmailValid = async (req, res) => {
     const otp = generateOtp();
     const emailSent = await sendVerificationEmail(email, otp);
 
+    // if (emailSent) {
+    //   req.session.userOtp = otp;
+    //   req.session.email = email;
+    //   console.log("Email sent successfully", otp);
+    //   return res.render("forgotPass-otp");
+    // } else {
+    //   return res.render("forgot-password", {
+    //     message: "Failed to send OTP. Please try again.",
+    //   });
+    // }
     if (emailSent) {
-      req.session.userOtp = otp;
+      req.session.userOtp = {
+        code: otp,
+        expiresAt: Date.now() + 1 * 60 * 1000 // 1 minute from now
+      }
       req.session.email = email;
       console.log("Email sent successfully", otp);
       return res.render("forgotPass-otp");
@@ -97,7 +110,17 @@ const forgotEmailValid = async (req, res) => {
 const verifyForgotPassOtp = async (req, res) => {
     try {
         const enterOtp = req.body.otp;
-        if (req.session.userOtp === enterOtp) {
+        const userOtp = req.session.userOtp;
+        if(!enterOtp){
+            return res.json({ success: false, message: "OTP is required" });
+        }
+        if (!userOtp) {
+            return res.json({ success: false, message: "OTP expired. Please resend OTP." });
+        }
+        if(Date.now() > userOtp.expiresAt){
+            return res.json({ success: false, message: "OTP expired. Please resend OTP." });
+        }
+        if (userOtp.code === enterOtp) {
             res.json({ success: true, redirectUrl: "/reset-password" });
         } else {
             res.json({ success: false, message: "Invalid OTP" });
@@ -118,7 +141,10 @@ const getResetPassPage = async (req, res) => {
 const resendOtp = async (req, res) => {
     try {
         const otp = generateOtp();
-        req.session.userOtp = otp;
+        req.session.userOtp = {
+            code: otp,
+            expiresAt: Date.now() + 1 * 60 * 1000 // 1 minute from now
+        }
         const email = req.session.email;
         
         const emailSent = await sendVerificationEmail(email, otp);
@@ -253,7 +279,6 @@ const getOrderDetails = async (req, res) => {
 
 const passChangeOtp = async (req, res) => {
     try {
-        console.log("Rendering passChangeOtp page");
         res.render("passChangeOtp", { csrfToken: req.csrfToken() });
         
     } catch (error) {
@@ -323,7 +348,7 @@ const verifyEmailPassOtp = async (req, res) => {
   }
 };
 
-const resendOtpemailPass = async (req, res) => {
+const resendPassOtp = async (req, res) => {
     try {
         const userId = req.session.user;
         const user = await User.findById(userId);
@@ -346,6 +371,171 @@ const resendOtpemailPass = async (req, res) => {
         
     }
 }
+
+const changeEmailOtp=async(req,res)=>{
+  try {
+    const otpSession=req.session.emailChangeOtp;
+    if(!otpSession){
+        return res.status(400).json({success:false,message:"no email change request found"});
+    }
+
+    const {newEmail}=otpSession;
+    console.log("New email for OTP resend:", newEmail);
+    const otp=generateOtp();
+    req.session.emailChangeOtp={
+        code:otp,
+        newEmail:newEmail,
+        expiresAt:Date.now()+1*60*1000 // 1 minute from now
+        
+    };
+
+    const emailSent= await sendVerificationEmail(newEmail,otp);
+
+    if(!emailSent){
+        return res.status(500).json({success:false,message:"Failed to send OTP"});
+    }
+
+    return res.status(200).json({success:true,
+        message:"OTP sent successfully"
+       }); 
+
+  } catch (error) {
+    
+  }
+}
+
+const changeEmailGet =async(req,res)=>{
+    try {
+        res.render("new-email");
+    } catch (error) {
+        res.redirect('page404');
+    }
+}
+
+const changeEmail =async(req,res)=>{
+    try {
+        
+        const {password,newEmail}=req.body;
+
+        if(!password || !newEmail){
+            return res.status(400).json({success:false,message:"All fields are required"});
+        }
+
+        const user= await User.findById(req.session.user);
+        if(!user){
+            return res.status(404).json({success:false,message:"User not found"});
+        }
+
+        const isMatch= await bcrypt.compare(password,user.password);
+        if(!isMatch){
+            return res.status(400).json({success:false,message:"Incorrect password"});
+        }
+
+        const emailExists= await User.findOne({email:newEmail});
+        if(emailExists){
+            return res.status(400).json({success:false,message:"Email already in use"});
+        }
+
+        const otp = generateOtp();
+
+        req.session.emailChangeOtp={
+            code:otp,
+            newEmail:newEmail,
+            expiresAt:Date.now()+1*60*1000 // 1 minute from now
+        };
+
+        const emailSent= await sendVerificationEmail(newEmail,otp);
+        if(!emailSent){
+            return res.status(500).json({success:false,message:"Failed to send OTP"});
+        }
+
+        return res.status(200).json({success:true,
+            message:"OTP sent successfully",
+            redirectUrl:"/verifyEmailOtp"
+        });
+
+
+    } catch (error) {
+        res.redirect('page404');
+        
+    }
+}
+
+const verifyEmailOtpGet = async (req, res) => {
+    try {
+        res.render("emailChangeOtp");
+    } catch (error) {
+        res.redirect('page404');
+    }
+}
+
+const verifyEmailOtp = async (req, res) => {
+  try {
+    const { otp } = req.body;
+
+    if (!otp) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP is required"
+      });
+    }
+
+    const sessionOtp = req.session.emailChangeOtp;
+
+    if (!sessionOtp) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP expired or not generated. Please resend OTP."
+      });
+    }
+
+    // expiry check
+    if (Date.now() > sessionOtp.expiresAt) {
+      delete req.session.emailChangeOtp;
+      return res.status(400).json({
+        success: false,
+        message: "OTP expired. Please request a new one."
+      });
+    }
+
+    // OTP match
+    if (String(otp) !== String(sessionOtp.code)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP"
+      });
+    }
+
+    // ✅ UPDATE EMAIL HERE
+    const userId = req.session.user;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "User not logged in"
+      });
+    }
+
+    await User.findByIdAndUpdate(userId, {
+      email: sessionOtp.newEmail
+    });
+
+    // cleanup
+    delete req.session.emailChangeOtp;
+
+    return res.status(200).json({
+      success: true,
+      message: "Email updated successfully",
+      redirectUrl: "/userProfile"
+    });
+
+  } catch (error) {
+    console.error("verifyEmailOtp error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error"
+    });
+  }
+};
 
 
 const changePassword = async (req, res) => {
@@ -434,8 +624,7 @@ const changepassPost = async (req, res) => {
         }
 
         const { newPassword, confirmNewPassword } = req.body;
-        console.log("Received newPassword:", newPassword);
-        console.log("Received confirmNewPassword:", confirmNewPassword);
+
 
         if (!newPassword || !confirmNewPassword) {
             return res.status(400).json({
@@ -515,33 +704,140 @@ const addAddress = async (req, res) => {
 };
 
 
-const postAddAddress = async (req, res) => {
-    try {
-        const userId = req.session.user;
-        const userData = await User.findOne({ _id: userId });
+// const postAddAddress = async (req, res) => {
+//     try {
+//         const userId = req.session.user;
+//         const userData = await User.findOne({ _id: userId });
 
-        const { addressType, name, city, landMark, state, pincode, phone, altPhone, redirect } = req.body;
-        const redirectPage = redirect; // ✅ define redirectPage
+//         const { addressType, name, city, landMark, state, pincode, phone, altPhone, redirect } = req.body;
+//         const redirectPage = redirect; // ✅ define redirectPage
 
-        const userAddress = await Address.findOne({ userId: userData._id });
+//         const userAddress = await Address.findOne({ userId: userData._id });
 
-        if (!userAddress) {
-            const newAddress = new Address({
-                userId: userData._id,
-                address: [{ addressType, name, city, landMark, state, pincode, phone, altPhone }]
-            });
-            await newAddress.save();
-        } else {
-            userAddress.address.push({ addressType, name, city, landMark, state, pincode, phone, altPhone });
-            await userAddress.save();
-        }
+//         if (!userAddress) {
+//             const newAddress = new Address({
+//                 userId: userData._id,
+//                 address: [{ addressType, name, city, landMark, state, pincode, phone, altPhone }]
+//             });
+//             await newAddress.save();
+//         } else {
+//             userAddress.address.push({ addressType, name, city, landMark, state, pincode, phone, altPhone });
+//             await userAddress.save();
+//         }
 
-        // ✅ Use defined redirectPage
-        res.redirect(redirectPage === 'checkout' ? '/checkout' : '/userProfile');
-    } catch (error) {
+//         // ✅ Use defined redirectPage
+//         res.redirect(redirectPage === 'checkout' ? '/checkout' : '/userProfile');
+//     } catch (error) {
         
-        res.redirect('page404');
+//         res.redirect('page404');
+//     }
+// };
+const postAddAddress = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized"
+      });
     }
+
+    const {
+      addressType,
+      name,
+      city,
+      landMark,
+      state,
+      pincode,
+      phone,
+      altPhone,
+      redirect
+    } = req.body;
+
+    console.log("Received data:", req.body);
+
+    // ✅ Required validation
+    if (
+      !addressType || !name || !city || !landMark ||
+      !state || !pincode || !phone || !altPhone
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required"
+      });
+    }
+
+    // ✅ Regex validation
+    const namePattern = /^[A-Za-z]{1,30}$/;
+    const pincodePattern = /^\d{6}$/;
+    const phonePattern = /^\d{10}$/;
+
+    if (!namePattern.test(addressType))
+      return res.status(400).json({ success: false, message: "Address type must contain only letters and max 30 characters" });
+
+    if (!namePattern.test(name))
+      return res.status(400).json({ success: false, message: "Name must contain only letters and max 30 characters" });
+
+    if (!namePattern.test(city))
+      return res.status(400).json({ success: false, message: "City must contain only letters and max 30 characters" });
+
+    if (!namePattern.test(landMark))
+      return res.status(400).json({ success: false, message: "Landmark must contain only letters and max 30 characters" });
+
+    if (!namePattern.test(state))
+      return res.status(400).json({ success: false, message: "State must contain only letters and max 30 characters" });
+
+    if (!pincodePattern.test(pincode))
+      return res.status(400).json({ success: false, message: "Pincode must be 6 digits" });
+
+    if (!phonePattern.test(phone))
+      return res.status(400).json({ success: false, message: "Phone number must be 10 digits" });
+
+    if (!phonePattern.test(altPhone))
+      return res.status(400).json({ success: false, message: "Alternate phone must be 10 digits" });
+
+    if (phone === altPhone)
+      return res.status(400).json({
+        success: false,
+        message: "Phone and alternate phone must be different"
+      });
+
+    // ✅ Find or create address doc
+    let userAddress = await Address.findOne({ userId });
+
+    if (!userAddress) {
+      userAddress = new Address({
+        userId,
+        address: []
+      });
+    }
+
+    userAddress.address.push({
+      addressType,
+      name,
+      city,
+      landMark,
+      state,
+      pincode,
+      phone,
+      altPhone
+    });
+
+    await userAddress.save();
+
+    return res.json({
+      success: true,
+      message: "Address added successfully",
+      redirect: redirect === "checkout" ? "/checkout" : "/userProfile"
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong. Please try again."
+    });
+  }
 };
 
 const editAddress = async (req, res) => {
@@ -574,39 +870,153 @@ const editAddress = async (req, res) => {
     }
 };
 
-const postEditAddress = async (req, res) => {
-    try {
-        const data = req.body;
-        const addressId = req.query.id;
-        const user = req.session.user;
-        const findAddress = await Address.findOne({ "address._id": addressId });
-        const redirectPage = req.body.redirect;
-        if (!findAddress) {
-            return res.redirect('/page404');
-        }
+// const postEditAddress = async (req, res) => {
+//     try {
+//         const data = req.body;
+//         const addressId = req.query.id;
+//         const user = req.session.user;
+//         const findAddress = await Address.findOne({ "address._id": addressId });
+//         const redirectPage = req.body.redirect;
+//         if (!findAddress) {
+//             return res.redirect('/page404');
+//         }
 
-        await Address.updateOne(
-            { "address._id": addressId },
-            {$set:{
-                "address.$":{
-                    id: addressId,
-                    addressType: data.addressType,
-                    name: data.name,
-                    city: data.city,
-                    landMark: data.landMark,
-                    state: data.state,
-                    pincode: data.pincode,
-                    phone: data.phone,
-                    altPhone: data.altPhone
-                }
-            }}
-        );
+//         await Address.updateOne(
+//             { "address._id": addressId },
+//             {$set:{
+//                 "address.$":{
+//                     id: addressId,
+//                     addressType: data.addressType,
+//                     name: data.name,
+//                     city: data.city,
+//                     landMark: data.landMark,
+//                     state: data.state,
+//                     pincode: data.pincode,
+//                     phone: data.phone,
+//                     altPhone: data.altPhone
+//                 }
+//             }}
+//         );
 
-         return res.redirect(redirectPage === 'checkout' ? '/checkout' : '/userProfile');
-    } catch (error) {
+//          return res.redirect(redirectPage === 'checkout' ? '/checkout' : '/userProfile');
+//     } catch (error) {
         
-        res.redirect('page404');
+//         res.redirect('page404');
+//     }
+// };
+
+
+const postEditAddress = async (req, res) => {
+  try {
+    const data = req.body;
+    const addressId = req.query.id;
+    const redirectPage = req.body.redirect;
+
+    if (!addressId) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid address ID"
+      });
     }
+
+    const findAddress = await Address.findOne({ "address._id": addressId });
+    if (!findAddress) {
+      return res.status(404).json({
+        success: false,
+        message: "Address not found"
+      });
+    }
+
+    const {
+      addressType,
+      name,
+      city,
+      landMark,
+      state,
+      pincode,
+      phone,
+      altPhone
+    } = data;
+
+    // ✅ Required fields check
+    if (
+      !addressType || !name || !city || !landMark ||
+      !state || !pincode || !phone || !altPhone
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required"
+      });
+    }
+
+    // ✅ Regex validations
+    const namePattern = /^[A-Za-z]{1,30}$/;
+    const pincodePattern = /^\d{6}$/;
+    const phonePattern = /^\d{10}$/;
+
+    if (!namePattern.test(addressType))
+      return res.status(400).json({ success: false, message: "Address  must contain only letters and max 30 characters" });
+
+    if (!namePattern.test(name))
+      return res.status(400).json({ success: false, message: "Name must contain only letters and max 30 characters" });
+
+    if (!namePattern.test(city))
+      return res.status(400).json({ success: false, message: "City must contain only letters and max 30 characters" });
+
+    if (!namePattern.test(landMark))
+      return res.status(400).json({ success: false, message: "Landmark must contain only letters and max 30 characters" });
+
+    if (!namePattern.test(state))
+      return res.status(400).json({ success: false, message: "State must contain only letters and max 30 characters" });
+
+    if (!pincodePattern.test(pincode))
+      return res.status(400).json({ success: false, message: "Pincode must be a 6-digit number" });
+
+    if (!phonePattern.test(phone))
+      return res.status(400).json({ success: false, message: "Phone number must be 10 digits" });
+
+    if (!phonePattern.test(altPhone))
+      return res.status(400).json({ success: false, message: "Alternate phone must be 10 digits" });
+
+    if (phone === altPhone)
+      return res.status(400).json({
+        success: false,
+        message: "Phone and alternate phone must be different"
+      });
+
+    // ✅ Update address
+    await Address.updateOne(
+      { "address._id": addressId },
+      {
+        $set: {
+          "address.$": {
+            id: addressId,
+            addressType,
+            name,
+            city,
+            landMark,
+            state,
+            pincode,
+            phone,
+            altPhone
+          }
+        }
+      }
+    );
+
+    return res.json({
+      success: true,
+      message: "Address updated successfully",
+      redirect: redirectPage === "checkout" ? "/checkout" : "/userProfile"
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong. Please try again."
+    });
+  }
 };
 
 
@@ -690,5 +1100,5 @@ const removeProfilePhoto = async (req, res) => {
 module.exports = {
     getForgotPassPage, forgotEmailValid, verifyForgotPassOtp, getResetPassPage, resendOtp, postNewPassword, userProfile, changePassword,
     addAddress, postAddAddress, getOrderDetails, editAddress, postEditAddress, deleteAddress, uploadProfilePhoto, removeProfilePhoto,
-     changePasswordValid,changepassGet,changepassPost, sendOtpforReset, passChangeOtp, verifyEmailPassOtp, resendOtpemailPass
+     changePasswordValid,changepassGet,changepassPost, sendOtpforReset, passChangeOtp, verifyEmailPassOtp, resendPassOtp, changeEmailGet, changeEmail, verifyEmailOtpGet, verifyEmailOtp,changeEmailOtp
 };

@@ -215,7 +215,7 @@
     });
 
     try {
-      const res = await fetch("/resend-otp", {
+      const res = await fetch("/resend-pass-otp", {
         method: "POST",
         headers: { "CSRF-Token": csrfToken }
       });

@@ -48,7 +48,7 @@
        <button type="submit" id="submitButton" class="btn btn-primary">Submit</button>
    </form>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
   
    document.getElementById('addressForm').addEventListener('submit', function(event) {
@@ -172,5 +172,56 @@
        }
        return isValid;
    }
+</script> -->
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+document.getElementById("addressForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  const form = e.target;
+  const formData = new URLSearchParams(new FormData(form));
+
+  try {
+    const response = await fetch(form.action, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content
+      },
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      Swal.fire({
+        icon: "error",
+        title: "Validation Error",
+        text: data.message
+      });
+      return;
+    }
+
+    Swal.fire({
+      icon: "success",
+      title: "Success",
+      text: data.message,
+      timer: 1500,
+      showConfirmButton: false
+    }).then(() => {
+      window.location.href = data.redirect;
+    });
+
+  } catch (error) {
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "Something went wrong. Please try again."
+    });
+  }
+});
 </script>
+
 <%- include("../../views/partials/user/footer") %>
