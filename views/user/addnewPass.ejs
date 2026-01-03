@@ -22,7 +22,23 @@
       max-width: 480px;
       margin: 0 auto;
       padding: 20px;
+      padding-top: 50px;
     }
+
+    .password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #666;
+  font-size: 16px;
+}
+
+.password-toggle:hover {
+  color: #0066cc;
+}
+
 
     .card {
       border: 1px solid #e0e0e0;
@@ -87,7 +103,7 @@
 
               <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
-              <div class="mb-3">
+              <!-- <div class="mb-3">
                 <label class="form-label">New Password</label>
                 <input
                   type="password"
@@ -96,9 +112,29 @@
                   placeholder="Enter new password"
                   required
                 />
-              </div>
+              </div> -->
 
               <div class="mb-3">
+  <label class="form-label">New Password</label>
+
+  <div class="position-relative">
+    <input
+      type="password"
+      class="form-control pe-5"
+      id="newPassword"
+      placeholder="Enter new password"
+      required
+    />
+
+    <i
+      class="fa-solid fa-eye password-toggle"
+      data-target="newPassword"
+    ></i>
+  </div>
+</div>
+
+
+              <!-- <div class="mb-3">
                 <label class="form-label">Confirm Password</label>
                 <input
                   type="password"
@@ -107,7 +143,27 @@
                   placeholder="Confirm new password"
                   required
                 />
-              </div>
+              </div> -->
+
+              <div class="mb-3">
+  <label class="form-label">Confirm Password</label>
+
+  <div class="position-relative">
+    <input
+      type="password"
+      class="form-control pe-5"
+      id="confirmPassword"
+      placeholder="Confirm new password"
+      required
+    />
+
+    <i
+      class="fa-solid fa-eye password-toggle"
+      data-target="confirmPassword"
+    ></i>
+  </div>
+</div>
+
 
               <button type="submit" class="btn btn-primary w-100">
                 Update Password
@@ -122,6 +178,20 @@
 
   <script>
     const form = document.getElementById("setPasswordForm");
+
+      document.querySelectorAll(".password-toggle").forEach(icon => {
+    icon.addEventListener("click", () => {
+      const input = document.getElementById(icon.dataset.target);
+
+      if (input.type === "password") {
+        input.type = "text";
+        icon.classList.replace("fa-eye", "fa-eye-slash");
+      } else {
+        input.type = "password";
+        icon.classList.replace("fa-eye-slash", "fa-eye");
+      }
+    });
+  });
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();

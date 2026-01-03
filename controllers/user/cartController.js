@@ -212,30 +212,57 @@ const changeQuantity = async (req, res) => {
             return res.status(400).json({ status: false, error: "Invalid product price" });
         }
 
-        if (newQuantity < 1) {
-            return res.status(400).json({
-                status: false,
-                error: "Quantity cannot be less than 1",
-                currentQuantity,
-            });
-        }
+        // if (newQuantity < 1) {
+        //     return res.status(400).json({
+        //         status: false,
+        //         error: "Quantity cannot be less than 1",
+        //         currentQuantity,
+        //     });
+        // }
 
-        if (newQuantity > MAX_QUANTITY_PER_ITEM) {
-            return res.status(400).json({
-                status: false,
-                error: `Maximum ${MAX_QUANTITY_PER_ITEM} items allowed per product`,
-                currentQuantity,
-            });
-        }
+        // if (newQuantity > MAX_QUANTITY_PER_ITEM) {
+        //     return res.status(400).json({
+        //         status: false,
+        //         error: `Maximum ${MAX_QUANTITY_PER_ITEM} items allowed per product`,
+        //         currentQuantity,
+        //     });
+        // }
 
-        if (newQuantity > productQuantity) {
-            return res.status(400).json({
-                status: false,
-                error: `Only ${productQuantity} items available in stock`,
-                currentQuantity,
-                stockQuantity: productQuantity,
-            });
-        }
+        // if (newQuantity > productQuantity) {
+        //     return res.status(400).json({
+        //         status: false,
+        //         error: `Only ${productQuantity} items available in stock`,
+        //         currentQuantity,
+        //         stockQuantity: productQuantity,
+        //     });
+        // }
+        // minimum
+if (newQuantity < 1) {
+    return res.status(400).json({
+        status: false,
+        error: "Quantity cannot be less than 1",
+        currentQuantity,
+    });
+}
+
+// max per item
+if (newQuantity > MAX_QUANTITY_PER_ITEM) {
+    return res.status(400).json({
+        status: false,
+        error: `Maximum ${MAX_QUANTITY_PER_ITEM} items allowed per product`,
+        currentQuantity,
+    });
+}
+
+// stock check ONLY when increasing
+if (countNum === 1 && newQuantity > productQuantity) {
+    return res.status(400).json({
+        status: false,
+        error: `Only ${productQuantity} items available in stock`,
+        currentQuantity,
+        stockQuantity: productQuantity,
+    });
+}
 
         cartItem.quantity = newQuantity;
         await cart.save();
