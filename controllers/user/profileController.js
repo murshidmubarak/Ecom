@@ -763,34 +763,6 @@ const addAddress = async (req, res) => {
 };
 
 
-// const postAddAddress = async (req, res) => {
-//     try {
-//         const userId = req.session.user;
-//         const userData = await User.findOne({ _id: userId });
-
-//         const { addressType, name, city, landMark, state, pincode, phone, altPhone, redirect } = req.body;
-//         const redirectPage = redirect; // ✅ define redirectPage
-
-//         const userAddress = await Address.findOne({ userId: userData._id });
-
-//         if (!userAddress) {
-//             const newAddress = new Address({
-//                 userId: userData._id,
-//                 address: [{ addressType, name, city, landMark, state, pincode, phone, altPhone }]
-//             });
-//             await newAddress.save();
-//         } else {
-//             userAddress.address.push({ addressType, name, city, landMark, state, pincode, phone, altPhone });
-//             await userAddress.save();
-//         }
-
-//         // ✅ Use defined redirectPage
-//         res.redirect(redirectPage === 'checkout' ? '/checkout' : '/userProfile');
-//     } catch (error) {
-        
-//         res.redirect('page404');
-//     }
-// };
 const postAddAddress = async (req, res) => {
   try {
     const userId = req.session.user;
@@ -929,40 +901,7 @@ const editAddress = async (req, res) => {
     }
 };
 
-// const postEditAddress = async (req, res) => {
-//     try {
-//         const data = req.body;
-//         const addressId = req.query.id;
-//         const user = req.session.user;
-//         const findAddress = await Address.findOne({ "address._id": addressId });
-//         const redirectPage = req.body.redirect;
-//         if (!findAddress) {
-//             return res.redirect('/page404');
-//         }
 
-//         await Address.updateOne(
-//             { "address._id": addressId },
-//             {$set:{
-//                 "address.$":{
-//                     id: addressId,
-//                     addressType: data.addressType,
-//                     name: data.name,
-//                     city: data.city,
-//                     landMark: data.landMark,
-//                     state: data.state,
-//                     pincode: data.pincode,
-//                     phone: data.phone,
-//                     altPhone: data.altPhone
-//                 }
-//             }}
-//         );
-
-//          return res.redirect(redirectPage === 'checkout' ? '/checkout' : '/userProfile');
-//     } catch (error) {
-        
-//         res.redirect('page404');
-//     }
-// };
 
 
 const postEditAddress = async (req, res) => {
