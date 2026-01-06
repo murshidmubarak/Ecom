@@ -633,6 +633,15 @@ const changepassPost = async (req, res) => {
             });
         }
 
+         const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+
+        if (!passwordRegex.test(newPassword)) {
+            return res.status(400).json({
+                success: false,
+                message: "Password must be at least 8 characters contain both letters and numbers"
+            });
+        }
+
         if (newPassword !== confirmNewPassword) {
             return res.status(400).json({
                 success: false,
@@ -684,6 +693,42 @@ const sendOtpforReset = async (req, res) => {
         }
     } catch (error) {
         res.redirect("/pageNotFound");
+    }
+}
+
+
+const changeUsernameGet = async (req, res) => {
+    try {
+        res.render("change-username", { csrfToken: req.csrfToken() });
+    } catch (error) {
+        res.redirect('page404');
+    }
+};
+
+const changeUsernamePost = async (req, res) => {
+    try {
+      console.log("changeUsernamePost called with body:", req.body);
+        const { username } = req.body;
+        if (!username) {
+            return res.status(400).json({ success: false, message: "Username is required" });
+        }
+        const userId = req.session.user;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: "User not logged in" });
+        }
+            const updatedUser = await User.findByIdAndUpdate(
+                  userId,
+                 { name:username },
+                 { new: true }
+              );
+
+              console.log("Updated user:", updatedUser);
+
+
+        return res.status(200).json({ success: true, message: "Username updated successfully", redirectUrl: "/userProfile" });
+    } catch (error) {
+        console.error("Error in changeUsernamePost:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
     }
 }
 
@@ -767,8 +812,8 @@ const postAddAddress = async (req, res) => {
       });
     }
 
-    // ✅ Regex validation
-    const namePattern = /^[A-Za-z]{1,30}$/;
+    // const namePattern = /^[A-Za-z]{1,30}$/;
+    const namePattern = /^(?=.{1,30}$)[A-Za-z]+(\s+[A-Za-z]+)*$/;
     const pincodePattern = /^\d{6}$/;
     const phonePattern = /^\d{10}$/;
 
@@ -949,8 +994,8 @@ const postEditAddress = async (req, res) => {
       });
     }
 
-    // ✅ Regex validations
-    const namePattern = /^[A-Za-z]{1,30}$/;
+    // const namePattern = /^[A-Za-z]{1,30}$/;
+    const namePattern = /^(?=.{1,30}$)[A-Za-z]+(\s+[A-Za-z]+)*$/;
     const pincodePattern = /^\d{6}$/;
     const phonePattern = /^\d{10}$/;
 
@@ -1100,5 +1145,6 @@ const removeProfilePhoto = async (req, res) => {
 module.exports = {
     getForgotPassPage, forgotEmailValid, verifyForgotPassOtp, getResetPassPage, resendOtp, postNewPassword, userProfile, changePassword,
     addAddress, postAddAddress, getOrderDetails, editAddress, postEditAddress, deleteAddress, uploadProfilePhoto, removeProfilePhoto,
-     changePasswordValid,changepassGet,changepassPost, sendOtpforReset, passChangeOtp, verifyEmailPassOtp, resendPassOtp, changeEmailGet, changeEmail, verifyEmailOtpGet, verifyEmailOtp,changeEmailOtp
+     changePasswordValid,changepassGet,changepassPost, sendOtpforReset, passChangeOtp, verifyEmailPassOtp, resendPassOtp, changeEmailGet, changeEmail, verifyEmailOtpGet, verifyEmailOtp,changeEmailOtp,
+    changeUsernameGet, changeUsernamePost
 };

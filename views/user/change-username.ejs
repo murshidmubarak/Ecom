@@ -1,0 +1,97 @@
+<%- include("../../views/partials/user/header") %>
+
+<section class="content-main d-flex justify-content-center align-items-center min-vh-100 px-3">
+  <div class="card col-12 col-sm-10 col-md-8 col-lg-6 shadow p-4">
+    <div class="card-body">
+
+      <h4 class="text-center mb-4">Enter Username</h4>
+
+      <form id="usernameForm">
+        <input type="hidden" id="csrfToken" value="<%= csrfToken %>">
+
+        <!-- Username -->
+        <div class="mb-3">
+          <label class="form-label">Enter your username</label>
+          <input
+            type="text"
+            id="username"
+            class="form-control"
+            placeholder="Enter your username"
+          />
+        </div>
+
+        <button id="submitBtn" class="btn btn-primary w-100 mt-3" type="submit">
+          Continue
+        </button>
+      </form>
+
+    </div>
+  </div>
+</section>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+document.getElementById("usernameForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  const username = document.getElementById("username").value.trim();
+  const csrfToken = document.getElementById("csrfToken").value;
+  const submitBtn = document.getElementById("submitBtn");
+
+  if (!username) {
+    return Swal.fire({
+      icon: "warning",
+      title: "Missing Field",
+      text: "Username is required"
+    });
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Checking...";
+
+  try {
+    const res = await fetch("/change-username", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "CSRF-Token": csrfToken
+      },
+      body: JSON.stringify({ username })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      return Swal.fire({
+        icon: "error",
+        title: "Failed",
+        text: data.message || "Invalid username"
+      });
+    }
+
+    await Swal.fire({
+      icon: "success",
+      title: "Username Verified",
+      text: data.message || "Username exists"
+    });
+
+    if (data.redirectUrl) {
+      window.location.href = data.redirectUrl;
+    }
+
+  } catch (err) {
+    Swal.fire({
+      icon: "error",
+      title: "Server Error",
+      text: "Please try again later"
+    });
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Continue";
+  }
+});
+</script>
+
+<%- include("../../views/partials/user/footer") %>

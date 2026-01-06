@@ -88,6 +88,9 @@ router.get("/addnewPass", userAuth,  profileController.changepassGet);//display 
 router.post("/addnewPass", userAuth,  profileController.changepassPost);//adding new password
 router.post("/send-reset-otp", userAuth,  profileController.sendOtpforReset);//sending otp for password reset
 
+router.get("/change-username", userAuth, profileController.changeUsernameGet); // display change username page
+router.post("/change-username", userAuth, profileController.changeUsernamePost); // handle change username form submission
+
 router.post("/uploadProfilePhoto", userAuth,  upload.single('profilePhoto'), profileController.uploadProfilePhoto);
 router.post("/removeProfilePhoto", userAuth,  profileController.removeProfilePhoto);
 
