@@ -449,6 +449,9 @@ const changeEmail =async(req,res)=>{
             return res.status(500).json({success:false,message:"Failed to send OTP"});
         }
 
+                req.session.canChangeEmail = true;
+
+
         return res.status(200).json({success:true,
             message:"OTP sent successfully",
             redirectUrl:"/verifyEmailOtp"
@@ -463,6 +466,9 @@ const changeEmail =async(req,res)=>{
 
 const verifyEmailOtpGet = async (req, res) => {
     try {
+      if (!req.session.emailChangeOtp) {
+        return res.redirect('/change-email');
+      }
         res.render("emailChangeOtp");
     } catch (error) {
         res.redirect('page404');
@@ -472,6 +478,13 @@ const verifyEmailOtpGet = async (req, res) => {
 const verifyEmailOtp = async (req, res) => {
   try {
     const { otp } = req.body;
+
+    if (!req.session.canChangeEmail) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to change email"
+      });
+    }
 
     if (!otp) {
       return res.status(400).json({
@@ -521,6 +534,7 @@ const verifyEmailOtp = async (req, res) => {
 
     // cleanup
     delete req.session.emailChangeOtp;
+    req.session.canChangeEmail = false;
 
     return res.status(200).json({
       success: true,
