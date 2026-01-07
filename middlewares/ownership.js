@@ -2,7 +2,6 @@ const Order = require("../models/orderSchema");
 const Address = require("../models/addressSchema");
 
 
-// ✅ ORDER OWNERSHIP
 const ownsOrder = async (req, res, next) => {
   try {
     const orderId =
@@ -35,7 +34,6 @@ const ownsOrder = async (req, res, next) => {
 
 
 
-// ✅ ADDRESS OWNERSHIP
 const ownsAddress = async (req, res, next) => {
   try {
     const addressId =
