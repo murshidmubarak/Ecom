@@ -621,7 +621,7 @@
                   </div>
                 </div>   
 
-              <div class="tab-pane fade <%= activeTab === 'orders' ? 'show active' : '' %>" id="orders" role="tabpanel" aria-labelledby="orders-tab">
+              <!-- <div class="tab-pane fade <%= activeTab === 'orders' ? 'show active' : '' %>" id="orders" role="tabpanel" aria-labelledby="orders-tab">
                 <div class="card">
                   <div class="card-header">
                     <h5 class="mb-0">Your Orders</h5>
@@ -668,7 +668,7 @@
                         </tbody>
                       </table>
                     </div>
-                    <!-- Pagination Controls for Orders -->
+
                     <% if (ordersTotalPages > 1) { %>
                       <nav aria-label="Orders pagination">
                         <ul class="pagination justify-content-center mt-3">
@@ -692,7 +692,123 @@
                     <% } %>
                   </div>
                 </div>
+              </div> -->
+
+
+              <div class="tab-pane fade <%= activeTab === 'orders' ? 'show active' : '' %>"
+     id="orders"
+     role="tabpanel"
+     aria-labelledby="orders-tab">
+
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Your Orders</h5>
+    </div>
+
+    <div class="card-body">
+
+      <!-- Search -->
+      <div class="search-container">
+        <input type="text"
+               id="orderSearch"
+               placeholder="Search by Order ID, Product, or Status">
+        <button onclick="searchOrders()">Search</button>
+        <button onclick="clearSearch()"
+                class="btn btn-small btn-outline-secondary ms-2">
+          Clear
+        </button>
+      </div>
+
+      <!-- Orders Cards -->
+      <div class="row" id="ordersContainer">
+        <% if (orders && orders.length > 0) { %>
+          <% orders.forEach(order => { %>
+
+            <div class="col-md-6 col-lg-4 mb-4 order-card"
+                 data-order-id="<%= order.orderId.toLowerCase() %>"
+                 data-product="<%= order.orderedItems.map(i => i.product.productName).join(', ').toLowerCase() %>"
+                 data-status="<%= order.status.toLowerCase() %>">
+
+              <div class="card h-100">
+                <div class="card-body d-flex flex-column">
+
+                  <h6><strong>Order ID:</strong> <%= order.orderId %></h6>
+
+                  <p class="mb-1">
+                    <strong>Products:</strong><br>
+                    <%= order.orderedItems.map(i => i.product.productName).join(', ') %>
+                  </p>
+
+                  <p class="mb-1">
+                    <strong>Date:</strong>
+                    <%= order.createdOn.toLocaleDateString() %>
+                  </p>
+
+                  <p class="mb-1">
+                    <strong>Status:</strong>
+                    <span class="badge bg-info text-dark">
+                      <%= order.status %>
+                    </span>
+                  </p>
+
+                  <p class="mb-3">
+                    <strong>Total:</strong>
+                    ₹<%= order.finalAmount.toFixed(2) %>
+                  </p>
+
+                  <a href="/orderDetails?id=<%= order.orderId %>"
+                     class="btn btn-success btn-sm mt-auto">
+                    View Details
+                  </a>
+
+                </div>
               </div>
+
+            </div>
+
+          <% }) %>
+        <% } else { %>
+          <div class="col-12 text-center text-muted">
+            No orders found
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Pagination -->
+      <% if (ordersTotalPages > 1) { %>
+        <nav aria-label="Orders pagination">
+          <ul class="pagination justify-content-center mt-3">
+
+            <li class="page-item <%= ordersPage === 1 ? 'disabled' : '' %>">
+              <a class="page-link"
+                 href="?tab=orders&ordersPage=<%= ordersPage - 1 %>&walletPage=<%= walletPage %>">
+                «
+              </a>
+            </li>
+
+            <% for (let i = 1; i <= ordersTotalPages; i++) { %>
+              <li class="page-item <%= ordersPage === i ? 'active' : '' %>">
+                <a class="page-link"
+                   href="?tab=orders&ordersPage=<%= i %>&walletPage=<%= walletPage %>">
+                  <%= i %>
+                </a>
+              </li>
+            <% } %>
+
+            <li class="page-item <%= ordersPage === ordersTotalPages ? 'disabled' : '' %>">
+              <a class="page-link"
+                 href="?tab=orders&ordersPage=<%= ordersPage + 1 %>&walletPage=<%= walletPage %>">
+                »
+              </a>
+            </li>
+
+          </ul>
+        </nav>
+      <% } %>
+
+    </div>
+  </div>
+</div>
 
               <div class="tab-pane fade <%= activeTab === 'track-orders' ? 'show active' : '' %>" id="track-orders" role="tabpanel" aria-labelledby="wallet-tab">
                 <div class="card">
@@ -720,7 +836,7 @@
                 </div>
               </div>
 
-              <div class="tab-pane fade <%= activeTab === 'wallet-history' ? 'show active' : '' %>" id="wallet-history" role="tabpanel" aria-labelledby="wallet-history-tab">
+              <!-- <div class="tab-pane fade <%= activeTab === 'wallet-history' ? 'show active' : '' %>" id="wallet-history" role="tabpanel" aria-labelledby="wallet-history-tab">
                 <div class="card">
                   <div class="card-header">
                     <h5 class="mb-0">Wallet History</h5>
@@ -760,7 +876,7 @@
                         </tbody>
                       </table>
                     </div>
-                    <!-- Pagination Controls for Wallet History -->
+
                     <% if (walletTotalPages > 1) { %>
                       <nav aria-label="Wallet history pagination">
                         <ul class="pagination justify-content-center mt-3">
@@ -784,7 +900,116 @@
                     <% } %>
                   </div>
                 </div>
+              </div> -->
+
+              <div class="tab-pane fade <%= activeTab === 'wallet-history' ? 'show active' : '' %>"
+     id="wallet-history"
+     role="tabpanel"
+     aria-labelledby="wallet-history-tab">
+
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Wallet History</h5>
+    </div>
+
+    <div class="card-body">
+
+      <!-- Wallet Cards -->
+      <div class="row">
+        <% if (walletTransactions && walletTransactions.length > 0) { %>
+          <% walletTransactions.forEach(txn => { %>
+
+            <div class="col-md-6 col-lg-4 mb-4">
+              <div class="card h-100">
+                <div class="card-body d-flex flex-column">
+
+                  <h6 class="mb-2">
+                    <strong>Txn ID:</strong> <%= txn.transactionId %>
+                  </h6>
+
+                  <p class="mb-1">
+                    <strong>Date:</strong><br>
+                    <%= moment(txn.transactionDate).format('DD MMM YYYY, hh:mm A') %>
+                  </p>
+
+                  <p class="mb-1">
+                    <strong>Type:</strong>
+                    <span class="badge bg-secondary">
+                      <%= txn.type.charAt(0).toUpperCase() + txn.type.slice(1) %>
+                    </span>
+                  </p>
+
+                  <p class="mb-1">
+                    <strong>Description:</strong><br>
+                    <%= txn.description.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase()) %>
+                  </p>
+
+                  <p class="mb-1">
+                    <strong>Amount:</strong>
+                    <span class="<%= txn.amount >= 0 ? 'text-success' : 'text-danger' %>">
+                      ₹<%= txn.amount.toFixed(2) %>
+                    </span>
+                  </p>
+
+                  <p class="mb-1">
+                    <strong>Balance After:</strong>
+                    ₹<%= txn.balanceAfter.toFixed(2) %>
+                  </p>
+
+                  <p class="mt-auto">
+                    <strong>Status:</strong>
+                    <span class="badge bg-info text-dark">
+                      <%= txn.status.charAt(0).toUpperCase() + txn.status.slice(1) %>
+                    </span>
+                  </p>
+
+                </div>
               </div>
+            </div>
+
+          <% }) %>
+        <% } else { %>
+          <div class="col-12 text-center text-muted">
+            No wallet transactions found
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Pagination -->
+      <% if (walletTotalPages > 1) { %>
+        <nav aria-label="Wallet pagination">
+          <ul class="pagination justify-content-center mt-3">
+
+            <li class="page-item <%= walletPage === 1 ? 'disabled' : '' %>">
+              <a class="page-link"
+                 href="?tab=wallet-history&ordersPage=<%= ordersPage %>&walletPage=<%= walletPage - 1 %>">
+                «
+              </a>
+            </li>
+
+            <% for (let i = 1; i <= walletTotalPages; i++) { %>
+              <li class="page-item <%= walletPage === i ? 'active' : '' %>">
+                <a class="page-link"
+                   href="?tab=wallet-history&ordersPage=<%= ordersPage %>&walletPage=<%= i %>">
+                  <%= i %>
+                </a>
+              </li>
+            <% } %>
+
+            <li class="page-item <%= walletPage === walletTotalPages ? 'disabled' : '' %>">
+              <a class="page-link"
+                 href="?tab=wallet-history&ordersPage=<%= ordersPage %>&walletPage=<%= walletPage + 1 %>">
+                »
+              </a>
+            </li>
+
+          </ul>
+        </nav>
+      <% } %>
+
+    </div>
+  </div>
+</div>
 
               <div class="tab-pane fade <%= activeTab === 'referral' ? 'show active' : '' %>" id="referral" role="tabpanel" aria-labelledby="referral-tab">
                 <div class="card">
@@ -887,35 +1112,64 @@ function copyReferralCode() {
   });
 }
 
-function searchOrders() {
-  const searchInput = document.getElementById("orderSearch").value.toLowerCase().trim();
-  const table = document.getElementById("ordersTable");
-  const rows = table.querySelectorAll("tbody tr");
+// function searchOrders() {
+//   const searchInput = document.getElementById("orderSearch").value.toLowerCase().trim();
+//   const table = document.getElementById("ordersTable");
+//   const rows = table.querySelectorAll("tbody tr");
 
-  rows.forEach((row) => {
-    const orderId = row.dataset.orderId ? row.dataset.orderId.toLowerCase() : "";
-    const product = row.dataset.product ? row.dataset.product.toLowerCase() : "";
-    const status = row.dataset.status ? row.dataset.status.toLowerCase() : "";
+//   rows.forEach((row) => {
+//     const orderId = row.dataset.orderId ? row.dataset.orderId.toLowerCase() : "";
+//     const product = row.dataset.product ? row.dataset.product.toLowerCase() : "";
+//     const status = row.dataset.status ? row.dataset.status.toLowerCase() : "";
+
+//     if (
+//       !searchInput ||
+//       orderId.includes(searchInput) ||
+//       product.includes(searchInput) ||
+//       status.includes(searchInput)
+//     ) {
+//       row.style.display = "table-row";
+//     } else {
+//       row.style.display = "none";
+//     }
+//   });
+// }
+
+// function clearSearch() {
+//   const searchInput = document.getElementById("orderSearch");
+//   searchInput.value = "";
+//   searchOrders();
+// }
+
+function searchOrders() {
+  const query = document.getElementById("orderSearch")
+    .value
+    .toLowerCase()
+    .trim();
+
+  document.querySelectorAll(".order-card").forEach(card => {
+    const orderId = card.dataset.orderId;
+    const product = card.dataset.product;
+    const status = card.dataset.status;
 
     if (
-      !searchInput ||
-      orderId.includes(searchInput) ||
-      product.includes(searchInput) ||
-      status.includes(searchInput)
+      !query ||
+      orderId.includes(query) ||
+      product.includes(query) ||
+      status.includes(query)
     ) {
-      row.style.display = "table-row";
+      card.style.display = "block";
     } else {
-      row.style.display = "none";
+      card.style.display = "none";
     }
   });
 }
 
 function clearSearch() {
-  const searchInput = document.getElementById("orderSearch");
-  searchInput.value = "";
-  searchOrders();
+  document.getElementById("orderSearch").value = "";
+  document.querySelectorAll(".order-card")
+    .forEach(card => card.style.display = "block");
 }
-
 function resetOrders() {
   const searchInput = document.getElementById("orderSearch");
   const table = document.getElementById("ordersTable");

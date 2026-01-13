@@ -715,7 +715,11 @@ const getOrderDetailsPage = async (req, res) => {
     const userId = req.session.user;
     const orderId = req.query.id;
 
-    const findOrder = await Order.findOne({ orderId }).populate("orderedItems.product");
+    const findOrder = await Order.findOne({ 
+      orderId,
+      userId
+
+     }).populate("orderedItems.product");
     if (!findOrder) {
       
       return res.redirect("/pageNotFound");

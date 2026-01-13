@@ -121,12 +121,14 @@ router.get("/retryPayment", userAuth, orderController.retryPayment);
 router.post("/applyCoupon", userAuth, orderController.applyCoupon);
 router.post("/clearCart", userAuth, orderController.clearCart);
 router.post("/changeOrderStatus", userAuth, orderController.changeOrderStatus); 
-router.get("/orderDetails", userAuth, ownsOrder, orderController.getOrderDetailsPage);
-router.post("/cancelOrder", userAuth, ownsOrder, orderController.cancelOrder);
-router.post("/cancelSingleProduct", userAuth,ownsOrder, orderController.cancelSingleProduct);
-router.post("/returnSingleProduct", userAuth,ownsOrder, orderController.returnSingleProduct);
-router.post("/returnrequestOrder", userAuth,ownsOrder, orderController.returnorder);
-router.get("/downloadInvoice/:orderId", userAuth,ownsOrder, orderController.downloadInvoice);
+router.get("/orderDetails", userAuth, orderController.getOrderDetailsPage);
+
+router.post("/cancelOrder", userAuth, orderController.cancelOrder);
+router.post("/cancelSingleProduct", userAuth, orderController.cancelSingleProduct);
+router.post("/returnSingleProduct", userAuth, orderController.returnSingleProduct);
+router.post("/returnrequestOrder", userAuth, orderController.returnorder);
+
+router.get("/downloadInvoice/:orderId", userAuth, orderController.downloadInvoice);
 router.post("/deleteItem", userAuth, cartController.deleteProduct);
 
 module.exports = router;
